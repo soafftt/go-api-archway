@@ -6,14 +6,14 @@ package main
 
 import "github.com/google/wire"
 
-type GetwayManager struct {
+type GatewayControllerApp struct {
 	Config *Config
 }
 
-func InitializeApp() (*GetwayManager, error) {
+func InitializeApp() (*GatewayControllerApp, error) {
 	wire.Build(
 		ConfigSet,
-		wire.Struct(new(GetwayManager), "*"),
+		wire.Struct(new(GatewayControllerApp), "*"),
 	)
 	return nil, nil
 }

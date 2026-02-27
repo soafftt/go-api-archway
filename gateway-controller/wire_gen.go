@@ -8,16 +8,16 @@ package main
 
 // Injectors from wire.go:
 
-func InitializeApp() (*GetwayManager, error) {
+func InitializeApp() (*GatewayControllerApp, error) {
 	config := NewConfig()
-	getwayManager := &GetwayManager{
+	gatewayControllerApp := &GatewayControllerApp{
 		Config: config,
 	}
-	return getwayManager, nil
+	return gatewayControllerApp, nil
 }
 
 // wire.go:
 
-type GetwayManager struct {
+type GatewayControllerApp struct {
 	Config *Config
 }
