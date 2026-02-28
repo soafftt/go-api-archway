@@ -43,7 +43,7 @@ func (g *gatewayControllerServer) StartUnixSocketServer() {
 	serve := http.Server{
 		ReadTimeout:  time.Duration(serverConfig.ReadTimeoutMillsSecond) * time.Millisecond,
 		WriteTimeout: time.Duration(serverConfig.WriteTimeoutMillsSecond) * time.Millisecond,
-		IdleTimeout:  time.Duration(serverConfig.IdleTimeoutMillsSecond) * time.Millisecond,
+		IdleTimeout:  time.Duration(serverConfig.IdleTimeoutMillsecond) * time.Millisecond,
 		Handler:      mux,
 	}
 

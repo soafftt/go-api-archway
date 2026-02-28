@@ -12,9 +12,9 @@ import (
 type AppConfig struct {
 	Server struct {
 		UnixSocketPath          string `env:"UNIX_SOCKET_PATH" envDefault:"/tmp/gateway-controller.sock"`
-		ReadTimeoutMillsSecond  int64  `env:"READ_TIMEOUT_MILLISECOND" envDefault:"10"`
-		WriteTimeoutMillsSecond int64  `env:"WRITE_TIMEOUT_MILLISECOND" envDefault:"10"`
-		IdleTimeoutMillsSecond  int64  `env:"IDLE_TIMEOUT_MILLISECOND" envDefault:"120"`
+		ReadTimeoutMillisecond  int64  `env:"READ_TIMEOUT_MILLISECOND" envDefault:"10"`
+		WriteTimeoutMillisecond int64  `env:"WRITE_TIMEOUT_MILLISECOND" envDefault:"10"`
+		IdleTimeoutMillisecond  int64  `env:"IDLE_TIMEOUT_MILLISECOND" envDefault:"120"`
 	}
 
 	Valkey struct {
