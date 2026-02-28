@@ -11,6 +11,14 @@
             "mode": "auto",
             "program": "${workspaceFolder}/gateway/cmd",
             "cwd": "${workspaceFolder}/gateway/cmd"
+		},
+        {
+            "name": "Gateway Controller",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/gateway-controller",
+            "cwd": "${workspaceFolder}/gateway-controller"
 		}
     ]
 }

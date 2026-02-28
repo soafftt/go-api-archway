@@ -1,4 +1,4 @@
-module gateway/manager
+module gateway/controller
 
 go 1.25.0
 
