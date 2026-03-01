@@ -8,205 +8,120 @@ import (
 )
 
 func TestUpStreamService_JSONUnmarshal(t *testing.T) {
-	// 테스트 JSON 데이터
 	jsonData := `{
-		"servie": "user-service",
-		"host": {
-			"api.example.com": {
+		"service_name": "member-api",
+		"resouces": [
+			{
+				"sub_domain": "api.example.com",
 				"host": "upstream-server-1.internal:8080",
-				"request": [
+				"paths": [
 					{
 						"path": "/api/users",
 						"method": "GET",
-						"requestTimeout": 5000,
-						"responseTimeout": 10000,
-						"checkAuthorization": true
+						"request_timeout": 5000,
+						"response_timeout": 10000,
+						"check_authorization": true,
+						"cache_timeout": 10
 					},
 					{
 						"path": "/api/users/{id}",
 						"method": "GET",
-						"requestTimeout": 3000,
-						"responseTimeout": 5000,
-						"checkAuthorization": true
-					},
-					{
-						"path": "/api/users/{userId}/posts/{postId}",
-						"method": "GET",
-						"requestTimeout": 5000,
-						"responseTimeout": 8000,
-						"checkAuthorization": true
+						"request_timeout": 3000,
+						"response_timeout": 5000,
+						"check_authorization": true
 					}
 				]
 			},
-			"admin.example.com": {
-				"host": "admin-server.internal:8081",
-				"request": [
+			{
+				"sub_domain": "",
+				"host": "default-user.internal:8081",
+				"paths": [
 					{
-						"path": "/admin/users",
+						"path": "/v1/member/",
 						"method": "GET",
-						"requestTimeout": 10000,
-						"responseTimeout": 15000,
-						"checkAuthorization": true
+						"request_timeout": 5000,
+						"response_timeout": 8000,
+						"check_authorization": true
 					}
 				]
 			}
-		}
+		]
 	}`
 
-	// JSON 파싱
 	var service UpstreamService
 	err := json.Unmarshal([]byte(jsonData), &service)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
+	service.InitializeResourceIndex()
 
-	// 기본 검증
-	if service.Service != "user-service" {
-		t.Errorf("Expected Service 'user-service', got '%s'", service.Service)
+	if service.ServiceName != "member-api" {
+		t.Errorf("Expected ServiceName 'member-api', got '%s'", service.ServiceName)
 	}
 
-	if len(service.HostMap) != 2 {
-		t.Errorf("Expected 2 hosts, got %d", len(service.HostMap))
+	if len(service.Resources) != 2 {
+		t.Errorf("Expected 2 resources, got %d", len(service.Resources))
 	}
 
-	// api.example.com 검증
-	apiHost := service.HostMap["api.example.com"]
-	if apiHost == nil {
+	apiResource, isEmptyDomain := service.LookupResourceDomain("api.example.com")
+	if apiResource == nil {
 		t.Fatal("api.example.com not found")
 	}
-
-	if apiHost.Host != "upstream-server-1.internal:8080" {
-		t.Errorf("Expected host 'upstream-server-1.internal:8080', got '%s'", apiHost.Host)
+	if isEmptyDomain {
+		t.Fatal("api.example.com should not use empty-domain fallback")
 	}
 
-	if len(apiHost.Request) != 3 {
-		t.Errorf("Expected 3 requests for api.example.com, got %d", len(apiHost.Request))
+	if apiResource.Host != "upstream-server-1.internal:8080" {
+		t.Errorf("Expected host 'upstream-server-1.internal:8080', got '%s'", apiResource.Host)
 	}
 
-	// Router 초기화
-	apiHost.InitializeRouter()
-
-	// 라우팅 테스트
-	tests := []struct {
-		name         string
-		path         string
-		shouldFind   bool
-		expectedPath string
-	}{
-		{"exact match", "/api/users", true, "/api/users"},
-		{"path variable single", "/api/users/123", true, "/api/users/{id}"},
-		{"path variable nested", "/api/users/123/posts/456", true, "/api/users/{userId}/posts/{postId}"},
-		{"not found", "/api/products", false, ""},
+	if len(apiResource.Paths) != 2 {
+		t.Errorf("Expected 2 paths for api.example.com, got %d", len(apiResource.Paths))
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := apiHost.LookupPath(tt.path)
-
-			if tt.shouldFind {
-				if result == nil {
-					t.Errorf("Expected to find path %s", tt.path)
-					return
-				}
-				if result.Path != tt.expectedPath {
-					t.Errorf("Expected path %s, got %s", tt.expectedPath, result.Path)
-				}
-				if result.Method != "GET" {
-					t.Errorf("Expected method GET, got %s", result.Method)
-				}
-			} else {
-				if result != nil {
-					t.Errorf("Expected not to find path %s, but got %v", tt.path, result)
-				}
-			}
-		})
+	if apiResource.Paths[0].CacheTimeout != 10 {
+		t.Errorf("Expected cache timeout 10, got %d", apiResource.Paths[0].CacheTimeout)
 	}
 
-	// admin.example.com 검증
-	adminHost := service.HostMap["admin.example.com"]
-	if adminHost == nil {
-		t.Fatal("admin.example.com not found")
+	apiResource.InitializeRouter()
+	result := apiResource.LookupPath("/api/users/123")
+	if result == nil || result.Path != "/api/users/{id}" {
+		t.Fatalf("Expected path '/api/users/{id}', got %#v", result)
 	}
 
-	if adminHost.Host != "admin-server.internal:8081" {
-		t.Errorf("Expected host 'admin-server.internal:8081', got '%s'", adminHost.Host)
+	fallbackResource, fallback := service.LookupResourceDomain("unknown.example.com")
+	if fallbackResource == nil {
+		t.Fatal("Expected fallback resource for empty subdomain")
 	}
-
-	if len(adminHost.Request) != 1 {
-		t.Errorf("Expected 1 request for admin.example.com, got %d", len(adminHost.Request))
-	}
-
-	// LookupHost 테스트
-	foundHost := service.LookupHost("api.example.com")
-	if foundHost == nil {
-		t.Error("LookupHost failed for api.example.com")
-	}
-
-	notFoundHost := service.LookupHost("nonexistent.example.com")
-	if notFoundHost != nil {
-		t.Error("LookupHost should return nil for non-existent host")
+	if !fallback {
+		t.Fatal("Expected fallback flag true")
 	}
 }
 
 func TestUpStreamService_ComplexScenario(t *testing.T) {
 	jsonData := `{
-		"servie": "product-service",
-		"host": {
-			"api.shop.com": {
+		"service_name": "product-api",
+		"resouces": [
+			{
+				"sub_domain": "api.shop.com",
 				"host": "product-api.internal:8080",
-				"request": [
+				"paths": [
 					{
 						"path": "/products",
 						"method": "GET",
-						"requestTimeout": 3000,
-						"responseTimeout": 5000,
-						"checkAuthorization": false
+						"request_timeout": 3000,
+						"response_timeout": 5000,
+						"check_authorization": false
 					},
 					{
 						"path": "/products/{productId}",
 						"method": "GET",
-						"requestTimeout": 2000,
-						"responseTimeout": 4000,
-						"checkAuthorization": false
-					},
-					{
-						"path": "/products/{productId}/reviews",
-						"method": "GET",
-						"requestTimeout": 5000,
-						"responseTimeout": 8000,
-						"checkAuthorization": false
-					},
-					{
-						"path": "/products/{productId}/reviews/{reviewId}",
-						"method": "GET",
-						"requestTimeout": 3000,
-						"responseTimeout": 5000,
-						"checkAuthorization": true
-					},
-					{
-						"path": "/categories",
-						"method": "GET",
-						"requestTimeout": 2000,
-						"responseTimeout": 3000,
-						"checkAuthorization": false
-					},
-					{
-						"path": "/categories/{categoryId}",
-						"method": "GET",
-						"requestTimeout": 2000,
-						"responseTimeout": 3000,
-						"checkAuthorization": false
-					},
-					{
-						"path": "/categories/{categoryId}/products",
-						"method": "GET",
-						"requestTimeout": 5000,
-						"responseTimeout": 8000,
-						"checkAuthorization": false
+						"request_timeout": 2000,
+						"response_timeout": 4000
 					}
 				]
 			}
-		}
+		]
 	}`
 
 	var service UpstreamService
@@ -214,15 +129,18 @@ func TestUpStreamService_ComplexScenario(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
+	service.InitializeResourceIndex()
 
-	host := service.LookupHost("api.shop.com")
-	if host == nil {
-		t.Fatal("Host not found")
+	resource, isEmptyDomain := service.LookupResourceDomain("api.shop.com")
+	if resource == nil {
+		t.Fatal("Resource not found")
+	}
+	if isEmptyDomain {
+		t.Fatal("api.shop.com should not be empty domain fallback")
 	}
 
-	host.InitializeRouter()
+	resource.InitializeRouter()
 
-	// 복잡한 라우팅 시나리오 테스트
 	tests := []struct {
 		path              string
 		expectedPattern   string
@@ -231,32 +149,22 @@ func TestUpStreamService_ComplexScenario(t *testing.T) {
 	}{
 		{"/products", "/products", 3000, false},
 		{"/products/123", "/products/{productId}", 2000, false},
-		{"/products/abc-def", "/products/{productId}", 2000, false},
-		{"/products/123/reviews", "/products/{productId}/reviews", 5000, false},
-		{"/products/123/reviews/456", "/products/{productId}/reviews/{reviewId}", 3000, true},
-		{"/categories", "/categories", 2000, false},
-		{"/categories/electronics", "/categories/{categoryId}", 2000, false},
-		{"/categories/electronics/products", "/categories/{categoryId}/products", 5000, false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.path, func(t *testing.T) {
-			result := host.LookupPath(tt.path)
-
+			result := resource.LookupPath(tt.path)
 			if result == nil {
 				t.Fatalf("Expected to find path %s", tt.path)
 			}
-
 			if result.Path != tt.expectedPattern {
 				t.Errorf("Expected pattern %s, got %s", tt.expectedPattern, result.Path)
 			}
-
 			if result.RequestTimeout != tt.expectedTimeout {
 				t.Errorf("Expected timeout %d, got %d", tt.expectedTimeout, result.RequestTimeout)
 			}
-
-			if result.CheckAuthrozation != tt.expectedAuthCheck {
-				t.Errorf("Expected auth check %v, got %v", tt.expectedAuthCheck, result.CheckAuthrozation)
+			if result.CheckAuthorization != tt.expectedAuthCheck {
+				t.Errorf("Expected auth check %v, got %v", tt.expectedAuthCheck, result.CheckAuthorization)
 			}
 		})
 	}
@@ -264,35 +172,34 @@ func TestUpStreamService_ComplexScenario(t *testing.T) {
 
 func TestUpStreamService_EmptyAndEdgeCases(t *testing.T) {
 	t.Run("empty service", func(t *testing.T) {
-		jsonData := `{
-			"servie": "empty-service",
-			"host": {}
-		}`
+		jsonData := `{"service_name": "empty-api", "resouces": []}`
 
 		var service UpstreamService
 		err := json.Unmarshal([]byte(jsonData), &service)
 		if err != nil {
 			t.Fatalf("Failed to unmarshal: %v", err)
 		}
+		service.InitializeResourceIndex()
 
-		if service.Service != "empty-service" {
-			t.Errorf("Expected 'empty-service', got '%s'", service.Service)
+		if service.ServiceName != "empty-api" {
+			t.Errorf("Expected 'empty-api', got '%s'", service.ServiceName)
 		}
 
-		if len(service.HostMap) != 0 {
-			t.Errorf("Expected 0 hosts, got %d", len(service.HostMap))
+		if len(service.Resources) != 0 {
+			t.Errorf("Expected 0 resources, got %d", len(service.Resources))
 		}
 	})
 
-	t.Run("host with no requests", func(t *testing.T) {
+	t.Run("resource with no paths", func(t *testing.T) {
 		jsonData := `{
-			"servie": "test-service",
-			"host": {
-				"test.com": {
+			"service_name": "test-api",
+			"resouces": [
+				{
+					"sub_domain": "test.com",
 					"host": "localhost:8080",
-					"request": []
+					"paths": []
 				}
-			}
+			]
 		}`
 
 		var service UpstreamService
@@ -300,15 +207,18 @@ func TestUpStreamService_EmptyAndEdgeCases(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to unmarshal: %v", err)
 		}
+		service.InitializeResourceIndex()
 
-		host := service.LookupHost("test.com")
-		if host == nil {
-			t.Fatal("Host not found")
+		resource, isEmptyDomain := service.LookupResourceDomain("test.com")
+		if resource == nil {
+			t.Fatal("Resource not found")
+		}
+		if isEmptyDomain {
+			t.Fatal("test.com should not be empty domain fallback")
 		}
 
-		host.InitializeRouter()
-
-		result := host.LookupPath("/any/path")
+		resource.InitializeRouter()
+		result := resource.LookupPath("/any/path")
 		if result != nil {
 			t.Error("Expected nil for non-existent path")
 		}

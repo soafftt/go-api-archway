@@ -3,19 +3,21 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"gateway/controller/infra"
 	"log"
+	"strings"
 	"time"
 
 	dto "gateway/common/dto/upstream"
+	modelDto "gateway/controller/model/dto"
 
 	"github.com/google/wire"
 	"github.com/valkey-io/valkey-go"
 )
 
 type PolicyService interface {
-	CheckPolicy(service, uri string) (allow bool, err error)
+	CheckPolicy(urlParseDto modelDto.URLParseDTO) (modelDto.RewitePathDTO, error)
 }
 
 type policyService struct {
@@ -27,8 +29,18 @@ var policyMap map[string]*dto.UpstreamService = make(map[string]*dto.UpstreamSer
 
 // buffered 고루틴 (100개의 서비스는 일단 없는 것으로 간주)
 // TODO 추후 Service 수가 많아질 경우, 정책 업데이트 시점에 일괄적으로 업데이트 하는 방식으로 변경 고려
-var policyUpdateJobs = make(chan string, 100)
-var policyUpdateResults = make(chan *dto.UpstreamService, 100)
+type policyUpdateJob struct {
+	service string
+	payload string
+}
+
+type policyUpdateResult struct {
+	service string
+	policy  *dto.UpstreamService
+}
+
+var policyUpdateJobs = make(chan policyUpdateJob, 100)
+var policyUpdateResults = make(chan policyUpdateResult, 100)
 
 /*
 초기화 시점에 GlideValkey를 통해 "UPSTREAM:*" 패턴의 키를 모두 조회하여 정책 맵을 초기화
@@ -39,15 +51,16 @@ var policyUpdateResults = make(chan *dto.UpstreamService, 100)
 */
 func initPolocyChannel() {
 	for i := 0; i < 50; i++ {
-		go func(id int, job <-chan string, result chan<- *dto.UpstreamService) {
+		go func(id int, job <-chan policyUpdateJob, result chan<- policyUpdateResult) {
 			var upstreamService dto.UpstreamService
+			item := <-job
 
-			err := json.Unmarshal([]byte(<-job), &upstreamService)
+			err := json.Unmarshal([]byte(item.payload), &upstreamService)
 			if err != nil {
 				log.Fatalf("Initialize policy error:policy unmarshal error: %v", err)
 			}
 
-			result <- &upstreamService
+			result <- policyUpdateResult{service: item.service, policy: &upstreamService}
 		}(i, policyUpdateJobs, policyUpdateResults)
 	}
 }
@@ -96,14 +109,18 @@ func initalizePolicyMap(valkey valkey.Client, cursor uint64) {
 	}
 
 	// goroutine pool로 병렬 처리, 정책 업데이트 채널에 job 전달
-	for _, value := range values {
-		policyUpdateJobs <- value
+	for index, value := range values {
+		policyUpdateJobs <- policyUpdateJob{
+			service: extractServiceName(keys[index]),
+			payload: value,
+		}
 	}
 
 	// 결과 수신
 	for range values {
-		upstreamService := <-policyUpdateResults
-		policyMap[upstreamService.Service] = upstreamService
+		result := <-policyUpdateResults
+		result.policy.InitializeResourceIndex()
+		policyMap[result.service] = result.policy
 	}
 
 	if nextCursor != 0 {
@@ -111,13 +128,29 @@ func initalizePolicyMap(valkey valkey.Client, cursor uint64) {
 	}
 }
 
-func (p *policyService) CheckPolicy(service, uri string) (allow bool, err error) {
-	upstreamService, ok := policyMap[service]
+func extractServiceName(rawKey string) string {
+	return strings.TrimPrefix(rawKey, "UPSTREAM:")
+}
+
+func (p *policyService) CheckPolicy(urlParseDto modelDto.URLParseDTO) (modelDto.RewitePathDTO, error) {
+	upstreamService, ok := policyMap[urlParseDto.Service]
 	if !ok {
-		return false, errors.New("not_found_service")
+		return modelDto.NewEmptyRewitePathDTO(), fmt.Errorf("No matching service found for %s", urlParseDto.Service)
 	}
 
-	return false, nil
+	domain, emptyDomain := upstreamService.LookupResourceDomain(urlParseDto.Domain)
+	if domain == nil {
+		return modelDto.NewEmptyRewitePathDTO(), fmt.Errorf("No matching domain found for %s", urlParseDto.Domain)
+	}
+
+	lookupPath := urlParseDto.GetPath(emptyDomain)
+
+	pathStream := domain.LookupPath(lookupPath)
+	if pathStream == nil {
+		return modelDto.NewEmptyRewitePathDTO(), fmt.Errorf("No matching path found for %s", lookupPath)
+	}
+
+	return modelDto.NewRewitePathDTO(pathStream), nil
 }
 
 var PolicyServiceSet = wire.NewSet(

@@ -1,92 +1,109 @@
 {
-  "servie": "user-service",
-  "host": {
-    "api.example.com": {
+  "service_name": "member-api",
+  "resouces": [
+    {
+      "sub_domain": "api.example.com",
       "host": "user-service.internal:8080",
-      "request": [
+      "paths": [
         {
           "path": "/api/users",
           "method": "GET",
-          "requestTimeout": 5000,
-          "responseTimeout": 10000,
-          "checkAuthorization": true
+          "request_timeout": 5000,
+          "response_timeout": 10000,
+          "check_authorization": true,
+          "cache_timeout": 10
         },
         {
           "path": "/api/users",
           "method": "POST",
-          "requestTimeout": 10000,
-          "responseTimeout": 15000,
-          "checkAuthorization": true
+          "request_timeout": 10000,
+          "response_timeout": 15000,
+          "check_authorization": true
         },
         {
           "path": "/api/users/{id}",
           "method": "GET",
-          "requestTimeout": 3000,
-          "responseTimeout": 5000,
-          "checkAuthorization": true
+          "request_timeout": 3000,
+          "response_timeout": 5000,
+          "check_authorization": true
         },
         {
           "path": "/api/users/{id}",
           "method": "PUT",
-          "requestTimeout": 8000,
-          "responseTimeout": 12000,
-          "checkAuthorization": true
+          "request_timeout": 8000,
+          "response_timeout": 12000,
+          "check_authorization": true
         },
         {
           "path": "/api/users/{id}",
           "method": "DELETE",
-          "requestTimeout": 5000,
-          "responseTimeout": 8000,
-          "checkAuthorization": true
+          "request_timeout": 5000,
+          "response_timeout": 8000,
+          "check_authorization": true
         },
         {
           "path": "/api/users/{userId}/posts",
           "method": "GET",
-          "requestTimeout": 5000,
-          "responseTimeout": 10000,
-          "checkAuthorization": true
+          "request_timeout": 5000,
+          "response_timeout": 10000,
+          "check_authorization": true
         },
         {
           "path": "/api/users/{userId}/posts/{postId}",
           "method": "GET",
-          "requestTimeout": 3000,
-          "responseTimeout": 5000,
-          "checkAuthorization": true
+          "request_timeout": 3000,
+          "response_timeout": 5000,
+          "check_authorization": true
         },
         {
           "path": "/api/health",
           "method": "GET",
-          "requestTimeout": 1000,
-          "responseTimeout": 2000,
-          "checkAuthorization": false
+          "request_timeout": 1000,
+          "response_timeout": 2000,
+          "check_authorization": false
         }
       ]
     },
-    "admin.example.com": {
+    {
+      "sub_domain": "admin.example.com",
       "host": "admin-service.internal:8081",
-      "request": [
+      "paths": [
         {
           "path": "/admin/users",
           "method": "GET",
-          "requestTimeout": 10000,
-          "responseTimeout": 15000,
-          "checkAuthorization": true
+          "request_timeout": 10000,
+          "response_timeout": 15000,
+          "check_authorization": true
         },
         {
           "path": "/admin/users/{id}",
           "method": "GET",
-          "requestTimeout": 5000,
-          "responseTimeout": 8000,
-          "checkAuthorization": true
+          "request_timeout": 5000,
+          "response_timeout": 8000,
+          "check_authorization": true
         },
         {
           "path": "/admin/settings",
           "method": "GET",
-          "requestTimeout": 5000,
-          "responseTimeout": 8000,
-          "checkAuthorization": true
+          "request_timeout": 5000,
+          "response_timeout": 8000,
+          "check_authorization": true
+        }
+      ]
+    },
+    {
+      "sub_domain": "",
+      "host": "user-default.internal:8089",
+      "paths": [
+        {
+          "path": "/v1/member/",
+          "method": "GET",
+          "request_timeout": 1000,
+          "response_timeout": 1000,
+          "check_authorization": true,
+          "cache_timeout": 10
         }
       ]
     }
-  }
+  ]
 }

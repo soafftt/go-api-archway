@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"gateway/controller/model/dto"
 	"gateway/controller/service"
 	"net/http"
 	"net/url"
@@ -34,28 +35,40 @@ func (cr *ControllerRouter) registerRoutes() {
 			return
 		}
 
-		service, path, err := parseTargetUrl(targetUrl)
+		dto, err := parseTargetUrl(targetUrl)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		cr.service.CheckPolicy(service, path)
+		cr.service.CheckPolicy(dto)
 	})
 }
 
-func parseTargetUrl(rawUrl string) (service string, path string, err error) {
+func parseTargetUrl(rawUrl string) (urlParseDto dto.URLParseDTO, err error) {
 	uri, err := url.Parse(rawUrl)
 	if err != nil {
-		return "", "", fmt.Errorf("Target UriParse Error: %v", err)
+		return dto.NewEmptyURLParseDTO(), fmt.Errorf("Target UriParse Error: %v", err)
 	}
 
-	uriPath := strings.Split(uri.Path, "/")
+	segments := strings.Split(strings.Trim(uri.Path, "/"), "/")
+	if len(segments) < 3 {
+		return dto.NewEmptyURLParseDTO(), fmt.Errorf("invalid upstream path: %s", uri.Path)
+	}
 
-	service = uriPath[0]                  // assuming the first segment of the path is the service name
-	path = strings.Join(uriPath[1:], "/") // the rest is the service path
+	version := segments[0]
+	service := segments[1]
+	resourceDomain := segments[2]
+	resourcePath := strings.Join(segments[2:], "/")
 
-	return service, path, nil
+	urlParseDto = dto.NewURLParseDTO(
+		version,
+		service,
+		resourceDomain,
+		resourcePath,
+	)
+
+	return urlParseDto, nil
 }
 
 var RouterSet = wire.NewSet(NewControllerRouter)

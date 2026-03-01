@@ -98,9 +98,9 @@ func TestPathRouter_MixedStaticAndDynamic(t *testing.T) {
 }
 
 func TestUpStreamHost_LookupPath(t *testing.T) {
-	host := &UptreamHost{
+	resource := &UpstreamResource{
 		Host: "example.com",
-		Request: []*UpstreamPath{
+		Paths: []*UpstreamPath{
 			{Path: "/api/users", Method: "GET"},
 			{Path: "/api/users/{id}", Method: "GET"},
 			{Path: "/api/users/{userId}/posts/{postId}", Method: "GET"},
@@ -108,7 +108,7 @@ func TestUpStreamHost_LookupPath(t *testing.T) {
 		},
 	}
 
-	host.InitializeRouter()
+	resource.InitializeRouter()
 
 	tests := []struct {
 		name         string
@@ -124,7 +124,7 @@ func TestUpStreamHost_LookupPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := host.LookupPath(tt.requestPath)
+			result := resource.LookupPath(tt.requestPath)
 
 			if tt.shouldMatch {
 				if result == nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"gateway/controller/config"
 	"gateway/controller/router"
+	"gateway/controller/service"
 	"log"
 	"net"
 	"net/http"
@@ -20,11 +21,12 @@ type GatewayControllerServer interface {
 }
 
 type gatewayControllerServer struct {
-	config *config.AppConfig
+	config  *config.AppConfig
+	service service.PolicyService
 }
 
-func NewGatewayServer(appConfig *config.AppConfig) *gatewayControllerServer {
-	return &gatewayControllerServer{config: appConfig}
+func NewGatewayServer(appConfig *config.AppConfig, policyService service.PolicyService) *gatewayControllerServer {
+	return &gatewayControllerServer{config: appConfig, service: policyService}
 }
 
 func (g *gatewayControllerServer) StartUnixSocketServer() {
@@ -41,7 +43,7 @@ func (g *gatewayControllerServer) StartUnixSocketServer() {
 		ReadTimeout:  time.Duration(serverConfig.ReadTimeoutMillisecond) * time.Millisecond,
 		WriteTimeout: time.Duration(serverConfig.WriteTimeoutMillisecond) * time.Millisecond,
 		IdleTimeout:  time.Duration(serverConfig.IdleTimeoutMillisecond) * time.Millisecond,
-		Handler:      router.NewControllerRouter().Mux,
+		Handler:      router.NewControllerRouter(g.service).Mux,
 	}
 
 	go func() {

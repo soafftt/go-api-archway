@@ -17,9 +17,9 @@ import (
 
 func InitializeApp() (*GatewayControllerApp, error) {
 	appConfig := config.NewAppConfig()
-	gatewayControllerServer := server.NewGatewayServer(appConfig)
 	glideValkey := infra.NewGlideValkey(appConfig)
 	policyService := service.NewPolicyService(glideValkey)
+	gatewayControllerServer := server.NewGatewayServer(appConfig, policyService)
 	gatewayControllerApp := &GatewayControllerApp{
 		Config:      appConfig,
 		Server:      gatewayControllerServer,

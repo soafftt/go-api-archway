@@ -1,118 +1,59 @@
 {
-  "servie": "e-commerce",
-  "host": {
-    "api.shop.com": {
+  "service_name": "ecommerce-api",
+  "resouces": [
+    {
+      "sub_domain": "api.shop.com",
       "host": "product-service.internal:8080",
-      "request": [
+      "paths": [
         {
           "path": "/products",
           "method": "GET",
-          "requestTimeout": 3000,
-          "responseTimeout": 5000,
-          "checkAuthorization": false
+          "request_timeout": 3000,
+          "response_timeout": 5000,
+          "check_authorization": false
         },
         {
           "path": "/products/{productId}",
           "method": "GET",
-          "requestTimeout": 2000,
-          "responseTimeout": 4000,
-          "checkAuthorization": false
-        },
-        {
-          "path": "/products/{productId}/reviews",
-          "method": "GET",
-          "requestTimeout": 5000,
-          "responseTimeout": 8000,
-          "checkAuthorization": false
-        },
-        {
-          "path": "/products/{productId}/reviews/{reviewId}",
-          "method": "GET",
-          "requestTimeout": 3000,
-          "responseTimeout": 5000,
-          "checkAuthorization": true
-        },
-        {
-          "path": "/categories",
-          "method": "GET",
-          "requestTimeout": 2000,
-          "responseTimeout": 3000,
-          "checkAuthorization": false
-        },
-        {
-          "path": "/categories/{categoryId}",
-          "method": "GET",
-          "requestTimeout": 2000,
-          "responseTimeout": 3000,
-          "checkAuthorization": false
-        },
-        {
-          "path": "/categories/{categoryId}/products",
-          "method": "GET",
-          "requestTimeout": 5000,
-          "responseTimeout": 8000,
-          "checkAuthorization": false
+          "request_timeout": 2000,
+          "response_timeout": 4000,
+          "check_authorization": false
         }
       ]
     },
-    "cart.shop.com": {
+    {
+      "sub_domain": "cart.shop.com",
       "host": "cart-service.internal:8082",
-      "request": [
+      "paths": [
         {
           "path": "/cart",
           "method": "GET",
-          "requestTimeout": 3000,
-          "responseTimeout": 5000,
-          "checkAuthorization": true
+          "request_timeout": 3000,
+          "response_timeout": 5000,
+          "check_authorization": true
         },
         {
           "path": "/cart/items",
           "method": "POST",
-          "requestTimeout": 5000,
-          "responseTimeout": 8000,
-          "checkAuthorization": true
-        },
-        {
-          "path": "/cart/items/{itemId}",
-          "method": "DELETE",
-          "requestTimeout": 3000,
-          "responseTimeout": 5000,
-          "checkAuthorization": true
+          "request_timeout": 5000,
+          "response_timeout": 8000,
+          "check_authorization": true
         }
       ]
     },
-    "order.shop.com": {
-      "host": "order-service.internal:8083",
-      "request": [
+    {
+      "sub_domain": "",
+      "host": "shop-default.internal:8090",
+      "paths": [
         {
-          "path": "/orders",
+          "path": "/v1/member/",
           "method": "GET",
-          "requestTimeout": 5000,
-          "responseTimeout": 10000,
-          "checkAuthorization": true
-        },
-        {
-          "path": "/orders",
-          "method": "POST",
-          "requestTimeout": 10000,
-          "responseTimeout": 15000,
-          "checkAuthorization": true
-        },
-        {
-          "path": "/orders/{orderId}",
-          "method": "GET",
-          "requestTimeout": 3000,
-          "responseTimeout": 5000,
-          "checkAuthorization": true
-        },
-        {
-          "path": "/orders/{orderId}/status",
-          "method": "GET",
-          "requestTimeout": 2000,
-          "responseTimeout": 3000,
-          "checkAuthorization": true
+          "request_timeout": 1000,
+          "response_timeout": 1000,
+          "check_authorization": true,
+          "cache_timeout": 10
         }
       ]
     }
-  }
+  ]
 }
