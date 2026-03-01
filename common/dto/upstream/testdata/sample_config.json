@@ -1,0 +1,92 @@
+{
+  "servie": "user-service",
+  "host": {
+    "api.example.com": {
+      "host": "user-service.internal:8080",
+      "request": [
+        {
+          "path": "/api/users",
+          "method": "GET",
+          "requestTimeout": 5000,
+          "responseTimeout": 10000,
+          "checkAuthorization": true
+        },
+        {
+          "path": "/api/users",
+          "method": "POST",
+          "requestTimeout": 10000,
+          "responseTimeout": 15000,
+          "checkAuthorization": true
+        },
+        {
+          "path": "/api/users/{id}",
+          "method": "GET",
+          "requestTimeout": 3000,
+          "responseTimeout": 5000,
+          "checkAuthorization": true
+        },
+        {
+          "path": "/api/users/{id}",
+          "method": "PUT",
+          "requestTimeout": 8000,
+          "responseTimeout": 12000,
+          "checkAuthorization": true
+        },
+        {
+          "path": "/api/users/{id}",
+          "method": "DELETE",
+          "requestTimeout": 5000,
+          "responseTimeout": 8000,
+          "checkAuthorization": true
+        },
+        {
+          "path": "/api/users/{userId}/posts",
+          "method": "GET",
+          "requestTimeout": 5000,
+          "responseTimeout": 10000,
+          "checkAuthorization": true
+        },
+        {
+          "path": "/api/users/{userId}/posts/{postId}",
+          "method": "GET",
+          "requestTimeout": 3000,
+          "responseTimeout": 5000,
+          "checkAuthorization": true
+        },
+        {
+          "path": "/api/health",
+          "method": "GET",
+          "requestTimeout": 1000,
+          "responseTimeout": 2000,
+          "checkAuthorization": false
+        }
+      ]
+    },
+    "admin.example.com": {
+      "host": "admin-service.internal:8081",
+      "request": [
+        {
+          "path": "/admin/users",
+          "method": "GET",
+          "requestTimeout": 10000,
+          "responseTimeout": 15000,
+          "checkAuthorization": true
+        },
+        {
+          "path": "/admin/users/{id}",
+          "method": "GET",
+          "requestTimeout": 5000,
+          "responseTimeout": 8000,
+          "checkAuthorization": true
+        },
+        {
+          "path": "/admin/settings",
+          "method": "GET",
+          "requestTimeout": 5000,
+          "responseTimeout": 8000,
+          "checkAuthorization": true
+        }
+      ]
+    }
+  }
+}

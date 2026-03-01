@@ -2,13 +2,14 @@ package infra
 
 import (
 	"gateway/controller/config"
+	"log"
 
 	"github.com/google/wire"
 	"github.com/valkey-io/valkey-go"
 )
 
 type GlideValkey struct {
-	client *valkey.Client
+	client valkey.Client // valkey client instance
 }
 
 // TODO: close client when app shutdown
@@ -21,19 +22,21 @@ func NewGlideValkey(config *config.AppConfig) *GlideValkey {
 			Standalone: valkey.StandaloneOption{
 				EnableRedirect: true,
 			},
-			ClientTrackingOptions: []string{"PREFIX", "UPSTREAM:"},
+			DisableCache:          false,
+			ClientTrackingOptions: []string{"BCAST", "PREFIX", "UPSTREAM:"},
+			AlwaysRESP2:           false,
 		},
 	)
 
 	// client connection error is fatal, panic here to fail fast
 	if err != nil {
-		panic(err)
+		log.Fatalf("valkey glide client init fail: %v", err)
 	}
 
-	return &GlideValkey{client: &client}
+	return &GlideValkey{client: client}
 }
 
-func (v *GlideValkey) GetClient() *valkey.Client {
+func (v *GlideValkey) GetClient() valkey.Client {
 	return v.client
 }
 

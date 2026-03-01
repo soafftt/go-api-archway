@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"gateway/controller/config"
+	"gateway/controller/router"
 	"log"
 	"net"
 	"net/http"
@@ -36,15 +37,11 @@ func (g *gatewayControllerServer) StartUnixSocketServer() {
 		panic(err)
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /v1/uri/policy", func(w http.ResponseWriter, r *http.Request) {
-	})
-
 	serve := http.Server{
 		ReadTimeout:  time.Duration(serverConfig.ReadTimeoutMillisecond) * time.Millisecond,
 		WriteTimeout: time.Duration(serverConfig.WriteTimeoutMillisecond) * time.Millisecond,
 		IdleTimeout:  time.Duration(serverConfig.IdleTimeoutMillisecond) * time.Millisecond,
-		Handler:      mux,
+		Handler:      router.NewControllerRouter().Mux,
 	}
 
 	go func() {

@@ -10,6 +10,7 @@ import (
 	"gateway/controller/config"
 	"gateway/controller/infra"
 	"gateway/controller/server"
+	"gateway/controller/service"
 )
 
 // Injectors from wire.go:
@@ -18,9 +19,11 @@ func InitializeApp() (*GatewayControllerApp, error) {
 	appConfig := config.NewAppConfig()
 	gatewayControllerServer := server.NewGatewayServer(appConfig)
 	glideValkey := infra.NewGlideValkey(appConfig)
+	policyService := service.NewPolicyService(glideValkey)
 	gatewayControllerApp := &GatewayControllerApp{
 		Config:      appConfig,
 		Server:      gatewayControllerServer,
+		Service:     policyService,
 		GlideValkey: glideValkey,
 	}
 	return gatewayControllerApp, nil
@@ -31,5 +34,6 @@ func InitializeApp() (*GatewayControllerApp, error) {
 type GatewayControllerApp struct {
 	Config      *config.AppConfig
 	Server      server.GatewayControllerServer
+	Service     service.PolicyService
 	GlideValkey *infra.GlideValkey
 }
