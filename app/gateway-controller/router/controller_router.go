@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"fmt"
 	"gateway/controller/model/dto"
 	"gateway/controller/service"
@@ -13,10 +14,10 @@ import (
 
 type ControllerRouter struct {
 	Mux     *http.ServeMux
-	service service.PolicyService
+	service service.RouteService
 }
 
-func NewControllerRouter(policyService service.PolicyService) *ControllerRouter {
+func NewControllerRouter(policyService service.RouteService) *ControllerRouter {
 	router := &ControllerRouter{
 		Mux:     http.NewServeMux(),
 		service: policyService,
@@ -41,7 +42,15 @@ func (cr *ControllerRouter) registerRoutes() {
 			return
 		}
 
-		cr.service.CheckPolicy(dto)
+		info, err := cr.service.GetRouteInfo(dto)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(info)
 	})
 }
 

@@ -9,16 +9,16 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/gateway/cmd",
-            "cwd": "${workspaceFolder}/gateway/cmd"
+            "program": "${workspaceFolder}/app/gateway/cmd",
+            "cwd": "${workspaceFolder}/app/gateway/cmd"
 		},
         {
             "name": "Gateway Controller",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/gateway-controller",
-            "cwd": "${workspaceFolder}/gateway-controller"
+            "program": "${workspaceFolder}/app/gateway-controller",
+            "cwd": "${workspaceFolder}/app/gateway-controller"
 		}
     ]
 }

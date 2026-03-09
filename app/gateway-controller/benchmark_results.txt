@@ -1,0 +1,8 @@
+goos: darwin
+goarch: arm64
+pkg: gateway/controller/server
+cpu: Apple M4
+BenchmarkUnixSocketSingleRequest-10       	  175888	     19469 ns/op	    8037 B/op	      90 allocs/op
+BenchmarkUnixSocketParallelRequests-10    	  480960	      6756 ns/op	    8100 B/op	      89 allocs/op
+PASS
+ok  	gateway/controller/server	27.932s

@@ -8,14 +8,11 @@ require (
 	github.com/valkey-io/valkey-go v1.0.72
 )
 
-require (
-	github.com/google/wire v0.7.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-)
-
+require golang.org/x/sys v0.39.0 // indirect
 
 require (
-	 gateway/common v0.0.0
+	gateway/common v0.0.0
+	github.com/google/wire v0.7.0
 )
 
-replace  gateway/common => ../../common
+replace gateway/common => ../../common

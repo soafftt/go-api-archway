@@ -7,6 +7,7 @@
 package main
 
 import (
+	"gateway/controller/component"
 	"gateway/controller/config"
 	"gateway/controller/infra"
 	"gateway/controller/server"
@@ -17,14 +18,23 @@ import (
 
 func InitializeApp() (*GatewayControllerApp, error) {
 	appConfig := config.NewAppConfig()
-	glideValkey := infra.NewGlideValkey(appConfig)
-	policyService := service.NewPolicyService(glideValkey)
-	gatewayControllerServer := server.NewGatewayServer(appConfig, policyService)
+	valkeyWrap := infra.NewValkeyWrap(appConfig)
+	routeParser := component.NewRouteParser()
+	routeCache := component.NewUpstreamRouteCache(valkeyWrap, routeParser)
+	routeService := service.NewPolicyService(routeCache)
+	gatewayControllerServer := server.NewGatewayServer(appConfig, routeService)
+	routeMessageHook := component.NewRouteMessageHook(routeCache, valkeyWrap)
+	componentSet := component.ComponentSet{
+		RouteParser:      routeParser,
+		RouteCache:       routeCache,
+		RouteMessageHook: routeMessageHook,
+	}
 	gatewayControllerApp := &GatewayControllerApp{
 		Config:      appConfig,
 		Server:      gatewayControllerServer,
-		Service:     policyService,
-		GlideValkey: glideValkey,
+		Service:     routeService,
+		Component:   componentSet,
+		GlideValkey: valkeyWrap,
 	}
 	return gatewayControllerApp, nil
 }
@@ -34,6 +44,7 @@ func InitializeApp() (*GatewayControllerApp, error) {
 type GatewayControllerApp struct {
 	Config      *config.AppConfig
 	Server      server.GatewayControllerServer
-	Service     service.PolicyService
-	GlideValkey *infra.GlideValkey
+	Service     service.RouteService
+	Component   component.ComponentSet
+	GlideValkey *infra.ValkeyWrap
 }

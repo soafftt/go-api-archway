@@ -5,6 +5,7 @@
 package main
 
 import (
+	component "gateway/controller/component"
 	config "gateway/controller/config"
 	infra "gateway/controller/infra"
 	server "gateway/controller/server"
@@ -16,15 +17,17 @@ import (
 type GatewayControllerApp struct {
 	Config      *config.AppConfig
 	Server      server.GatewayControllerServer
-	Service     service.PolicyService
-	GlideValkey *infra.GlideValkey
+	Service     service.RouteService
+	Component   component.ComponentSet
+	GlideValkey *infra.ValkeyWrap
 }
 
 func InitializeApp() (*GatewayControllerApp, error) {
 	wire.Build(
 		config.AppConfigSet,
 		infra.GlideValkeySet,
-		service.PolicyServiceSet,
+		component.RouteComponentSet,
+		service.RouteServiceSet,
 		server.ServerConfigSet,
 		wire.Struct(new(GatewayControllerApp), "*"),
 	)

@@ -22,10 +22,10 @@ type GatewayControllerServer interface {
 
 type gatewayControllerServer struct {
 	config  *config.AppConfig
-	service service.PolicyService
+	service service.RouteService
 }
 
-func NewGatewayServer(appConfig *config.AppConfig, policyService service.PolicyService) *gatewayControllerServer {
+func NewGatewayServer(appConfig *config.AppConfig, policyService service.RouteService) *gatewayControllerServer {
 	return &gatewayControllerServer{config: appConfig, service: policyService}
 }
 
