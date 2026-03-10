@@ -3,10 +3,10 @@ package server
 import (
 	"context"
 	"encoding/json"
+	upstreamDto "gateway/common/dto/upstream"
 	"gateway/controller/component"
 	"gateway/controller/router"
 	"gateway/controller/service"
-	upstreamDto "gateway/common/dto/upstream"
 	"io"
 	"log"
 	"net"

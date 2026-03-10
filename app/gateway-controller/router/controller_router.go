@@ -29,8 +29,8 @@ func NewControllerRouter(policyService service.RouteService) *ControllerRouter {
 }
 
 func (cr *ControllerRouter) registerRoutes() {
-	cr.Mux.HandleFunc("GET /v1/uri/policy", func(w http.ResponseWriter, r *http.Request) {
-		targetUrl := r.URL.Query().Get("upstream")
+	cr.Mux.HandleFunc("GET /v1/uptream", func(w http.ResponseWriter, r *http.Request) {
+		targetUrl := r.URL.Query().Get("path")
 		if targetUrl == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			return

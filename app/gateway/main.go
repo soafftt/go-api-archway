@@ -7,7 +7,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os/signal"
-	"strings"
 	"syscall"
 )
 
@@ -16,16 +15,21 @@ func main() {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			target, _ := url.Parse("https://www.naver.com")
+			// 여기서, target 을 확인하고.
+			// context write 함.
+			// session check 가 필요하면 추가. 하고.
+			// header 에 write 해줌.
+
+			pr.Out.WithContext(context.WithValue(pr.Out.Context(), "A", "B"))
 
 			// 1. URL과 Host 헤더를 한 번에 표준에 맞게 수정
 			pr.SetURL(target)
 		},
 		ModifyResponse: func(res *http.Response) error {
+
 			if res.StatusCode == http.StatusMovedPermanently {
 				// 타겟 서버가 보낸 내부 주소를 외부 도메인 주소로 교체
-				location := res.Header.Get("Location")
-				newLocation := strings.Replace(location, "http://10.0.1.10:8080", "https://naver.com", 1)
-				res.Header.Set("Location", newLocation)
+
 			}
 			return nil
 		},
