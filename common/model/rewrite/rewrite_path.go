@@ -1,6 +1,6 @@
-package dto
+package rewrite
 
-import upstreamDto "gateway/common/dto/upstream"
+import upstreamDto "gateway/common/model/upstream"
 
 type RewitePathDTO struct {
 	Host               string `json:"domain"`              // 도메인 이름
@@ -16,9 +16,9 @@ func NewEmptyRewitePathDTO() RewitePathDTO {
 	return RewitePathDTO{}
 }
 
-func NewRewitePathDTO(upstreamPath *upstreamDto.UpstreamPath) RewitePathDTO {
+func NewRewitePathDTO(domain string, upstreamPath *upstreamDto.UpstreamPath) RewitePathDTO {
 	return RewitePathDTO{
-		Host:               upstreamPath.Path,
+		Host:               domain,
 		Path:               upstreamPath.Path,
 		Method:             upstreamPath.Method,
 		ResponseTimeout:    upstreamPath.ResponseTimeout,

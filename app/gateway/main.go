@@ -26,11 +26,6 @@ func main() {
 			pr.SetURL(target)
 		},
 		ModifyResponse: func(res *http.Response) error {
-
-			if res.StatusCode == http.StatusMovedPermanently {
-				// 타겟 서버가 보낸 내부 주소를 외부 도메인 주소로 교체
-
-			}
 			return nil
 		},
 	}

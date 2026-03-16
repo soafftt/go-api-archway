@@ -9,17 +9,20 @@ package main
 import (
 	"gateway/component"
 	"gateway/config"
+	"gateway/service"
 	"net/http"
 )
 
 // Injectors from wire.go:
 
 func InitializeNewApp() (*GatewayApp, error) {
-	client := component.NewHttpClient()
 	appConfig := config.NewAppConfig()
+	client := component.NewHttpClient(appConfig)
+	upstreamLookupService := service.NewUpstreamLookupService(appConfig, client)
 	gatewayApp := &GatewayApp{
-		HttpClient: client,
-		Config:     appConfig,
+		HttpClient:    client,
+		Config:        appConfig,
+		LookupService: upstreamLookupService,
 	}
 	return gatewayApp, nil
 }
@@ -27,6 +30,7 @@ func InitializeNewApp() (*GatewayApp, error) {
 // wire.go:
 
 type GatewayApp struct {
-	HttpClient *http.Client
-	Config     *config.AppConfig
+	HttpClient    *http.Client
+	Config        *config.AppConfig
+	LookupService service.UpstreamLookupService
 }

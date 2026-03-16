@@ -13,7 +13,7 @@ $ go test -v -run TestUpStreamService
 === RUN   TestUpStreamService_EmptyAndEdgeCases
 --- PASS: TestUpStreamService_EmptyAndEdgeCases (0.00s)
 PASS
-ok      gateway/common/dto/upstream     0.681s
+ok      gateway/common/model/upstream     0.681s
 ```
 
 ---
@@ -151,7 +151,7 @@ package main
 import (
     "encoding/json"
     "os"
-    "gateway/common/dto/upstream"
+    "gateway/common/model/upstream"
 )
 
 func main() {

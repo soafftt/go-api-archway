@@ -1,6 +1,7 @@
 package component
 
 import (
+	"gateway/config"
 	"net"
 	"net/http"
 	"time"
@@ -8,20 +9,25 @@ import (
 	"github.com/google/wire"
 )
 
-func NewHttpClient() *http.Client {
+/*
+Upstream 의 정보 확인을 위하여, Gateway-Controoller 과 통신하는 HttpClient 를 생성합니다.
+*/
+func NewHttpClient(appConfig *config.AppConfig) *http.Client {
+	httpClientConfig := appConfig.HttpClient
+
 	transport := &http.Transport{
 		Dial: func(network, addr string) (net.Conn, error) {
-			return net.Dial("unix", "socketPath")
+			return net.Dial(appConfig.Server.Netowrk, appConfig.Server.UnixSocketPath)
 		},
-		MaxIdleConns:        0,
-		MaxIdleConnsPerHost: 10000,
+		MaxIdleConns:        httpClientConfig.MaxIdleConns,
+		MaxIdleConnsPerHost: httpClientConfig.MaxIdleConnsPerHost,
 		DisableCompression:  true,
-		IdleConnTimeout:     90 * time.Second,
+		IdleConnTimeout:     time.Duration(httpClientConfig.IdleConnTimeoutSeconds) * time.Second,
 	}
 
 	return &http.Client{
 		Transport: transport,
-		Timeout:   5 * time.Millisecond,
+		Timeout:   time.Duration(httpClientConfig.TimeoutMilliSeconds) * time.Millisecond,
 	}
 }
 
