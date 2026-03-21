@@ -18,7 +18,7 @@ type AppConfig struct {
 		TimeoutMilliSeconds    int `env:"HTTP_CLIENT_TIMEOUT_MILLISECONDS" envDefault:"5000"`
 	}
 	UpstreamLookup struct {
-		BaseURL string `env:"UPSTREAM_LOOKUP_BASE_URL" envDefault:"http://localhost/v1/upstream?path="`
+		BaseURL string `env:"UPSTREAM_LOOKUP_BASE_URL" envDefault:"http://unix/v1/upstream?path="`
 	}
 }
 

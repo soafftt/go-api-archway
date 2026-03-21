@@ -9,8 +9,8 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/app/gateway/cmd",
-            "cwd": "${workspaceFolder}/app/gateway/cmd"
+            "program": "${workspaceFolder}/app/gateway",
+            "cwd": "${workspaceFolder}/app/gateway"
 		},
         {
             "name": "Gateway Controller",

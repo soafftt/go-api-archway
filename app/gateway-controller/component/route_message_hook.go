@@ -3,7 +3,7 @@ package component
 import (
 	"context"
 	"encoding/json"
-	dto "gateway/common/dto/pubsub"
+	dto "gateway/common/model/pubsub"
 	"gateway/controller/infra"
 	"log"
 

@@ -1,6 +1,9 @@
 package dto
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type URLParseDTO struct {
 	Version string
@@ -29,4 +32,8 @@ func (u URLParseDTO) GetPath(isEmptyDomain bool) string {
 	}
 
 	return strings.Join(strings.Split(u.path, "/")[1:], "/")
+}
+
+func (u URLParseDTO) String() string {
+	return fmt.Sprintf("version=%s, service=%s, domain=%s, path=%s", u.Version, u.Service, u.Domain, u.path)
 }

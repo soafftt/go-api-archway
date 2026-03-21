@@ -9,6 +9,7 @@ package main
 import (
 	"gateway/component"
 	"gateway/config"
+	"gateway/server"
 	"gateway/service"
 	"net/http"
 )
@@ -19,10 +20,12 @@ func InitializeNewApp() (*GatewayApp, error) {
 	appConfig := config.NewAppConfig()
 	client := component.NewHttpClient(appConfig)
 	upstreamLookupService := service.NewUpstreamLookupService(appConfig, client)
+	reverseProxyServer := server.NewReserveProxyServer(upstreamLookupService)
 	gatewayApp := &GatewayApp{
 		HttpClient:    client,
 		Config:        appConfig,
 		LookupService: upstreamLookupService,
+		ReverseProxy:  reverseProxyServer,
 	}
 	return gatewayApp, nil
 }
@@ -33,4 +36,5 @@ type GatewayApp struct {
 	HttpClient    *http.Client
 	Config        *config.AppConfig
 	LookupService service.UpstreamLookupService
+	ReverseProxy  *server.ReverseProxyServer
 }

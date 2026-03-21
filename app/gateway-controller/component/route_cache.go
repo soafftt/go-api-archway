@@ -3,7 +3,7 @@ package component
 import (
 	"context"
 	"fmt"
-	dto "gateway/common/dto/upstream"
+	dto "gateway/common/model/upstream"
 	"gateway/controller/infra"
 	"log"
 	"strings"

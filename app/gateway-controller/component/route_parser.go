@@ -2,7 +2,7 @@ package component
 
 import (
 	"encoding/json"
-	dto "gateway/common/dto/upstream"
+	dto "gateway/common/model/upstream"
 	"log"
 )
 

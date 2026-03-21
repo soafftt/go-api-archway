@@ -2,21 +2,28 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	model "gateway/common/model/rewrite"
+	commonModel "gateway/common/model"
+	"gateway/common/model/rewrite"
 	"gateway/config"
+	"gateway/model"
+	"io"
+	"log"
 	"net/http"
 
 	"github.com/google/wire"
 )
 
 const (
-	UNIX_SOCKET_RESPONSE_ERROR               = "UNIX_SOCKET_RESPONSE_ERROR :%v"
-	UNIX_SOCKET_RESPONSE_BODY_ERR_READ_ERROR = "UNIX_SOCKET_RESPONSE_BODY_READ_ERROR :%v"
+	UNIX_SOCKET_RESPONSE_ERROR                               = "UNIX_SOCKET_RESPONSE_ERROR"
+	UNIX_SOCKET_RESPONSE_BODY_ERR_READ_ERROR                 = "UNIX_SOCKET_RESPONSE_BODY_READ_ERROR"
+	UNIX_SOCKET_RESPONSE_BODY_ERR_JSON_UNMARSHAL_ERROR       = "UNIX_SOCKET_RESPONSE_BODY_JSON_UNMARSHAL_ERROR"
+	UNIX_SOCKET_RESPONSE_ERROR_BODY_ERR_JSON_UNMARSHAL_ERROR = "UNIX_SOCKET_RESPONSE_ERROR_BODY_ERR_JSON_UNMARSHAL_ERROR"
 )
 
 type UpstreamLookupService interface {
-	Lookup(targetPath string) (*model.RewitePathDTO, error)
+	Lookup(targetPath string) model.UpstreamLookupResult
 }
 
 type upstreamLookupService struct {
@@ -34,33 +41,84 @@ func NewUpstreamLookupService(config *config.AppConfig, httpClient *http.Client)
 /*
 Upstream 에 대한 정보를 조회합니다.
 */
-func (s *upstreamLookupService) Lookup(targetPath string) (*model.RewitePathDTO, error) {
+func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupResult {
 	res, err := s.httpClient.Get(s.lookupUrl + targetPath)
 	if err != nil {
-		return nil, fmt.Errorf(UNIX_SOCKET_RESPONSE_ERROR, err)
+		return model.NewUpstreamLookupError(
+			UNIX_SOCKET_RESPONSE_ERROR,
+			fmt.Errorf("failed to call upstream lookup service: %v", err),
+		)
 	}
 
 	bodyBuffer, err := bodyRead(res)
 	if err != nil {
-		return nil, err
+		errorDetail := fmt.Errorf("failed to read response body: %v", err)
+
+		log.Printf(
+			"%v, targetPath: %s",
+			errorDetail, targetPath,
+		)
+
+		return model.NewUpstreamLookupError(
+			UNIX_SOCKET_RESPONSE_BODY_ERR_READ_ERROR,
+			errorDetail,
+		)
 	}
 
-	var pathInfo *model.RewitePathDTO
+	// httpStatus 에러가 있는 경우..
+	if res.StatusCode != http.StatusOK {
+		var errReponse *commonModel.ErroeResponse
+		if err := json.Unmarshal(bodyBuffer, &errReponse); err != nil {
+			errorDetail := fmt.Errorf("failed to unmarshal error response body: eror%v", err)
+
+			log.Printf(
+				"%v, targetPath: %s, responsebody: %s",
+				errorDetail, targetPath, string(bodyBuffer),
+			)
+
+			return model.NewUpstreamLookupError(
+				UNIX_SOCKET_RESPONSE_ERROR_BODY_ERR_JSON_UNMARSHAL_ERROR,
+				errorDetail,
+			)
+		}
+
+		log.Printf(
+			"unix-socket: %s, detail: %v, target: %s",
+			errReponse.Message,
+			errReponse.Detail,
+			targetPath,
+		)
+
+		return model.NewUpstreamLookupError(
+			errReponse.Message,
+			errors.New(errReponse.Detail),
+		)
+	}
+
+	var pathInfo *rewrite.RewitePathDTO
 	if err := json.Unmarshal(bodyBuffer, &pathInfo); err != nil {
-		return nil, fmt.Errorf(UNIX_SOCKET_RESPONSE_BODY_ERR_READ_ERROR, err)
+		errorDetail := fmt.Errorf("failed to unmarshal response body: eror%v", err)
+		log.Printf(
+			"%v, targetPath: %s, responsebody: %s",
+			errorDetail, targetPath, string(bodyBuffer),
+		)
+
+		return model.NewUpstreamLookupError(
+			UNIX_SOCKET_RESPONSE_BODY_ERR_JSON_UNMARSHAL_ERROR,
+			errorDetail,
+		)
 	}
 
-	return pathInfo, nil
+	return model.NewUpstreamLookupResult(pathInfo)
+
 }
 
 // body 읽기 함수
 func bodyRead(res *http.Response) ([]byte, error) {
 	defer res.Body.Close()
-	bodyBuffer := make([]byte, 0)
-
-	_, err := res.Body.Read(bodyBuffer)
+	bodyBuffer, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf(UNIX_SOCKET_RESPONSE_BODY_ERR_READ_ERROR, err)
+		return nil, fmt.Errorf(UNIX_SOCKET_RESPONSE_ERROR+": %v", err)
 	}
 
 	return bodyBuffer, nil

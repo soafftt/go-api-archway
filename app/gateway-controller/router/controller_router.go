@@ -3,8 +3,11 @@ package router
 import (
 	"encoding/json"
 	"fmt"
+	commonCode "gateway/common/code"
+	"gateway/common/model"
 	"gateway/controller/model/dto"
 	"gateway/controller/service"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -29,28 +32,43 @@ func NewControllerRouter(policyService service.RouteService) *ControllerRouter {
 }
 
 func (cr *ControllerRouter) registerRoutes() {
-	cr.Mux.HandleFunc("GET /v1/uptream", func(w http.ResponseWriter, r *http.Request) {
+	cr.Mux.HandleFunc("GET /v1/upstream", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		targetUrl := r.URL.Query().Get("path")
 		if targetUrl == "" {
+			log.Println("not include targetUrl.")
+
 			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.ErroeResponse{Message: commonCode.ERROR_NOT_FOUND_PARAMETER, Detail: "missing required parameter: path"})
+
 			return
 		}
 
 		dto, err := parseTargetUrl(targetUrl)
 		if err != nil {
+			log.Printf("targetUrl parsing error %s, %v", targetUrl, err)
+
 			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.ErroeResponse{Message: commonCode.ERROR_TARGET_URL_PARSING_FAILED, Detail: err.Error()})
+
 			return
 		}
 
-		info, err := cr.service.GetRouteInfo(dto)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+		result := cr.service.GetRouteInfo(dto)
+		if !result.Ok {
+			detailError := result.Error.Detail
+
+			log.Printf("upstrem check error : %v", detailError.Error())
+
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.ErroeResponse{Message: result.Error.Message, Detail: detailError.Error()})
+
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(info)
+		json.NewEncoder(w).Encode(result.RewitePath)
 	})
 }
 
