@@ -1,4 +1,4 @@
-# kidari-gateway Copilot 지침
+# archway Copilot 지침
 
 ## 프로젝트 요약
 - 이 저장소는 게이트웨이 라우팅 및 게이트웨이 컨트롤러 로직을 위한 Go 서비스로 구성됩니다.
