@@ -45,6 +45,7 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 	res, err := s.httpClient.Get(s.lookupUrl + targetPath)
 	if err != nil {
 		return model.NewUpstreamLookupError(
+			model.LookupErrorTransport,
 			UNIX_SOCKET_RESPONSE_ERROR,
 			fmt.Errorf("failed to call upstream lookup service: %v", err),
 		)
@@ -60,6 +61,7 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 		)
 
 		return model.NewUpstreamLookupError(
+			model.LookupErrorReadBody,
 			UNIX_SOCKET_RESPONSE_BODY_ERR_READ_ERROR,
 			errorDetail,
 		)
@@ -67,8 +69,8 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 
 	// httpStatus 에러가 있는 경우..
 	if res.StatusCode != http.StatusOK {
-		var errReponse *commonModel.ErroeResponse
-		if err := json.Unmarshal(bodyBuffer, &errReponse); err != nil {
+		var errResponse *commonModel.ErrorResponse
+		if err := json.Unmarshal(bodyBuffer, &errResponse); err != nil {
 			errorDetail := fmt.Errorf("failed to unmarshal error response body: eror%v", err)
 
 			log.Printf(
@@ -77,6 +79,7 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 			)
 
 			return model.NewUpstreamLookupError(
+				model.LookupErrorDecodeErrorBody,
 				UNIX_SOCKET_RESPONSE_ERROR_BODY_ERR_JSON_UNMARSHAL_ERROR,
 				errorDetail,
 			)
@@ -84,18 +87,19 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 
 		log.Printf(
 			"unix-socket: %s, detail: %v, target: %s",
-			errReponse.Message,
-			errReponse.Detail,
+			errResponse.Message,
+			errResponse.Detail,
 			targetPath,
 		)
 
 		return model.NewUpstreamLookupError(
-			errReponse.Message,
-			errors.New(errReponse.Detail),
+			model.LookupErrorUpstreamResult,
+			errResponse.Message,
+			errors.New(errResponse.Detail),
 		)
 	}
 
-	var pathInfo *rewrite.RewitePathDTO
+	var pathInfo *rewrite.RewritePathDTO
 	if err := json.Unmarshal(bodyBuffer, &pathInfo); err != nil {
 		errorDetail := fmt.Errorf("failed to unmarshal response body: eror%v", err)
 		log.Printf(
@@ -104,6 +108,7 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 		)
 
 		return model.NewUpstreamLookupError(
+			model.LookupErrorDecodeBody,
 			UNIX_SOCKET_RESPONSE_BODY_ERR_JSON_UNMARSHAL_ERROR,
 			errorDetail,
 		)

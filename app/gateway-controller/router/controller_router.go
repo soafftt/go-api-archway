@@ -40,7 +40,7 @@ func (cr *ControllerRouter) registerRoutes() {
 			log.Println("not include targetUrl.")
 
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.ErroeResponse{Message: commonCode.ERROR_NOT_FOUND_PARAMETER, Detail: "missing required parameter: path"})
+			json.NewEncoder(w).Encode(model.ErrorResponse{Message: commonCode.ERROR_NOT_FOUND_PARAMETER, Detail: "missing required parameter: path"})
 
 			return
 		}
@@ -50,7 +50,7 @@ func (cr *ControllerRouter) registerRoutes() {
 			log.Printf("targetUrl parsing error %s, %v", targetUrl, err)
 
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.ErroeResponse{Message: commonCode.ERROR_TARGET_URL_PARSING_FAILED, Detail: err.Error()})
+			json.NewEncoder(w).Encode(model.ErrorResponse{Message: commonCode.ERROR_TARGET_URL_PARSING_FAILED, Detail: err.Error()})
 
 			return
 		}
@@ -59,16 +59,16 @@ func (cr *ControllerRouter) registerRoutes() {
 		if !result.Ok {
 			detailError := result.Error.Detail
 
-			log.Printf("upstrem check error : %v", detailError.Error())
+			log.Printf("upstream check error: %v", detailError.Error())
 
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(model.ErroeResponse{Message: result.Error.Message, Detail: detailError.Error()})
+			json.NewEncoder(w).Encode(model.ErrorResponse{Message: result.Error.Message, Detail: detailError.Error()})
 
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(result.RewitePath)
+		json.NewEncoder(w).Encode(result.RewritePath)
 	})
 }
 

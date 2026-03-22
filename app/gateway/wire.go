@@ -8,17 +8,23 @@ import (
 	"gateway/component"
 	"gateway/config"
 	"gateway/server"
+	middlewareDi "gateway/server/middleware/di"
+	serverResponse "gateway/server/response"
 	"gateway/service"
 	"net/http"
+	"net/http/httputil"
 
 	"github.com/google/wire"
 )
 
 type GatewayApp struct {
-	HttpClient    *http.Client
-	Config        *config.AppConfig
-	LookupService service.UpstreamLookupService
-	ReverseProxy  *server.ReverseProxyServer
+	HttpClient          *http.Client
+	Config              *config.AppConfig
+	LookupService       service.UpstreamLookupService
+	JsonErrorResponse   *serverResponse.JsonErrorResponse
+	ReverseServer       *server.ReverseProxyServer
+	ReverseProxy        *httputil.ReverseProxy
+	MiddlewareContainer *middlewareDi.MiddlewareContainers
 }
 
 func InitializeNewApp() (*GatewayApp, error) {
@@ -26,7 +32,10 @@ func InitializeNewApp() (*GatewayApp, error) {
 		config.AppConfigSet,
 		component.HttpClientSet,
 		service.UpstreamLookupServiceSet,
+		serverResponse.JsonErrorResponseSet,
+		middlewareDi.MiddlewareContainerSet,
 		server.ReverseProxySet,
+		server.ReverseProxyServerSet,
 		wire.Struct(new(GatewayApp), "*"),
 	)
 

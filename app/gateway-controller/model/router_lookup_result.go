@@ -1,6 +1,6 @@
 package model
 
-import rewiterDto "gateway/common/model/rewrite"
+import rewriteDTO "gateway/common/model/rewrite"
 
 type RouterLookupError struct {
 	Message string
@@ -8,23 +8,23 @@ type RouterLookupError struct {
 }
 
 type RouterLookupResult struct {
-	Ok         bool
-	RewitePath rewiterDto.RewitePathDTO
-	Error      RouterLookupError
+	Ok          bool
+	RewritePath rewriteDTO.RewritePathDTO
+	Error       RouterLookupError
 }
 
-func NewRouterLookupResult(rewritePath rewiterDto.RewitePathDTO) RouterLookupResult {
+func NewRouterLookupResult(rewritePath rewriteDTO.RewritePathDTO) RouterLookupResult {
 	return RouterLookupResult{
-		Ok:         true,
-		RewitePath: rewritePath,
-		Error:      RouterLookupError{},
+		Ok:          true,
+		RewritePath: rewritePath,
+		Error:       RouterLookupError{},
 	}
 }
 
-func NewRoterLookupError(message string, detail error) RouterLookupResult {
+func NewRouterLookupError(message string, detail error) RouterLookupResult {
 	return RouterLookupResult{
-		Ok:         false,
-		RewitePath: rewiterDto.NewEmptyRewitePathDTO(),
-		Error:      RouterLookupError{Message: message, Detail: detail},
+		Ok:          false,
+		RewritePath: rewriteDTO.NewEmptyRewritePathDTO(),
+		Error:       RouterLookupError{Message: message, Detail: detail},
 	}
 }

@@ -6,5 +6,5 @@ func main() {
 		panic(err)
 	}
 
-	app.ReverseProxy.Start()
+	app.ReverseServer.Start()
 }

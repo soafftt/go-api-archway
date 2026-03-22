@@ -8,7 +8,7 @@ import (
 
 type AppConfig struct {
 	Server struct {
-		Netowrk        string `env:"SERVER_NETWORK" envDefault:"unix"`
+		Network        string `env:"SERVER_NETWORK" envDefault:"unix"`
 		UnixSocketPath string `env:"UNIX_SOCKET_PATH" envDefault:"/tmp/gateway-controller.sock"`
 	}
 	HttpClient struct {

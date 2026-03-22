@@ -2,9 +2,9 @@ package model
 
 type ErrorResponse struct {
 	Message string `json:"message"`
-	Details string `json:"details"`
+	Detail  string `json:"detail"`
 }
 
-func NewErrorResponse(message string, details string) ErrorResponse {
-	return ErrorResponse{Message: message, Details: details}
+func NewErrorResponse(message string, detail string) ErrorResponse {
+	return ErrorResponse{Message: message, Detail: detail}
 }

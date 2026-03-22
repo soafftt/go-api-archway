@@ -2,7 +2,7 @@ package rewrite
 
 import upstreamDto "gateway/common/model/upstream"
 
-type RewitePathDTO struct {
+type RewritePathDTO struct {
 	Host               string `json:"domain"`              // 도메인 이름
 	Path               string `json:"path"`                // 프록시 경로
 	Method             string `json:"method"`              // 메소드
@@ -12,12 +12,12 @@ type RewitePathDTO struct {
 	CacheTimeout       int64  `json:"cache_timeout"`       // 캐시 타임아웃
 }
 
-func NewEmptyRewitePathDTO() RewitePathDTO {
-	return RewitePathDTO{}
+func NewEmptyRewritePathDTO() RewritePathDTO {
+	return RewritePathDTO{}
 }
 
-func NewRewitePathDTO(domain string, upstreamPath *upstreamDto.UpstreamPath) RewitePathDTO {
-	return RewitePathDTO{
+func NewRewritePathDTO(domain string, upstreamPath *upstreamDto.UpstreamPath) RewritePathDTO {
+	return RewritePathDTO{
 		Host:               domain,
 		Path:               upstreamPath.Path,
 		Method:             upstreamPath.Method,

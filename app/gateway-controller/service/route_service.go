@@ -5,7 +5,7 @@ import (
 	"gateway/controller/component"
 
 	code "gateway/common/code"
-	rewiterDto "gateway/common/model/rewrite"
+	rewriteDTO "gateway/common/model/rewrite"
 	model "gateway/controller/model"
 	modelDto "gateway/controller/model/dto"
 
@@ -27,8 +27,8 @@ func NewPolicyService(routeCache component.RouteCache) *routeService {
 func (p *routeService) GetRouteInfo(urlParseDto modelDto.URLParseDTO) model.RouterLookupResult {
 	upstreamService, ok := p.routeCache.Get(urlParseDto.Service)
 	if !ok {
-		return model.NewRoterLookupError(
-			code.NOT_FOUND_UPSTERAM_SERVICE,
+		return model.NewRouterLookupError(
+			code.NOT_FOUND_UPSTREAM_SERVICE,
 			errors.New("No matching upstream service found for: "+urlParseDto.String()),
 		)
 	}
@@ -36,8 +36,8 @@ func (p *routeService) GetRouteInfo(urlParseDto modelDto.URLParseDTO) model.Rout
 	// 서브도메인이 있는 경우를 찾는다.
 	domain, emptyDomain := upstreamService.LookupResourceDomain(urlParseDto.Domain)
 	if domain == nil {
-		return model.NewRoterLookupError(
-			code.NOT_FOUND_UPSTERAM_SERVICE,
+		return model.NewRouterLookupError(
+			code.NOT_FOUND_UPSTREAM_DOMAIN,
 			errors.New("No matching domain found for: "+urlParseDto.String()),
 		)
 	}
@@ -46,13 +46,13 @@ func (p *routeService) GetRouteInfo(urlParseDto modelDto.URLParseDTO) model.Rout
 	lookupPath := urlParseDto.GetPath(emptyDomain)
 	pathStream := domain.LookupPath(lookupPath)
 	if pathStream == nil {
-		return model.NewRoterLookupError(
-			code.NOT_FOUND_UPSTERAM_SERVICE,
+		return model.NewRouterLookupError(
+			code.NOT_FOUND_UPSTREAM_PATH,
 			errors.New("No matching path found for: "+urlParseDto.String()),
 		)
 	}
 
-	return model.NewRouterLookupResult(rewiterDto.NewRewitePathDTO(domain.Host, pathStream))
+	return model.NewRouterLookupResult(rewriteDTO.NewRewritePathDTO(domain.Host, pathStream))
 }
 
 var RouteServiceSet = wire.NewSet(

@@ -1,6 +1,7 @@
 package component
 
 import (
+	"context"
 	"gateway/config"
 	"net"
 	"net/http"
@@ -12,12 +13,17 @@ import (
 /*
 Upstream 의 정보 확인을 위하여, Gateway-Controoller 과 통신하는 HttpClient 를 생성합니다.
 */
-func NewHttpClient(appConfig *config.AppConfig) *http.Client {
+func NewUnixSocketHTTPClient(appConfig *config.AppConfig) *http.Client {
 	httpClientConfig := appConfig.HttpClient
 
+	dialer := &net.Dialer{
+		Timeout:   time.Duration(httpClientConfig.TimeoutMilliSeconds) * time.Millisecond,
+		KeepAlive: 30 * time.Second,
+	}
+
 	transport := &http.Transport{
-		Dial: func(network, addr string) (net.Conn, error) {
-			return net.Dial(appConfig.Server.Netowrk, appConfig.Server.UnixSocketPath)
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return dialer.DialContext(ctx, appConfig.Server.Network, appConfig.Server.UnixSocketPath)
 		},
 		MaxIdleConns:        httpClientConfig.MaxIdleConns,
 		MaxIdleConnsPerHost: httpClientConfig.MaxIdleConnsPerHost,
@@ -31,4 +37,4 @@ func NewHttpClient(appConfig *config.AppConfig) *http.Client {
 	}
 }
 
-var HttpClientSet = wire.NewSet(NewHttpClient)
+var HttpClientSet = wire.NewSet(NewUnixSocketHTTPClient)
