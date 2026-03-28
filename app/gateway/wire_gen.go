@@ -12,7 +12,6 @@ import (
 	"gateway/server"
 	"gateway/server/middleware"
 	"gateway/server/middleware/di"
-	"gateway/server/response"
 	"gateway/service"
 	"net/http"
 	"net/http/httputil"
@@ -24,9 +23,8 @@ func InitializeNewApp() (*GatewayApp, error) {
 	appConfig := config.NewAppConfig()
 	client := component.NewUnixSocketHTTPClient(appConfig)
 	upstreamLookupService := service.NewUpstreamLookupService(appConfig, client)
-	jsonErrorResponse := response.NewJsonErrorWriter()
-	reverseProxy := server.NewGatewayReverseProxy(jsonErrorResponse)
-	upstreamCheckMiddleware := middleware.NewUpstreamCheckMiddleware(upstreamLookupService, jsonErrorResponse)
+	reverseProxy := server.NewGatewayReverseProxy()
+	upstreamCheckMiddleware := middleware.NewUpstreamCheckMiddleware(upstreamLookupService)
 	authMiddleware := middleware.NewAuthMiddleware()
 	middlewareContainers := di.NewMiddlewareContainers(upstreamCheckMiddleware, authMiddleware)
 	reverseProxyServer := server.NewReserveProxyServer(reverseProxy, middlewareContainers)
@@ -34,7 +32,6 @@ func InitializeNewApp() (*GatewayApp, error) {
 		HttpClient:          client,
 		Config:              appConfig,
 		LookupService:       upstreamLookupService,
-		JsonErrorResponse:   jsonErrorResponse,
 		ReverseServer:       reverseProxyServer,
 		ReverseProxy:        reverseProxy,
 		MiddlewareContainer: middlewareContainers,
@@ -48,7 +45,6 @@ type GatewayApp struct {
 	HttpClient          *http.Client
 	Config              *config.AppConfig
 	LookupService       service.UpstreamLookupService
-	JsonErrorResponse   *response.JsonErrorResponse
 	ReverseServer       *server.ReverseProxyServer
 	ReverseProxy        *httputil.ReverseProxy
 	MiddlewareContainer *di.MiddlewareContainers

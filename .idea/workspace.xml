@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f240f2fb-5683-4f9b-af8a-6d409ce9f0f6" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/app/gateway/context/gateway_context.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/context/gateway_context.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gateway/server/middleware/upstream_check_middleware.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/server/middleware/upstream_check_middleware.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gateway/server/response/json_error_response.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/server/response/json_error_response.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gateway/server/reverse_proxy.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/server/reverse_proxy.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gateway/wire.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/wire.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gateway/wire_gen.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/wire_gen.go" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" url="file:///opt/homebrew/opt/go/libexec" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="3BTt0pEUgM0ak5ktso6s5Bf0cGv" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoLinterPluginOnboardingV2&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoLinterPluginStorageMigration&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.analysis.ui.options.defaults&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/soft&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
+  }
+}</component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-gosdk-72a9cf600ed8-dfa3e7267ae0-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-253.31033.129" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-GO-253.31033.129" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="디폴트 작업">
+      <changelist id="f240f2fb-5683-4f9b-af8a-6d409ce9f0f6" name="변경" comment="" />
+      <created>1774524668433</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1774524668433</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

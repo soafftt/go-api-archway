@@ -5,7 +5,7 @@ import (
 	"gateway/common/code"
 	gatewayContext "gateway/context"
 	"gateway/model"
-	response "gateway/server/response"
+	"gateway/server/response"
 	"gateway/service"
 	"net/http"
 )
@@ -13,17 +13,14 @@ import (
 type UpstreamCheckMiddleware Middleware
 
 type upstreamCheckMiddleware struct {
-	jsonErrorResponse     *response.JsonErrorResponse
 	upstreamLookupService service.UpstreamLookupService
 }
 
 func NewUpstreamCheckMiddleware(
 	upstreamLookupService service.UpstreamLookupService,
-	jsonErrorResponse *response.JsonErrorResponse,
 ) UpstreamCheckMiddleware {
 	return &upstreamCheckMiddleware{
 		upstreamLookupService: upstreamLookupService,
-		jsonErrorResponse:     jsonErrorResponse,
 	}
 }
 
@@ -47,7 +44,7 @@ func (m *upstreamCheckMiddleware) HandleMiddleware(next http.Handler) http.Handl
 				detail = "unknown error occurred"
 			}
 
-			m.jsonErrorResponse.WriteResponse(w, statusCode, message, detail)
+			response.HandErrorResponse(w, statusCode, message, detail)
 
 			return
 		}

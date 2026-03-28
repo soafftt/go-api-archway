@@ -12,7 +12,7 @@ import (
 	"github.com/google/wire"
 )
 
-func NewGatewayReverseProxy(jsonErrorResponse *response.JsonErrorResponse) *httputil.ReverseProxy {
+func NewGatewayReverseProxy() *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			targetURL := pr.In.Context().Value(gatewayContext.UpstreamContextKey).(*rewrite.RewritePathDTO)
@@ -37,7 +37,7 @@ func NewGatewayReverseProxy(jsonErrorResponse *response.JsonErrorResponse) *http
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
 			// TODO: Logging
-			jsonErrorResponse.WriteResponse(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "internal server error")
+			response.HandErrorResponse(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "internal server error")
 		},
 	}
 }
