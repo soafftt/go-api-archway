@@ -10,6 +10,7 @@ type RewritePathDTO struct {
 	RequestTimeout     int64  `json:"request_timeout"`     // 요청 타임아웃
 	CheckAuthorization bool   `json:"check_authorization"` // 권한 체크 여부
 	CacheTimeout       int64  `json:"cache_timeout"`       // 캐시 타임아웃
+	UserKey            any    `json:"user_key:omitempty"`  // 인증 체크이후의 유저키.
 }
 
 func NewEmptyRewritePathDTO() RewritePathDTO {
@@ -26,4 +27,11 @@ func NewRewritePathDTO(domain string, upstreamPath *upstreamDto.UpstreamPath) Re
 		CheckAuthorization: upstreamPath.CheckAuthorization,
 		CacheTimeout:       upstreamPath.CacheTimeout,
 	}
+}
+
+func NewRewritePathDTOWithUserKey(domain string, upstreamPath *upstreamDto.UpstreamPath, userKey any) RewritePathDTO {
+	pathDto := NewRewritePathDTO(domain, upstreamPath)
+	pathDto.UserKey = userKey
+
+	return pathDto
 }

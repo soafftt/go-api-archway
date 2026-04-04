@@ -15,4 +15,6 @@ var (
 	ErrAlgNotFound JwtError = "unsupported signing algorithm"
 	ErrSerialize   JwtError = "failed to sign JWT"
 	ErrDeserialize JwtError = "failed to parse JWT"
+	ErrJwtExpire   JwtError = "expire jwt"
+	ErrJwtSigned   JwtError = "fail verify signing signature"
 )

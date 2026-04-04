@@ -3,11 +3,12 @@ package component
 import (
 	"context"
 	"fmt"
-	dto "gateway/common/model/upstream"
-	"gateway/controller/infra"
 	"log"
 	"strings"
 	"time"
+
+	dto "gateway/common/model/upstream"
+	"gateway/controller/infra"
 )
 
 // 서비스별 업스트림 라우팅 정보 저장 키 패턴
@@ -38,7 +39,7 @@ func NewUpstreamRouteCache(valkey *infra.ValkeyWrap, parser RouteParse) *routeCa
 
 func (u *routeCache) initializeCache() {
 	ctx := context.Background()
-	keys, err := u.getUpstreeamKeys(ctx, 0, nil)
+	keys, err := u.getUpstreamKeys(ctx, 0, nil)
 	if err != nil {
 		log.Fatalf("initialize upstream cache error: %v", err)
 	}
@@ -49,7 +50,7 @@ func (u *routeCache) initializeCache() {
 /*
 valkey 에서 "UPSTREAM:*" 패턴의 키를 모두 조회
 */
-func (u *routeCache) getUpstreeamKeys(
+func (u *routeCache) getUpstreamKeys(
 	ctx context.Context,
 	cursor uint64,
 	beforeKeys []string,
@@ -74,7 +75,7 @@ func (u *routeCache) getUpstreeamKeys(
 	keyResults := append(beforeKeys, scanEntity.Elements...)
 	if scanEntity.Cursor != 0 {
 		// 재귀 호출로 다음 페이지의 키 조회
-		return u.getUpstreeamKeys(ctx, scanEntity.Cursor, keyResults)
+		return u.getUpstreamKeys(ctx, scanEntity.Cursor, keyResults)
 	}
 
 	return keyResults, nil

@@ -5,6 +5,7 @@ type UpstreamService struct {
 	Authorization *struct {
 		Algorithm string `json:"algorithm"`
 		KeyData   string `json:"key_data"`
+		UserKey   string `json:"user_key"`
 	} `json:"authorization:omitempty"`
 	Resources     []*UpstreamResource `json:"resources"` // Note: field name matches API spec (resources)
 	resourceIndex map[string]*UpstreamResource

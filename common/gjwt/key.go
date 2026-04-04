@@ -117,7 +117,7 @@ func HasKey(name string) bool {
 	return ok
 }
 
-func getKey(name string) (keyEntry, bool) {
+func GetKey(name string) (keyEntry, bool) {
 	keyMu.RLock()
 	defer keyMu.RUnlock()
 	entry, ok := keyStore[name]

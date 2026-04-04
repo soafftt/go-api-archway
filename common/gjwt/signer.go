@@ -26,20 +26,22 @@ type Codec interface {
 type codec struct {
 	keyStoreName string
 	method       goJwt.SigningMethod
+	keyEntry     keyEntry
 }
 
 // NewCodec 은 키 데이터를 등록하고 Codec 을 생성한다.
 // 동일한 keyStoreName 이 이미 등록되어 있으면 keyData 는 무시되며 기존 키를 재사용한다.
-func NewCodec(keyStoreName string, keyData []byte, keyType KeyType, alg Algorithm) (Codec, error) {
-	if ok := HasKey(keyStoreName); !ok {
+func NewCodec(keyStoreName string) (Codec, error) {
+	keyEntry, ok := GetKey(keyStoreName)
+	if !ok {
 		return nil, ErrKeyNotFound
 	}
 
-	method, err := signingMethod(alg)
+	method, err := signingMethod(keyEntry.Algorithm)
 	if err != nil {
 		return nil, err
 	}
-	return &codec{keyStoreName: keyStoreName, method: method}, nil
+	return &codec{keyStoreName: keyStoreName, method: method, keyEntry: keyEntry}, nil
 }
 
 func signingMethod(alg Algorithm) (goJwt.SigningMethod, error) {
@@ -68,11 +70,6 @@ var (
 )
 
 func (c *codec) Serialize(header HeaderBuilder, claims ClaimsBuilder) (string, error) {
-	entry, ok := getKey(c.keyStoreName)
-	if !ok {
-		return "", ErrKeyNotFound
-	}
-
 	hp := headerPool.Get().(*map[string]any)
 	cp := claimsPool.Get().(*map[string]any)
 	defer func() {
@@ -94,7 +91,7 @@ func (c *codec) Serialize(header HeaderBuilder, claims ClaimsBuilder) (string, e
 		token.Header[k] = v
 	}
 
-	signed, err := token.SignedString(entry.PrivateKey)
+	signed, err := token.SignedString(c.keyEntry.PrivateKey)
 	if err != nil {
 		return "", errors.Join(ErrSerialize, err)
 	}

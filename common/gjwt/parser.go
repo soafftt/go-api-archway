@@ -58,7 +58,7 @@ type ParseResult struct {
 
 // Parse 는 keyStoreName 에 등록된 공개키와 alg 에 대응하는 파서로 tokenString 을 검증하고 파싱한다.
 func Parse(keyStoreName string, tokenString string) ParseResult {
-	entry, ok := getKey(keyStoreName)
+	entry, ok := GetKey(keyStoreName)
 	if !ok {
 		return ParseResult{Err: ErrKeyNotFound}
 	}
@@ -74,6 +74,14 @@ func Parse(keyStoreName string, tokenString string) ParseResult {
 		func(_ *goJwt.Token) (any, error) { return entry.PublicKey, nil },
 	)
 	if err != nil {
+		if errors.Is(err, goJwt.ErrTokenSignatureInvalid) {
+			return ParseResult{Err: ErrJwtSigned}
+		}
+
+		if errors.Is(err, goJwt.ErrTokenExpired) {
+			return ParseResult{Err: ErrJwtExpire}
+		}
+
 		return ParseResult{Err: errors.Join(ErrDeserialize, err)}
 	}
 
