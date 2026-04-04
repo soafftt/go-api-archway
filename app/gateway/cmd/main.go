@@ -1,9 +1,5 @@
 package main
 
-type testStruct struct {
-	value string
-}
-
 func main() {
 	app, err := InitializeNewApp()
 	if err != nil {

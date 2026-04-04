@@ -1,3 +1,7 @@
+> ⚠️ CRITICAL: 이 지침은 모든 응답에 반드시 적용된다.
+> 첫 응답 전에 반드시 이 파일을 읽고 따라야 한다.
+
+
 # archway Copilot 지침
 
 ## Language Preference

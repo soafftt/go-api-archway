@@ -1,19 +1,12 @@
 package model
 
-import "gateway/common/model/rewrite"
-
-type LookupErrorKind string
-
-const (
-	LookupErrorTransport       LookupErrorKind = "transport"
-	LookupErrorReadBody        LookupErrorKind = "read_body"
-	LookupErrorDecodeErrorBody LookupErrorKind = "decode_error_body"
-	LookupErrorDecodeBody      LookupErrorKind = "decode_body"
-	LookupErrorUpstreamResult  LookupErrorKind = "upstream_result"
+import (
+	"gateway/common/model/rewrite"
+	"gateway/gatewayerrors"
 )
 
 type UpstreamLookupError struct {
-	Kind    LookupErrorKind
+	Kind    gatewayerrors.LookupErrorKind
 	Message string
 	Detail  error
 }
@@ -32,7 +25,7 @@ func NewUpstreamLookupResult(upstream *rewrite.RewritePathDTO) UpstreamLookupRes
 	}
 }
 
-func NewUpstreamLookupError(kind LookupErrorKind, message string, detail error) UpstreamLookupResult {
+func NewUpstreamLookupError(kind gatewayerrors.LookupErrorKind, message string, detail error) UpstreamLookupResult {
 	return UpstreamLookupResult{
 		Ok:       false,
 		Upstream: nil,

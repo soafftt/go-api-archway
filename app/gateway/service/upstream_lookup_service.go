@@ -11,16 +11,10 @@ import (
 	commonModel "gateway/common/model"
 	"gateway/common/model/rewrite"
 	"gateway/config"
+	"gateway/gatewayerrors"
 	"gateway/model"
 
 	"github.com/google/wire"
-)
-
-const (
-	UNIX_SOCKET_RESPONSE_ERROR                               = "UNIX_SOCKET_RESPONSE_ERROR"
-	UNIX_SOCKET_RESPONSE_BODY_ERR_READ_ERROR                 = "UNIX_SOCKET_RESPONSE_BODY_READ_ERROR"
-	UNIX_SOCKET_RESPONSE_BODY_ERR_JSON_UNMARSHAL_ERROR       = "UNIX_SOCKET_RESPONSE_BODY_JSON_UNMARSHAL_ERROR"
-	UNIX_SOCKET_RESPONSE_ERROR_BODY_ERR_JSON_UNMARSHAL_ERROR = "UNIX_SOCKET_RESPONSE_ERROR_BODY_ERR_JSON_UNMARSHAL_ERROR"
 )
 
 type UpstreamLookupService interface {
@@ -46,8 +40,8 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 	res, err := s.httpClient.Get(s.lookupUrl + targetPath)
 	if err != nil {
 		return model.NewUpstreamLookupError(
-			model.LookupErrorTransport,
-			UNIX_SOCKET_RESPONSE_ERROR,
+			gatewayerrors.ErrLookupTransport,
+			gatewayerrors.ErrMsgTransport,
 			fmt.Errorf("failed to call upstream lookup service: %v", err),
 		)
 	}
@@ -62,8 +56,8 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 		)
 
 		return model.NewUpstreamLookupError(
-			model.LookupErrorReadBody,
-			UNIX_SOCKET_RESPONSE_BODY_ERR_READ_ERROR,
+			gatewayerrors.ErrLookupReadBody,
+			gatewayerrors.ErrMsgReadBody,
 			errorDetail,
 		)
 	}
@@ -72,7 +66,7 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 	if res.StatusCode != http.StatusOK {
 		var errResponse *commonModel.ErrorResponse
 		if err := json.Unmarshal(bodyBuffer, &errResponse); err != nil {
-			errorDetail := fmt.Errorf("failed to unmarshal error response body: eror%v", err)
+			errorDetail := fmt.Errorf("failed to unmarshal error response body: %v", err)
 
 			log.Printf(
 				"%v, targetPath: %s, responsebody: %s",
@@ -80,8 +74,8 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 			)
 
 			return model.NewUpstreamLookupError(
-				model.LookupErrorDecodeErrorBody,
-				UNIX_SOCKET_RESPONSE_ERROR_BODY_ERR_JSON_UNMARSHAL_ERROR,
+				gatewayerrors.ErrLookupDecodeErrorBody,
+				gatewayerrors.ErrMsgDecodeErrorBody,
 				errorDetail,
 			)
 		}
@@ -94,7 +88,7 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 		)
 
 		return model.NewUpstreamLookupError(
-			model.LookupErrorUpstreamResult,
+			gatewayerrors.ErrLookupUpstreamResult,
 			errResponse.Message,
 			errors.New(errResponse.Detail),
 		)
@@ -102,15 +96,15 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 
 	var pathInfo *rewrite.RewritePathDTO
 	if err := json.Unmarshal(bodyBuffer, &pathInfo); err != nil {
-		errorDetail := fmt.Errorf("failed to unmarshal response body: eror%v", err)
+		errorDetail := fmt.Errorf("failed to unmarshal response body: %v", err)
 		log.Printf(
-			"%v, targetPath: %s, responsebody: %s",
+			"%v, targetPath: %s, response body: %s",
 			errorDetail, targetPath, string(bodyBuffer),
 		)
 
 		return model.NewUpstreamLookupError(
-			model.LookupErrorDecodeBody,
-			UNIX_SOCKET_RESPONSE_BODY_ERR_JSON_UNMARSHAL_ERROR,
+			gatewayerrors.ErrLookupDecodeBody,
+			gatewayerrors.ErrMsgDecodeBody,
 			errorDetail,
 		)
 	}
@@ -123,7 +117,7 @@ func bodyRead(res *http.Response) ([]byte, error) {
 	defer res.Body.Close()
 	bodyBuffer, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf(UNIX_SOCKET_RESPONSE_ERROR+": %v", err)
+		return nil, fmt.Errorf("%s: %v", gatewayerrors.ErrMsgTransport, err)
 	}
 
 	return bodyBuffer, nil

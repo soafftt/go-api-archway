@@ -4,6 +4,7 @@ import (
 	"context"
 	"gateway/common/code"
 	gatewayContext "gateway/context"
+	"gateway/gatewayerrors"
 	"gateway/model"
 	"gateway/server/response"
 	"gateway/service"
@@ -35,7 +36,7 @@ func (m *upstreamCheckMiddleware) HandleMiddleware(next http.Handler) http.Handl
 			var detail string
 
 			switch lookupResult.Error.Kind {
-			case model.LookupErrorUpstreamResult:
+			case gatewayerrors.ErrLookupUpstreamResult:
 				// common code 정의에 따라서 NOT_FOUND 시리즈는 404, 그 외는 500 처리.
 				statusCode, message, detail = handleUpstreamResult(lookupResult)
 			default:
