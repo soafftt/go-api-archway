@@ -11,7 +11,7 @@ import (
 	commonModel "gateway/common/model"
 	"gateway/common/model/rewrite"
 	"gateway/config"
-	"gateway/gatewayerrors"
+	"gateway/gwe"
 	"gateway/model"
 
 	"github.com/google/wire"
@@ -40,8 +40,8 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 	res, err := s.httpClient.Get(s.lookupUrl + targetPath)
 	if err != nil {
 		return model.NewUpstreamLookupError(
-			gatewayerrors.ErrLookupTransport,
-			gatewayerrors.ErrMsgTransport,
+			gwe.ErrLookupTransport,
+			gwe.ErrMsgTransport,
 			fmt.Errorf("failed to call upstream lookup service: %v", err),
 		)
 	}
@@ -56,8 +56,8 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 		)
 
 		return model.NewUpstreamLookupError(
-			gatewayerrors.ErrLookupReadBody,
-			gatewayerrors.ErrMsgReadBody,
+			gwe.ErrLookupReadBody,
+			gwe.ErrMsgReadBody,
 			errorDetail,
 		)
 	}
@@ -74,8 +74,8 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 			)
 
 			return model.NewUpstreamLookupError(
-				gatewayerrors.ErrLookupDecodeErrorBody,
-				gatewayerrors.ErrMsgDecodeErrorBody,
+				gwe.ErrLookupDecodeErrorBody,
+				gwe.ErrMsgDecodeErrorBody,
 				errorDetail,
 			)
 		}
@@ -88,7 +88,7 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 		)
 
 		return model.NewUpstreamLookupError(
-			gatewayerrors.ErrLookupUpstreamResult,
+			gwe.ErrLookupUpstreamResult,
 			errResponse.Message,
 			errors.New(errResponse.Detail),
 		)
@@ -103,8 +103,8 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 		)
 
 		return model.NewUpstreamLookupError(
-			gatewayerrors.ErrLookupDecodeBody,
-			gatewayerrors.ErrMsgDecodeBody,
+			gwe.ErrLookupDecodeBody,
+			gwe.ErrMsgDecodeBody,
 			errorDetail,
 		)
 	}
@@ -117,7 +117,7 @@ func bodyRead(res *http.Response) ([]byte, error) {
 	defer res.Body.Close()
 	bodyBuffer, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %v", gatewayerrors.ErrMsgTransport, err)
+		return nil, fmt.Errorf("%s: %v", gwe.ErrMsgTransport, err)
 	}
 
 	return bodyBuffer, nil

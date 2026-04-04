@@ -1,4 +1,4 @@
-package gatewayerrors
+package gwe
 
 // LookupErrorKind upstream lookup 에러 분류
 type LookupErrorKind string

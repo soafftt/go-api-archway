@@ -2,11 +2,11 @@ package model
 
 import (
 	"gateway/common/model/rewrite"
-	"gateway/gatewayerrors"
+	"gateway/gwe"
 )
 
 type UpstreamLookupError struct {
-	Kind    gatewayerrors.LookupErrorKind
+	Kind    gwe.LookupErrorKind
 	Message string
 	Detail  error
 }
@@ -25,7 +25,7 @@ func NewUpstreamLookupResult(upstream *rewrite.RewritePathDTO) UpstreamLookupRes
 	}
 }
 
-func NewUpstreamLookupError(kind gatewayerrors.LookupErrorKind, message string, detail error) UpstreamLookupResult {
+func NewUpstreamLookupError(kind gwe.LookupErrorKind, message string, detail error) UpstreamLookupResult {
 	return UpstreamLookupResult{
 		Ok:       false,
 		Upstream: nil,
