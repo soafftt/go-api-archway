@@ -9,16 +9,16 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/app/gateway",
-            "cwd": "${workspaceFolder}/app/gateway"
+            "program": "${workspaceFolder}/arcway/gateway",
+            "cwd": "${workspaceFolder}/arcway/gateway"
 		},
         {
             "name": "Gateway Controller",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/app/gateway-controller",
-            "cwd": "${workspaceFolder}/app/gateway-controller"
+            "program": "${workspaceFolder}/arcway/gateway-controller",
+            "cwd": "${workspaceFolder}/arcway/gateway-controller"
 		}
     ]
 }

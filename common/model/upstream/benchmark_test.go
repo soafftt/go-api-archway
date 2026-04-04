@@ -7,7 +7,7 @@ import (
 
 var benchmarkServiceJSON = []byte(`{
 	"service_name": "member-api",
-	"resouces": [
+	"resources": [
 		{
 			"sub_domain": "api.example.com",
 			"host": "upstream-server-1.internal:8080",

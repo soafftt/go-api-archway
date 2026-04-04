@@ -1,8 +1,12 @@
 package upstream
 
 type UpstreamService struct {
-	ServiceName   string              `json:"service_name"`
-	Resources     []*UpstreamResource `json:"resouces"` // Note: field name matches API spec (resouces)
+	ServiceName   string `json:"service_name"`
+	Authorization *struct {
+		Algorithm string `json:"algorithm"`
+		KeyData   string `json:"key_data"`
+	} `json:"authorization:omitempty"`
+	Resources     []*UpstreamResource `json:"resources"` // Note: field name matches API spec (resources)
 	resourceIndex map[string]*UpstreamResource
 }
 

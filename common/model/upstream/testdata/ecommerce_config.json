@@ -1,6 +1,6 @@
 {
   "service_name": "ecommerce-api",
-  "resouces": [
+  "resources": [
     {
       "sub_domain": "api.shop.com",
       "host": "product-service.internal:8080",

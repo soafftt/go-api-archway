@@ -1,4 +1,4 @@
-package jwt
+package gjwt
 
 import (
 	"errors"
@@ -25,21 +25,21 @@ type Codec interface {
 
 type codec struct {
 	keyStoreName string
-	alg          Algorithm
 	method       goJwt.SigningMethod
 }
 
 // NewCodec 은 키 데이터를 등록하고 Codec 을 생성한다.
 // 동일한 keyStoreName 이 이미 등록되어 있으면 keyData 는 무시되며 기존 키를 재사용한다.
 func NewCodec(keyStoreName string, keyData []byte, keyType KeyType, alg Algorithm) (Codec, error) {
-	if err := RegisterKey(keyStoreName, keyData, keyType); err != nil {
-		return nil, err
+	if ok := HasKey(keyStoreName); !ok {
+		return nil, ErrKeyNotFound
 	}
+
 	method, err := signingMethod(alg)
 	if err != nil {
 		return nil, err
 	}
-	return &codec{keyStoreName: keyStoreName, alg: alg, method: method}, nil
+	return &codec{keyStoreName: keyStoreName, method: method}, nil
 }
 
 func signingMethod(alg Algorithm) (goJwt.SigningMethod, error) {
@@ -102,5 +102,5 @@ func (c *codec) Serialize(header HeaderBuilder, claims ClaimsBuilder) (string, e
 }
 
 func (c *codec) Parse(tokenString string) ParseResult {
-	return Parse(c.keyStoreName, c.alg, tokenString)
+	return Parse(c.keyStoreName, tokenString)
 }

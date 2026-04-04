@@ -10,7 +10,7 @@ import (
 func TestUpStreamService_JSONUnmarshal(t *testing.T) {
 	jsonData := `{
 		"service_name": "member-api",
-		"resouces": [
+		"resources": [
 			{
 				"sub_domain": "api.example.com",
 				"host": "upstream-server-1.internal:8080",
@@ -101,7 +101,7 @@ func TestUpStreamService_JSONUnmarshal(t *testing.T) {
 func TestUpStreamService_ComplexScenario(t *testing.T) {
 	jsonData := `{
 		"service_name": "product-api",
-		"resouces": [
+		"resources": [
 			{
 				"sub_domain": "api.shop.com",
 				"host": "product-api.internal:8080",
@@ -172,7 +172,7 @@ func TestUpStreamService_ComplexScenario(t *testing.T) {
 
 func TestUpStreamService_EmptyAndEdgeCases(t *testing.T) {
 	t.Run("empty service", func(t *testing.T) {
-		jsonData := `{"service_name": "empty-api", "resouces": []}`
+		jsonData := `{"service_name": "empty-api", "resources": []}`
 
 		var service UpstreamService
 		err := json.Unmarshal([]byte(jsonData), &service)
@@ -193,7 +193,7 @@ func TestUpStreamService_EmptyAndEdgeCases(t *testing.T) {
 	t.Run("resource with no paths", func(t *testing.T) {
 		jsonData := `{
 			"service_name": "test-api",
-			"resouces": [
+			"resources": [
 				{
 					"sub_domain": "test.com",
 					"host": "localhost:8080",

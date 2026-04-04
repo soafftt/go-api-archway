@@ -1,4 +1,4 @@
-package jwt
+package gjwt
 
 import (
 	"errors"
@@ -57,13 +57,13 @@ type ParseResult struct {
 }
 
 // Parse 는 keyStoreName 에 등록된 공개키와 alg 에 대응하는 파서로 tokenString 을 검증하고 파싱한다.
-func Parse(keyStoreName string, alg Algorithm, tokenString string) ParseResult {
+func Parse(keyStoreName string, tokenString string) ParseResult {
 	entry, ok := getKey(keyStoreName)
 	if !ok {
 		return ParseResult{Err: ErrKeyNotFound}
 	}
 
-	p, ok := parsers[alg]
+	p, ok := parsers[entry.Algorithm]
 	if !ok {
 		return ParseResult{Err: ErrAlgNotFound}
 	}

@@ -5,12 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f240f2fb-5683-4f9b-af8a-6d409ce9f0f6" name="변경" comment="">
-      <change beforePath="$PROJECT_DIR$/app/gateway/context/gateway_context.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/context/gateway_context.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gateway/server/middleware/upstream_check_middleware.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/server/middleware/upstream_check_middleware.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gateway/server/response/json_error_response.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/server/response/json_error_response.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gateway/server/reverse_proxy.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/server/reverse_proxy.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gateway/wire.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/wire.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gateway/wire_gen.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/wire_gen.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vscode/launch.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/launch.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gateway-controller/benchmark_results.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gateway-controller/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway-controller/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gateway-controller/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway-controller/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gateway/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/jwt/alg.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/jwt/ecdsa_signer_test.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/jwt/error.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/jwt/key.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/jwt/parser.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/jwt/rsa_signer_test.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/jwt/signer.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/model/upstream/benchmark_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/benchmark_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/model/upstream/integration_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/integration_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/model/upstream/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/model/upstream/testdata/ecommerce_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/testdata/ecommerce_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/model/upstream/testdata/sample_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/testdata/sample_config.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,28 +42,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.GoLinterPluginOnboardingV2&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.GoLinterPluginStorageMigration&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.analysis.ui.options.defaults&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/soft&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.GoLinterPluginOnboardingV2": "true",
+    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.go.analysis.ui.options.defaults": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "master",
+    "go.sdk.automatically.set": "true",
+    "last_opened_file_path": "/Users/soft",
+    "nodejs_package_manager_path": "npm"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-72a9cf600ed8-dfa3e7267ae0-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-253.31033.129" />
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-GO-253.31033.129" />
+        <option value="bundled-gosdk-72a9cf600ed8-3105c3b11fe0-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-261.22158.291" />
+        <option value="bundled-js-predefined-d6986cc7102b-3bd3a6803838-JavaScript-GO-261.22158.291" />
       </set>
     </attachedChunks>
   </component>
