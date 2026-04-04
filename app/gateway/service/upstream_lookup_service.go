@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+
 	commonModel "gateway/common/model"
 	"gateway/common/model/rewrite"
 	"gateway/config"
 	"gateway/model"
-	"io"
-	"log"
-	"net/http"
 
 	"github.com/google/wire"
 )
@@ -115,7 +116,6 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 	}
 
 	return model.NewUpstreamLookupResult(pathInfo)
-
 }
 
 // body 읽기 함수

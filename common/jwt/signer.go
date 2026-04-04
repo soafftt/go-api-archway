@@ -1,297 +1,106 @@
 package jwt
 
 import (
-	"crypto"
 	"errors"
 	"sync"
 
 	goJwt "github.com/golang-jwt/jwt/v5"
-	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
-// JwtToken 생성, 검증을 위한 Signer 타입을 재정의 합니다.
-type Signer string
-
-// Singer 타입은 JWT 토큰을 생성할 때 사용할 알고리즘을 나타냅니다.
-const (
-	RSA256Signer   Signer = "RSA256"
-	RSA512Signer   Signer = "RSA512"
-	ECDSA256Signer Signer = "ECDSA256"
-	ECDSA512Signer Signer = "ECDSA512"
-	HMACSigner     Signer = "HMAC"
+type (
+	// HeaderBuilder 는 JWT 헤더 필드를 직접 채우는 함수 타입이다.
+	HeaderBuilder func(map[string]any)
+	// ClaimsBuilder 는 JWT 클레임 필드를 직접 채우는 함수 타입이다.
+	ClaimsBuilder func(map[string]any)
 )
 
-// KeyType Jwt.Token 을 생성할때 키 타입을 나타냅니다.
-type KeyType string
-
-// 지원 하는 KeyType 종류
-const (
-	PEMKeyType  KeyType = "PEM"
-	JSONKeyType KeyType = "JSON"
-)
-
-// Jwt Claims 에서 사용할 수 있는 기본 클레임을 정의 합니다.
-type DefaultClaims string
-
-const (
-	// Jwt Issuer
-	Issuer DefaultClaims = "iss"
-	// Jwt Subject
-	Subject DefaultClaims = "sub"
-	// Jwt Audience
-	Audience DefaultClaims = "aud"
-	// Jwt Expiration
-	Expiration DefaultClaims = "exp"
-	// Jwt NotBefore
-	NotBefore DefaultClaims = "nbf"
-	// Jwt IssuedAt
-	IssuedAt DefaultClaims = "iat"
-)
-
-// Jwt 의 RSA/ ECDSA 키를 저장하는 구조체와, Signer 이름을 저장하는 구조체를 정의 합니다.
-type jwtKey struct {
-	privateKey crypto.PrivateKey
-	publicKey  crypto.PublicKey
+// Codec 은 고정된 키와 알고리즘으로 JWT 서명 및 파싱을 담당한다.
+// 동시성에 안전하며 요청 간 재사용을 전제로 설계되었다.
+type Codec interface {
+	// Serialize 는 JWT를 생성하고 서명한다. header, claims 빌더는 nil 가능.
+	Serialize(header HeaderBuilder, claims ClaimsBuilder) (string, error)
+	// Parse 는 JWT 문자열을 검증하고 파싱한다.
+	Parse(tokenString string) ParseResult
 }
 
-// JwtCodec 인터페이스는 JWT 토큰을 직렬화(Serialize)하고 역직렬화(Deserialize)하는 메서드를 정의합니다.
-// 재사용의 목적으로 map 으로 관리 하며 읽기/쓰기 시 동시성 문제를 방지하기 위해 sync.RWMutex 를 사용합니다.
-type jwtKeyMap map[string]jwtKey
+type codec struct {
+	keyStoreName string
+	alg          Algorithm
+	method       goJwt.SigningMethod
+}
 
-// JwtKey 객체를 생성합니다.
-func newJwtKey(privateKey crypto.PrivateKey, publicKey crypto.PublicKey) jwtKey {
-	return jwtKey{
-		privateKey: privateKey,
-		publicKey:  publicKey,
+// NewCodec 은 키 데이터를 등록하고 Codec 을 생성한다.
+// 동일한 keyStoreName 이 이미 등록되어 있으면 keyData 는 무시되며 기존 키를 재사용한다.
+func NewCodec(keyStoreName string, keyData []byte, keyType KeyType, alg Algorithm) (Codec, error) {
+	if err := RegisterKey(keyStoreName, keyData, keyType); err != nil {
+		return nil, err
 	}
-}
-
-type singerSignatureMap map[string]struct{}
-
-var (
-	jwtLock          sync.RWMutex
-	signatureNameMap = make(singerSignatureMap, 50)
-	jwtKeysMap       = make(jwtKeyMap, 50)
-)
-
-func existsSignature(name string) bool {
-	jwtLock.RLock()
-	defer jwtLock.RUnlock()
-
-	_, exists := signatureNameMap[name]
-
-	return exists
-}
-
-func makeCryptoKeyFromJwk(jsonKey []byte, pem bool) (jwtKey, JwtError) {
-	jwkPrivateKey, err := jwk.ParseKey(jsonKey, jwk.WithPEM(pem))
+	method, err := signingMethod(alg)
 	if err != nil {
-		return jwtKey{}, errors.Join(ErrKeyParseError, err)
+		return nil, err
 	}
-
-	var privateKey crypto.PrivateKey
-	if err := jwk.Export(jwkPrivateKey, &privateKey); err != nil {
-		return jwtKey{}, errors.Join(ErrKeyExportError, err)
-	}
-
-	signer, ok := privateKey.(crypto.Signer)
-	if !ok {
-		// TODO: 에러 코드 정리
-		return jwtKey{}, ErrCryptoPrivateKeyParseError
-	}
-
-	return newJwtKey(privateKey, signer.Public()), nil
+	return &codec{keyStoreName: keyStoreName, alg: alg, method: method}, nil
 }
 
-func putJwtKeyAndSingerSignature(key []byte, singerName string, keyType KeyType) JwtError {
-	jwtLock.RLock()
-	_, existsJwtKey := jwtKeysMap[singerName]
-	_, existsSingerName := signatureNameMap[singerName]
-	jwtLock.RUnlock()
-
-	if !existsJwtKey || !existsSingerName {
-		var jwkKey jwtKey
-		if !existsJwtKey {
-			var err JwtError
-			jwkKey, err = makeCryptoKeyFromJwk(key, keyType == PEMKeyType)
-			if err != nil {
-				return err
-			}
-		}
-
-		jwtLock.Lock()
-		defer jwtLock.Unlock()
-
-		if !existsSingerName {
-			if _, exists := signatureNameMap[singerName]; !exists {
-				signatureNameMap[singerName] = struct{}{}
-			}
-		}
-
-		if !existsJwtKey {
-			if _, exists := jwtKeysMap[singerName]; !exists {
-				jwtKeysMap[singerName] = jwkKey
-			}
-		}
+func signingMethod(alg Algorithm) (goJwt.SigningMethod, error) {
+	switch alg {
+	case ES256:
+		return goJwt.SigningMethodES256, nil
+	case ES512:
+		return goJwt.SigningMethodES512, nil
+	case RS256:
+		return goJwt.SigningMethodRS256, nil
+	case RS512:
+		return goJwt.SigningMethodRS512, nil
+	case HS256:
+		return goJwt.SigningMethodHS256, nil
+	case HS512:
+		return goJwt.SigningMethodHS512, nil
+	default:
+		return nil, ErrAlgNotFound
 	}
-
-	return nil
 }
 
-func existsJwtKey(singerName string) bool {
-	jwtLock.RLock()
-	defer jwtLock.RUnlock()
-
-	_, existsJwtKey := jwtKeysMap[singerName]
-	return existsJwtKey
-}
-
-func getJwtKey(singerName string) (jwtKey, bool) {
-	jwtLock.RLock()
-	defer jwtLock.RUnlock()
-
-	cryptoPrivateKey, exists := jwtKeysMap[singerName]
-	if !exists {
-		return jwtKey{}, false
-	}
-
-	return cryptoPrivateKey, exists
-}
-
+// headerPool, claimsPool 은 서명 핫패스의 map 할당 비용을 줄이기 위한 풀이다.
 var (
-	headerSyncPool = sync.Pool{
-		New: func() any {
-			return make(map[string]any, 50)
-		},
-	}
-
-	claimsSyncPool = sync.Pool{
-		New: func() any {
-			return make(goJwt.MapClaims, 50)
-		},
-	}
+	headerPool = sync.Pool{New: func() any { m := make(map[string]any, 4); return &m }}
+	claimsPool = sync.Pool{New: func() any { m := make(map[string]any, 8); return &m }}
 )
 
-func getHeaderFromSyncPool() map[string]any {
-	return headerSyncPool.Get().(map[string]any)
-}
-
-func getClaimsFromSyncPool() goJwt.MapClaims {
-	return claimsSyncPool.Get().(goJwt.MapClaims)
-}
-
-func deferSyncPool(header map[string]any, claims goJwt.MapClaims) {
-	clear(header)
-	clear(claims)
-
-	headerSyncPool.Put(header)
-	claimsSyncPool.Put(claims)
-}
-
-type HeadBuilder func(map[string]any) (map[string]any, error)
-type ClaimsBuilder func(goJwt.MapClaims) (goJwt.MapClaims, error)
-
-type JwtSerializeResult struct {
-	SignedJwt string
-	Err       error
-}
-
-func handleErrorToJwtSerializeResult(err error, jwtError JwtError) JwtSerializeResult {
-	return JwtSerializeResult{
-		Err: errors.Join(jwtError, err),
-	}
-}
-
-func handleJwtErrorToJwtSerializeResult(jwtError JwtError) JwtSerializeResult {
-	return JwtSerializeResult{
-		Err: jwtError,
-	}
-}
-
-type JwtDeserializeResult struct {
-	Header map[string]any
-	Claims goJwt.MapClaims
-	Verify bool
-	Err    JwtError
-}
-
-func handleErrorToJwtDeserializeResult(err error, jwtError JwtError) JwtDeserializeResult {
-	var retError error
-	if errors.Is(err, jwtError) {
-		retError = err
-	} else {
-		retError = errors.Join(jwtError, err)
-	}
-
-	return JwtDeserializeResult{
-		Err: retError,
-	}
-}
-
-func handleJwtErrorToJwtDeserializeResult(jwtError JwtError) JwtDeserializeResult {
-	return JwtDeserializeResult{
-		Err: jwtError,
-	}
-}
-
-type JwtCodec interface {
-	Serialize(singerName string, header HeadBuilder, claims ClaimsBuilder) JwtSerializeResult
-	Deserialize(singerName string, token string) JwtDeserializeResult
-}
-
-/*
-goJwt(github.com/golang-jwt/jwt/v5) 는 thread-safe 하지 핞다.
-Token 만들거나, Token Verify 등을 할때는 매번 새로운 객체를 만들어야 한다.
-*/
-type signer struct {
-	Token *goJwt.Token
-}
-
-func newSigner(singer Signer) (*goJwt.Token, JwtError) {
-	jwtToken, jwtError := singer.makeJwtToken()
-	if jwtError != nil {
-		return nil, jwtError
-	}
-
-	return jwtToken, nil
-}
-
-func convertPrivateKey[T any](privateKey crypto.PrivateKey) (*T, JwtError) {
-	// c := privKey.(*ecdsa.PrivateKey)
-	convertKey, ok := privateKey.(*T)
+func (c *codec) Serialize(header HeaderBuilder, claims ClaimsBuilder) (string, error) {
+	entry, ok := getKey(c.keyStoreName)
 	if !ok {
-		return nil, ErrPrivateKeyConvertError
+		return "", ErrKeyNotFound
 	}
-	return convertKey, nil
+
+	hp := headerPool.Get().(*map[string]any)
+	cp := claimsPool.Get().(*map[string]any)
+	defer func() {
+		clear(*hp)
+		clear(*cp)
+		headerPool.Put(hp)
+		claimsPool.Put(cp)
+	}()
+
+	if header != nil {
+		header(*hp)
+	}
+	if claims != nil {
+		claims(*cp)
+	}
+
+	token := goJwt.NewWithClaims(c.method, goJwt.MapClaims(*cp))
+	for k, v := range *hp {
+		token.Header[k] = v
+	}
+
+	signed, err := token.SignedString(entry.PrivateKey)
+	if err != nil {
+		return "", errors.Join(ErrSerialize, err)
+	}
+	return signed, nil
 }
 
-func convertPublicKey[T any](publicKey crypto.PublicKey) (*T, JwtError) {
-	convertKey, ok := publicKey.(*T)
-	if !ok {
-		return nil, ErrPublicKeyConvertError
-	}
-	return convertKey, nil
-}
-
-func (s Signer) makeJwtToken() (*goJwt.Token, JwtError) {
-	switch s {
-	case RSA256Signer, RSA512Signer:
-		method := goJwt.SigningMethodRS256
-		if s == RSA512Signer {
-			method = goJwt.SigningMethodRS512
-		}
-
-		return goJwt.New(method), nil
-
-	case ECDSA256Signer, ECDSA512Signer:
-		method := goJwt.SigningMethodES256
-		if s == ECDSA512Signer {
-			method = goJwt.SigningMethodES512
-		}
-		return goJwt.New(method), nil
-
-	default:
-		// Todo: 에러 코드 정의
-		return nil, ErrTokenInstanceError
-	}
+func (c *codec) Parse(tokenString string) ParseResult {
+	return Parse(c.keyStoreName, c.alg, tokenString)
 }

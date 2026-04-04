@@ -7,14 +7,15 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httputil"
+
 	"gateway/component"
 	"gateway/config"
 	"gateway/server"
 	"gateway/server/middleware"
 	"gateway/server/middleware/di"
 	"gateway/service"
-	"net/http"
-	"net/http/httputil"
 )
 
 // Injectors from wire.go:
