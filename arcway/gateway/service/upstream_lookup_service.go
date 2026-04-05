@@ -94,6 +94,7 @@ func (s *upstreamLookupService) Lookup(targetPath string) model.UpstreamLookupRe
 		)
 	}
 
+	// TODO:  Authorization 관련 에러 응답 처리 필요.
 	var pathInfo *rewrite.RewritePathDTO
 	if err := json.Unmarshal(bodyBuffer, &pathInfo); err != nil {
 		errorDetail := fmt.Errorf("failed to unmarshal response body: %v", err)

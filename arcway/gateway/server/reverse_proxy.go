@@ -1,30 +1,33 @@
 package server
 
 import (
+	"net/http"
+	"net/http/httputil"
+	"strconv"
+
 	"gateway/common/model/rewrite"
 	gatewayContext "gateway/context"
 	"gateway/server/response"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"strconv"
 
 	"github.com/google/wire"
 )
 
+// Reverse Proxy 처리.
 func NewGatewayReverseProxy() *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			targetURL := pr.In.Context().Value(gatewayContext.UpstreamContextKey).(*rewrite.RewritePathDTO)
-			url := &url.URL{
-				Scheme: "http",
-				Host:   targetURL.Host,
-				Path:   targetURL.Path,
-			}
 
-			pr.SetURL(url)
+			// SetURL은 target.Path + incoming.Path 를 join하므로 Out.URL 을 직접 설정
+			pr.Out.URL.Scheme = "http"
+			pr.Out.URL.Host = targetURL.Host
+			pr.Out.URL.Path = targetURL.Path
+			pr.Out.URL.RawPath = ""
 			pr.Out.Header.Set("X-Forwarded-Host", pr.In.Host)
-			// TODO x-forwarded-for 헤더 추가.
+
+			if targetURL.UserKey != "" {
+				pr.Out.Header.Set("X-UserId", targetURL.UserKey.(string))
+			}
 		},
 		ModifyResponse: func(res *http.Response) error {
 			targetURL := res.Request.Context().Value(gatewayContext.UpstreamContextKey).(*rewrite.RewritePathDTO)

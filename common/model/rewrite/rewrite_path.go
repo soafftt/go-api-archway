@@ -3,14 +3,13 @@ package rewrite
 import upstreamDto "gateway/common/model/upstream"
 
 type RewritePathDTO struct {
-	Host               string `json:"domain"`              // 도메인 이름
-	Path               string `json:"path"`                // 프록시 경로
-	Method             string `json:"method"`              // 메소드
-	ResponseTimeout    int64  `json:"response_timeout"`    // 응답 타임아웃
-	RequestTimeout     int64  `json:"request_timeout"`     // 요청 타임아웃
-	CheckAuthorization bool   `json:"check_authorization"` // 권한 체크 여부
-	CacheTimeout       int64  `json:"cache_timeout"`       // 캐시 타임아웃
-	UserKey            any    `json:"user_key:omitempty"`  // 인증 체크이후의 유저키.
+	Host            string `json:"domain"`             // 도메인 이름
+	Path            string `json:"path"`               // 프록시 경로
+	Method          string `json:"method"`             // 메소드
+	ResponseTimeout int64  `json:"response_timeout"`   // 응답 타임아웃
+	RequestTimeout  int64  `json:"request_timeout"`    // 요청 타임아웃
+	CacheTimeout    int64  `json:"cache_timeout"`      // 캐시 타임아웃
+	UserKey         any    `json:"user_key:omitempty"` // 인증 체크이후의 유저키.
 }
 
 func NewEmptyRewritePathDTO() RewritePathDTO {
@@ -19,13 +18,12 @@ func NewEmptyRewritePathDTO() RewritePathDTO {
 
 func NewRewritePathDTO(domain string, upstreamPath *upstreamDto.UpstreamPath) RewritePathDTO {
 	return RewritePathDTO{
-		Host:               domain,
-		Path:               upstreamPath.Path,
-		Method:             upstreamPath.Method,
-		ResponseTimeout:    upstreamPath.ResponseTimeout,
-		RequestTimeout:     upstreamPath.RequestTimeout,
-		CheckAuthorization: upstreamPath.CheckAuthorization,
-		CacheTimeout:       upstreamPath.CacheTimeout,
+		Host:            domain,
+		Path:            upstreamPath.Path,
+		Method:          upstreamPath.Method,
+		ResponseTimeout: upstreamPath.ResponseTimeout,
+		RequestTimeout:  upstreamPath.RequestTimeout,
+		CacheTimeout:    upstreamPath.CacheTimeout,
 	}
 }
 

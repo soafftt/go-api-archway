@@ -2,13 +2,14 @@ package middleware
 
 import (
 	"context"
+	"net/http"
+
 	"gateway/common/code"
 	gatewayContext "gateway/context"
 	"gateway/gwe"
 	"gateway/model"
 	"gateway/server/response"
 	"gateway/service"
-	"net/http"
 )
 
 type UpstreamCheckMiddleware Middleware

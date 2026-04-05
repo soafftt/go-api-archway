@@ -3,14 +3,16 @@ package router
 import (
 	"encoding/json"
 	"fmt"
-	commonCode "gateway/common/code"
-	"gateway/common/model"
-	"gateway/controller/model/dto"
-	"gateway/controller/service"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"gateway/common/code"
+	commonCode "gateway/common/code"
+	"gateway/common/model"
+	"gateway/controller/model/dto"
+	"gateway/controller/service"
 
 	"github.com/google/wire"
 )
@@ -57,13 +59,14 @@ func (cr *ControllerRouter) registerRoutes() {
 
 		result := cr.service.GetRouteInfo(dto)
 		if !result.Ok {
-			detailError := result.Error.Detail
+			err := result.Error
+			if err.Message == code.EXPIRE_JWT || err.Message == code.FAIL_AUTHORIZATION {
+				w.WriteHeader(http.StatusNonAuthoritativeInfo)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+			}
 
-			log.Printf("upstream check error: %v", detailError.Error())
-
-			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(model.ErrorResponse{Message: result.Error.Message, Detail: detailError.Error()})
-
+			json.NewEncoder(w).Encode(model.ErrorResponse{Message: result.Error.Message, Detail: err.Detail.Error()})
 			return
 		}
 
