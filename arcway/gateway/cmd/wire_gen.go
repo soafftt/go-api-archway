@@ -7,15 +7,15 @@
 package main
 
 import (
-	"net/http"
-	"net/http/httputil"
-
 	"gateway/component"
 	"gateway/config"
+	"gateway/infra/upstreamlookup"
 	"gateway/server"
 	"gateway/server/middleware"
 	"gateway/server/middleware/di"
 	"gateway/service"
+	"net/http"
+	"net/http/httputil"
 )
 
 // Injectors from wire.go:
@@ -23,7 +23,8 @@ import (
 func InitializeNewApp() (*GatewayApp, error) {
 	appConfig := config.NewAppConfig()
 	client := component.NewUnixSocketHTTPClient(appConfig)
-	upstreamLookupService := service.NewUpstreamLookupService(appConfig, client)
+	httpUpstreamLookupAdapter := upstreamlookup.NewHTTPUpstreamLookupAdapter(appConfig, client)
+	upstreamLookupService := service.NewUpstreamLookupService(httpUpstreamLookupAdapter)
 	reverseProxy := server.NewGatewayReverseProxy()
 	upstreamCheckMiddleware := middleware.NewUpstreamCheckMiddleware(upstreamLookupService)
 	authMiddleware := middleware.NewAuthMiddleware()

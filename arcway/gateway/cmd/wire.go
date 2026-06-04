@@ -7,6 +7,7 @@ package main
 import (
 	"gateway/component"
 	"gateway/config"
+	"gateway/infra/upstreamlookup"
 	"gateway/server"
 	middlewareDi "gateway/server/middleware/di"
 	"gateway/service"
@@ -29,6 +30,7 @@ func InitializeNewApp() (*GatewayApp, error) {
 	wire.Build(
 		config.AppConfigSet,
 		component.HttpClientSet,
+		upstreamlookup.UpstreamLookupAdapterSet,
 		service.UpstreamLookupServiceSet,
 		middlewareDi.MiddlewareContainerSet,
 		server.ReverseProxySet,
