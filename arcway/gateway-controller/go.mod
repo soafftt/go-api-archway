@@ -11,8 +11,8 @@ require (
 require golang.org/x/sys v0.42.0 // indirect
 
 require (
-	gateway/common v0.0.0
+	gateway/core v0.0.0
 	github.com/google/wire v0.7.0
 )
 
-replace gateway/common => ../../common
+replace gateway/core => ../../core

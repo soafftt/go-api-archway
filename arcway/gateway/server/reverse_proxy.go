@@ -1,11 +1,11 @@
 package server
 
 import (
+	"core/model/rewrite"
 	"net/http"
 	"net/http/httputil"
 	"strconv"
 
-	"gateway/common/model/rewrite"
 	gatewayContext "gateway/context"
 	"gateway/server/response"
 

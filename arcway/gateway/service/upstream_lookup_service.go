@@ -1,6 +1,8 @@
 package service
 
 import (
+	commonModel "core/model"
+	"core/model/rewrite"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,8 +10,6 @@ import (
 	"log"
 	"net/http"
 
-	commonModel "gateway/common/model"
-	"gateway/common/model/rewrite"
 	"gateway/config"
 	"gateway/gwe"
 	"gateway/model"

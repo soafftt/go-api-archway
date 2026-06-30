@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"context"
+	"core/model/rewrite"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"gateway/common/model/rewrite"
 	gatewayContext "gateway/context"
 	"gateway/gwe"
 	"gateway/model"

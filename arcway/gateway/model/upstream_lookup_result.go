@@ -1,7 +1,7 @@
 package model
 
 import (
-	"gateway/common/model/rewrite"
+	"core/model/rewrite"
 	"gateway/gwe"
 )
 

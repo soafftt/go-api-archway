@@ -2,11 +2,11 @@ package server
 
 import (
 	"context"
+	"core/model/rewrite"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"gateway/common/model/rewrite"
 	gatewayContext "gateway/context"
 )
 

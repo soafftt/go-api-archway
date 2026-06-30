@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"context"
+	"core/model/rewrite"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"testing"
 
-	"gateway/common/model/rewrite"
 	gatewayContext "gateway/context"
 	"gateway/gwe"
 	"gateway/model"
@@ -179,4 +179,3 @@ func BenchmarkChain_SingleMiddleware(b *testing.B) {
 		handler.ServeHTTP(rec, req)
 	}
 }
-

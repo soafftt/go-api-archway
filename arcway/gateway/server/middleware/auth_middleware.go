@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"gateway/common/model/rewrite"
+	"core/model/rewrite"
 	gatewayContext "gateway/context"
 	"net/http"
 )

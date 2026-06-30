@@ -83,6 +83,22 @@ common/
 - Unix socket 서버로 동작 (`UNIX_SOCKET_PATH`)
 - 라우팅 데이터 소스(예: Valkey)와 연동 가능한 구조
 
+성능 및 캐시 동작:
+
+- `gateway-controller`의 `/v1/upstream` 경로는 Unix socket 기반 lookup 기준으로 약 `19.6µs/op` 수준입니다.
+- Valkey + JWT 검증 포함 기준 route lookup 성능은 대략 다음과 같습니다.
+  - `RS256`: `52.9µs/op`, `12346 B/op`, `140 allocs/op`
+  - `ES256`: `68.0µs/op`, `11656 B/op`, `152 allocs/op`
+  - `HS256`: `23.6µs/op`, `10710 B/op`, `135 allocs/op`
+- 현재 측정에서는 예상대로 `ES256`이 가장 느리고, `HS256`이 가장 빠르며, `RS256`은 그 중간 수준입니다.
+- route 등록 비용은 약 `44.8µs/op`이며, 요청 핫패스가 아니라 서버 기동 시점 비용입니다.
+- Valkey cache load (`SCAN + MGET + JSON parse + router initialize + JWT key register`)는 대략 다음 수준입니다.
+  - `RS256`: `254.4µs/op`, `33945 B/op`, `176 allocs/op`
+  - `ES256`: `241.4µs/op`, `26724 B/op`, `175 allocs/op`
+  - `HS256`: `239.8µs/op`, `26007 B/op`, `176 allocs/op`
+- 현재 구조는 **초기 `LoadCache()` 1회에서 Valkey 데이터를 로컬 메모리 cache(map)에 적재**하고, 이후 request 처리 시에는 로컬 cache만 조회합니다.
+- 따라서 최초 적재 이후에는 Valkey key가 제거되어도 기존에 메모리에 올라온 route 정보로 `/v1/upstream` 요청을 계속 처리할 수 있습니다.
+
 ### 3) common
 
 주요 역할:
@@ -98,4 +114,3 @@ common/
 3. `gateway-controller`가 path를 해석해 업스트림 정보 반환
 4. `gateway`가 반환된 정보로 경로를 재작성하고 업스트림으로 프록시
 5. 응답을 클라이언트에 전달
-

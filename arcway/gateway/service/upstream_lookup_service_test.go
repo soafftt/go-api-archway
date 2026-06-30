@@ -1,13 +1,12 @@
 package service
 
 import (
+	"core/model/rewrite"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	commonModel "gateway/common/model"
-	"gateway/common/model/rewrite"
 	"gateway/config"
 	"gateway/gwe"
 )
@@ -75,7 +74,7 @@ func TestUpstreamLookupService_Lookup_Success(t *testing.T) {
 }
 
 func TestUpstreamLookupService_Lookup_NotFound(t *testing.T) {
-	errResp := commonModel.ErrorResponse{
+	errResp := model.ErrorResponse{
 		Message: "NOT_FOUND_UPSTREAM_PATH",
 		Detail:  "path not found",
 	}
@@ -167,7 +166,7 @@ func BenchmarkLookup_Success(b *testing.B) {
 }
 
 func BenchmarkLookup_NotFound(b *testing.B) {
-	errResp := commonModel.ErrorResponse{
+	errResp := model.ErrorResponse{
 		Message: "NOT_FOUND_UPSTREAM_PATH",
 		Detail:  "path not found",
 	}
