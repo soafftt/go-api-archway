@@ -1,0 +1,482 @@
+import { useEffect, useMemo, useState } from 'react';
+import { previewMatch } from '../lib/api';
+import { buildGatewaySamples, toGatewayPreview } from '../lib/mappers';
+import { validateDraft } from '../lib/validation';
+import { createAuthorizationDraft, createPathDraft, createResourceDraft } from '../lib/defaults';
+import type { AuthorizationDraft, PreviewMatchResult, UpstreamPathDraft, UpstreamResourceDraft, UpstreamServiceDraft } from '../types';
+
+type ServiceEditorProps = {
+  draft: UpstreamServiceDraft;
+  mode: 'create' | 'edit';
+  busy: boolean;
+  message: string | null;
+  error: string | null;
+  onChange: (next: UpstreamServiceDraft) => void;
+  onSave: () => void;
+  onDelete: () => void;
+};
+
+const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const;
+const algorithms = ['RS256', 'RS512', 'ES256', 'ES512', 'HS256', 'HS512'] as const;
+
+export function ServiceEditor({
+  draft,
+  mode,
+  busy,
+  message,
+  error,
+  onChange,
+  onSave,
+  onDelete,
+}: ServiceEditorProps) {
+  const previewJson = JSON.stringify(toGatewayPreview(draft), null, 2);
+  const samples = buildGatewaySamples(draft);
+  const validationErrors = useMemo(() => validateDraft(draft), [draft]);
+  const [gatewayPath, setGatewayPath] = useState('');
+  const [matchResult, setMatchResult] = useState<PreviewMatchResult | null>(null);
+  const [matchError, setMatchError] = useState<string | null>(null);
+  const [matching, setMatching] = useState(false);
+
+  useEffect(() => {
+    setMatchResult(null);
+    setMatchError(null);
+  }, [draft]);
+
+  const handlePreviewMatch = async () => {
+    setMatching(true);
+    setMatchError(null);
+    try {
+      const result = await previewMatch(gatewayPath);
+      setMatchResult(result);
+    } catch (previewError) {
+      setMatchResult(null);
+      setMatchError(previewError instanceof Error ? previewError.message : 'preview 요청에 실패했습니다.');
+    } finally {
+      setMatching(false);
+    }
+  };
+
+  return (
+    <section className="flex min-h-screen flex-1 flex-col bg-slate-950">
+      <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/95 px-6 py-4 backdrop-blur">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-white">
+              {mode === 'create' ? '새 routing rule' : draft.serviceName || 'routing rule'}
+            </h2>
+            <p className="text-sm text-slate-400">gateway-controller 의 Valkey projection 형식에 맞춰 편집합니다.</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {mode === 'edit' ? (
+              <button
+                type="button"
+                onClick={onDelete}
+                disabled={busy}
+                className="rounded-md border border-rose-500/40 px-3 py-2 text-sm font-medium text-rose-200 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                삭제
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={busy}
+              className="rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {busy ? '저장 중...' : '저장'}
+            </button>
+          </div>
+        </div>
+        {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}
+        {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
+      </header>
+
+      <div className="grid flex-1 gap-6 px-6 py-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+        <div className="space-y-6">
+          <Card title="Service">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="serviceName">
+                <input
+                  value={draft.serviceName}
+                  disabled={mode === 'edit'}
+                  onChange={(event) => onChange({ ...draft, serviceName: event.target.value })}
+                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-70"
+                  placeholder="member-api"
+                />
+              </Field>
+              <div className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-300">
+                <div className="font-medium text-white">Gateway lookup segment</div>
+                <div className="mt-1 text-xs text-slate-400">
+                  현재 gateway-controller 규칙에서는 `/v1/{'{serviceName}'}/{'{subDomain}'}/...` 형태로 조회됩니다.
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Client validation">
+            {validationErrors.length === 0 ? (
+              <p className="text-sm text-emerald-300">현재 입력은 기본 클라이언트 검증을 통과했습니다.</p>
+            ) : (
+              <ul className="space-y-2 text-sm text-rose-200">
+                {validationErrors.map((validationError) => (
+                  <li key={validationError} className="rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2">
+                    {validationError}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card title="Authorization">
+            <div className="mb-4">
+              <label className="inline-flex items-center gap-2 text-sm text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={Boolean(draft.authorization)}
+                  onChange={(event) =>
+                    onChange({
+                      ...draft,
+                      authorization: event.target.checked ? createAuthorizationDraft() : undefined,
+                    })
+                  }
+                />
+                service authorization 사용
+              </label>
+            </div>
+            {draft.authorization ? (
+              <AuthorizationFields
+                value={draft.authorization}
+                onChange={(authorization) => onChange({ ...draft, authorization })}
+              />
+            ) : (
+              <p className="text-sm text-slate-400">경로 중 `checkAuthorization` 이 켜진 항목이 있으면 authorization 이 필수입니다.</p>
+            )}
+          </Card>
+
+          <Card
+            title="Resources"
+            action={
+              <button
+                type="button"
+                onClick={() => onChange({ ...draft, resources: [...draft.resources, createResourceDraft()] })}
+                className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-100 transition hover:border-slate-500"
+              >
+                resource 추가
+              </button>
+            }
+          >
+            <div className="space-y-6">
+              {draft.resources.map((resource, resourceIndex) => (
+                <ResourceEditor
+                  key={`${resource.subDomain}-${resourceIndex}`}
+                  resource={resource}
+                  index={resourceIndex}
+                  onChange={(nextResource) => {
+                    const resources = [...draft.resources];
+                    resources[resourceIndex] = nextResource;
+                    onChange({ ...draft, resources });
+                  }}
+                  onRemove={() => {
+                    const resources = draft.resources.filter((_, index) => index !== resourceIndex);
+                    onChange({ ...draft, resources: resources.length > 0 ? resources : [createResourceDraft()] });
+                  }}
+                />
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card title="Gateway path samples">
+            {samples.length === 0 ? (
+              <p className="text-sm text-slate-400">resource/path 를 추가하면 샘플 path 가 생성됩니다.</p>
+            ) : (
+              <ul className="space-y-2 text-sm text-slate-300">
+                {samples.map((sample, index) => (
+                  <li key={`${sample}-${index}`} className="rounded-md bg-slate-950 px-3 py-2 font-mono text-xs text-sky-200">
+                    {sample}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card title="Rewrite preview test">
+            <div className="space-y-3">
+              <p className="text-xs text-slate-400">이 패널은 저장된 규칙 기준으로 gateway-controller의 path-only 매칭 결과를 조회합니다.</p>
+              <Field label="gateway path">
+                <input
+                  value={gatewayPath}
+                  onChange={(event) => setGatewayPath(event.target.value)}
+                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+                  placeholder="/v1/member-api/users/123"
+                />
+              </Field>
+              <button
+                type="button"
+                onClick={() => void handlePreviewMatch()}
+                disabled={matching || gatewayPath.trim() === ''}
+                className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-100 transition hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {matching ? '검사 중...' : 'preview-match 실행'}
+              </button>
+              {matchError ? <p className="text-sm text-rose-300">{matchError}</p> : null}
+              {matchResult ? (
+                <div className="rounded-md border border-slate-800 bg-slate-950 p-4 text-sm text-slate-200">
+                  <div>matched: <span className={matchResult.matched ? 'text-emerald-300' : 'text-rose-300'}>{String(matchResult.matched)}</span></div>
+                  <div className="mt-1">service: {matchResult.serviceName || '-'}</div>
+                  <div className="mt-1">domain: {matchResult.domain || '-'}</div>
+                  <div className="mt-1">host: {matchResult.host || '-'}</div>
+                  <div className="mt-1">upstreamPath: {matchResult.upstreamPath || '-'}</div>
+                  <div className="mt-1">stored method metadata: {matchResult.method || '-'}</div>
+                </div>
+              ) : null}
+            </div>
+          </Card>
+
+          <Card title="Valkey snapshot preview">
+            <pre className="max-h-[560px] overflow-auto rounded-md bg-slate-950 p-4 text-xs text-slate-200">{previewJson}</pre>
+          </Card>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AuthorizationFields({
+  value,
+  onChange,
+}: {
+  value: AuthorizationDraft;
+  onChange: (next: AuthorizationDraft) => void;
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Field label="algorithm">
+        <select
+          value={value.algorithm}
+          onChange={(event) => onChange({ ...value, algorithm: event.target.value as AuthorizationDraft['algorithm'] })}
+          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+        >
+          {algorithms.map((algorithm) => (
+            <option key={algorithm} value={algorithm}>
+              {algorithm}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="userKey">
+        <input
+          value={value.userKey}
+          onChange={(event) => onChange({ ...value, userKey: event.target.value })}
+          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+        />
+      </Field>
+      <Field label="keyData">
+        <input
+          value={value.keyData}
+          onChange={(event) => onChange({ ...value, keyData: event.target.value })}
+          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+          placeholder="base64 encoded JWK / shared secret"
+        />
+      </Field>
+    </div>
+  );
+}
+
+function ResourceEditor({
+  resource,
+  index,
+  onChange,
+  onRemove,
+}: {
+  resource: UpstreamResourceDraft;
+  index: number;
+  onChange: (next: UpstreamResourceDraft) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-5">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div>
+          <h4 className="font-medium text-white">Resource #{index + 1}</h4>
+          <p className="text-xs text-slate-400">subDomain 이 비어 있으면 fallback resource 로 저장됩니다.</p>
+        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200 transition hover:border-rose-500 hover:text-rose-200"
+        >
+          제거
+        </button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="subDomain">
+          <input
+            value={resource.subDomain}
+            onChange={(event) => onChange({ ...resource, subDomain: event.target.value })}
+            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+            placeholder="users 또는 api.example.com"
+          />
+        </Field>
+        <Field label="host">
+          <input
+            value={resource.host}
+            onChange={(event) => onChange({ ...resource, host: event.target.value })}
+            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+            placeholder="member.internal:8080"
+          />
+        </Field>
+      </div>
+
+      <div className="mt-5 overflow-x-auto">
+        <table className="min-w-full text-left text-sm text-slate-200">
+          <thead className="text-xs uppercase tracking-wide text-slate-400">
+            <tr>
+              <th className="pb-2">method</th>
+              <th className="pb-2">path</th>
+              <th className="pb-2">req timeout</th>
+              <th className="pb-2">res timeout</th>
+              <th className="pb-2">cache</th>
+              <th className="pb-2">auth</th>
+              <th className="pb-2"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-800">
+            {resource.paths.map((path, pathIndex) => (
+              <PathRow
+                key={`${path.path}-${pathIndex}`}
+                path={path}
+                onChange={(nextPath) => {
+                  const paths = [...resource.paths];
+                  paths[pathIndex] = nextPath;
+                  onChange({ ...resource, paths });
+                }}
+                onRemove={() => {
+                  const paths = resource.paths.filter((_, indexToRemove) => indexToRemove !== pathIndex);
+                  onChange({ ...resource, paths: paths.length > 0 ? paths : [createPathDraft()] });
+                }}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-4">
+        <button
+          type="button"
+          onClick={() => onChange({ ...resource, paths: [...resource.paths, createPathDraft()] })}
+          className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-100 transition hover:border-slate-500"
+        >
+          path 추가
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PathRow({
+  path,
+  onChange,
+  onRemove,
+}: {
+  path: UpstreamPathDraft;
+  onChange: (next: UpstreamPathDraft) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <tr>
+      <td className="py-3 pr-2">
+        <select
+          value={path.method}
+          onChange={(event) => onChange({ ...path, method: event.target.value })}
+          className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-white"
+        >
+          {methods.map((method) => (
+            <option key={method} value={method}>
+              {method}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td className="py-3 pr-2">
+        <input
+          value={path.path}
+          onChange={(event) => onChange({ ...path, path: event.target.value })}
+          className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-white"
+          placeholder="/{id}"
+        />
+      </td>
+      <td className="py-3 pr-2">
+        <NumberInput value={path.requestTimeout} onChange={(value) => onChange({ ...path, requestTimeout: value })} />
+      </td>
+      <td className="py-3 pr-2">
+        <NumberInput value={path.responseTimeout} onChange={(value) => onChange({ ...path, responseTimeout: value })} />
+      </td>
+      <td className="py-3 pr-2">
+        <NumberInput value={path.cacheTimeout} onChange={(value) => onChange({ ...path, cacheTimeout: value })} />
+      </td>
+      <td className="py-3 pr-2">
+        <label className="inline-flex items-center justify-center">
+          <input
+            type="checkbox"
+            checked={path.checkAuthorization}
+            onChange={(event) => onChange({ ...path, checkAuthorization: event.target.checked })}
+          />
+        </label>
+      </td>
+      <td className="py-3">
+        <button
+          type="button"
+          onClick={onRemove}
+          className="rounded-md border border-slate-700 px-2 py-2 text-xs text-slate-200 transition hover:border-rose-500 hover:text-rose-200"
+        >
+          제거
+        </button>
+      </td>
+    </tr>
+  );
+}
+
+function NumberInput({ value, onChange }: { value: number; onChange: (next: number) => void }) {
+  return (
+    <input
+      type="number"
+      min={0}
+      value={value}
+      onChange={(event) => onChange(Number(event.target.value))}
+      className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-white"
+    />
+  );
+}
+
+function Card({
+  title,
+  children,
+  action,
+}: {
+  title: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-xl shadow-slate-950/20">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-medium text-slate-200">{label}</span>
+      {children}
+    </label>
+  );
+}
