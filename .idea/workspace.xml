@@ -5,33 +5,114 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f240f2fb-5683-4f9b-af8a-6d409ce9f0f6" name="변경" comment="">
+      <change afterPath="$PROJECT_DIR$/arcway/_gateway/cmd/main.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/arcway/_gateway/cmd/wire.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/console/.github/agent.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vscode/launch.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/launch.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gateway-controller/benchmark_results.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gateway-controller/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway-controller/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gateway-controller/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway-controller/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gateway/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/jwt/alg.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/jwt/ecdsa_signer_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/jwt/error.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/jwt/key.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/jwt/parser.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/jwt/rsa_signer_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/jwt/signer.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/model/upstream/benchmark_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/benchmark_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/model/upstream/integration_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/integration_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/model/upstream/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/model/upstream/testdata/ecommerce_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/testdata/ecommerce_config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/model/upstream/testdata/sample_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/upstream/testdata/sample_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/adapter/port/out/cache/valkey_route_cache.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/adapter/port/out/cache/valkey_route_cache.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/application/service/upstream_lookup_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/application/service/upstream_lookup_service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/cmd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/cmd/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/cmd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway/cmd/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/cmd/wire.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway/cmd/wire.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/cmd/wire_gen.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/cmd/wire_gen.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/component/httpclient.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/component/httpclient.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/config/appconfig.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/config/appconfig.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/context/gateway_context.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/context/gateway_context.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/errors/lookup.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/errors/lookup.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/gwe/error_code.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/gwe/error_code.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/model/upstream_lookup_result.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/model/upstream_lookup_result.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/middleware/auth_middleware.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/middleware/auth_middleware.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/middleware/chain_bench_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/middleware/chain_bench_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/middleware/di/middleware_di.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/middleware/di/middleware_di.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/middleware/middleware.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/middleware/middleware.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/middleware/upstream_check_middleware.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/middleware/upstream_check_middleware.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/middleware/upstream_check_middleware_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/middleware/upstream_check_middleware_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/response/json_error_response.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/response/json_error_response.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/reverse_proxy.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/reverse_proxy.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/reverse_proxy_server.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/reverse_proxy_server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/server/reverse_proxy_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/server/reverse_proxy_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/service/upstream_lookup_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/service/upstream_lookup_service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway/service/upstream_lookup_service_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/_gateway/service/upstream_lookup_service_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
   <component name="GOROOT" url="file:///opt/homebrew/opt/go/libexec" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0000000000000282" />
+      <entry key="M2" value="1.0000025505739107" />
+      <entry key="M5" value="1.2089088962114827" />
+      <entry key="M10" value="11.677197361477983" />
+      <entry key="M15" value="42.022081179457565" />
+      <entry key="M30" value="162.13712826531759" />
+      <entry key="H1" value="323.3204396875215" />
+      <entry key="H2" value="458.0210048733413" />
+      <entry key="H4" value="548.9612361475437" />
+      <entry key="D1" value="944.5139224152385" />
+      <entry key="W1" value="2219.664583682651" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="2.2637302410209063E-228" />
+      <entry key="M5" value="5.770358030048957E-91" />
+      <entry key="M10" value="4.9606579921296685E-45" />
+      <entry key="M15" value="1.1214644972211593E-29" />
+      <entry key="M30" value="2.8111437312532017E-14" />
+      <entry key="H1" value="1.495267532226911E-6" />
+      <entry key="H2" value="0.011164356979221211" />
+      <entry key="H4" value="0.9837775571620823" />
+      <entry key="D1" value="68.8824228641584" />
+      <entry key="W1" value="300.25494363288425" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.9526379980439373" />
+      <entry key="MS500" value="0.9903428719330246" />
+      <entry key="S2" value="0.9975769252644544" />
+      <entry key="S5" value="0.9990300646389034" />
+      <entry key="S10" value="0.9995149146655609" />
+      <entry key="S30" value="0.9998382787361629" />
+      <entry key="S60" value="0.9999191360986244" />
+      <entry key="M2" value="0.9999621177280184" />
+      <entry key="M5" value="1.2088901155624465" />
+      <entry key="M10" value="11.677118275923869" />
+      <entry key="M15" value="42.021886896099296" />
+      <entry key="M30" value="162.1367362987436" />
+      <entry key="H1" value="323.3200395370369" />
+      <entry key="H2" value="458.0318757859517" />
+      <entry key="H4" value="549.9446184481524" />
+      <entry key="D1" value="1013.3932722907477" />
+      <entry key="W1" value="2519.917575130166" />
+    </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -44,10 +125,14 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultGoTemplateProperty": "Go File",
+    "Go Build.go build gateway/controller/cmd.executor": "Debug",
+    "Go Test.TestParseLogLevel in core/utils.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.GoLinterPluginOnboardingV2": "true",
     "RunOnceActivity.GoLinterPluginStorageMigration": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.go.analysis.ui.options.defaults": "true",
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
@@ -56,15 +141,93 @@
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "master",
     "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "/Users/soft",
-    "nodejs_package_manager_path": "npm"
+    "last_opened_file_path": "/Users/soft/Documents/dev/repos/kidari-gateway",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "run.configurations.included.in.services": "true",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "ts.external.directory.path": "/Users/soft/Applications/GoLand.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/arcway/_gateway" />
+      <recent name="$PROJECT_DIR$/core/application/in" />
+      <recent name="$PROJECT_DIR$/core/model" />
+      <recent name="$PROJECT_DIR$/arcway/gateway-controller/application/port/in/dto" />
+      <recent name="$PROJECT_DIR$/arcway/gateway-controller/adapter/port/out/cache/di" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="GoApplicationRunConfiguration" />
+      </set>
+    </option>
+    <option name="configurationStatuses">
+      <map>
+        <entry key="GoApplicationRunConfiguration">
+          <value>
+            <map>
+              <entry key="go build gateway/controller/cmd" value="STOPPED" />
+            </map>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="RunManager" selected="Go Build.go build gateway/controller/cmd">
+    <configuration name="go build gateway/cmd" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="kidari-gateway" />
+      <working_directory value="$PROJECT_DIR$/arcway/gateway" />
+      <kind value="PACKAGE" />
+      <package value="gateway/cmd" />
+      <directory value="$PROJECT_DIR$" />
+      <auto_managed_config_id value="$PROJECT_DIR$/arcway/gateway/cmd" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build gateway/controller" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="kidari-gateway" />
+      <working_directory value="$PROJECT_DIR$/arcway/gateway-controller" />
+      <kind value="PACKAGE" />
+      <package value="gateway/controller" />
+      <directory value="$PROJECT_DIR$" />
+      <auto_managed_config_id value="$PROJECT_DIR$/arcway/gateway-controller" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build gateway/controller/cmd" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="kidari-gateway" />
+      <working_directory value="$PROJECT_DIR$/arcway/gateway-controller" />
+      <kind value="PACKAGE" />
+      <package value="gateway/controller/cmd" />
+      <directory value="$PROJECT_DIR$" />
+      <auto_managed_config_id value="$PROJECT_DIR$/arcway/gateway-controller/cmd" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestParseLogLevel in core/utils" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="kidari-gateway" />
+      <working_directory value="$PROJECT_DIR$/core/utils" />
+      <root_directory value="$PROJECT_DIR$/core" />
+      <kind value="PACKAGE" />
+      <package value="core/utils" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestParseLogLevel\E$" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Test.TestParseLogLevel in core/utils" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-72a9cf600ed8-3105c3b11fe0-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-261.22158.291" />
-        <option value="bundled-js-predefined-d6986cc7102b-3bd3a6803838-JavaScript-GO-261.22158.291" />
+        <option value="bundled-gosdk-72a9cf600ed8-3dd3895e5e08-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-261.25134.147" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-GO-261.25134.147" />
       </set>
     </attachedChunks>
   </component>
@@ -80,5 +243,69 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VgoModernizerVersionTracker">
+    <upgrades>
+      <map>
+        <entry key="$PROJECT_DIR$/arcway/gateway-controller/go.mod">
+          <value>
+            <VersionUpgradeInfo>
+              <version>1.26.1</version>
+              <timestamp>1781992427635</timestamp>
+            </VersionUpgradeInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/arcway/gateway-controller/go.work">
+          <value>
+            <VersionUpgradeInfo>
+              <version>1.26.1</version>
+              <timestamp>1781992425076</timestamp>
+            </VersionUpgradeInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/common/go.mod">
+          <value>
+            <VersionUpgradeInfo>
+              <version>1.26.1</version>
+              <timestamp>1782601159115</timestamp>
+            </VersionUpgradeInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/common/go.work">
+          <value>
+            <VersionUpgradeInfo>
+              <version>1.26.1</version>
+              <timestamp>1781906568505</timestamp>
+            </VersionUpgradeInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/core/go.mod">
+          <value>
+            <VersionUpgradeInfo>
+              <version>1.26</version>
+              <timestamp>1781906560683</timestamp>
+            </VersionUpgradeInfo>
+          </value>
+        </entry>
+      </map>
+    </upgrades>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <default-breakpoints>
+        <breakpoint type="DlvErrorBreakpoint" />
+      </default-breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

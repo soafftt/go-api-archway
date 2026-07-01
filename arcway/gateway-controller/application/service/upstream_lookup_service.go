@@ -4,6 +4,7 @@ import (
 	"core/errs"
 	"core/gjwt"
 	"errors"
+	"fmt"
 	"gateway/controller/application/port/in"
 	"gateway/controller/application/port/in/dto"
 	"gateway/controller/application/port/out/cache"
@@ -40,8 +41,14 @@ func (u UpstreamLookupService) LookUp(lookupRequest dto.UpStreamLookupRequest) d
 
 	var userKey any
 	if resourcePath.CheckAuthorization {
+		claimKey := "user_id"
+		if service.Authorization != nil && service.Authorization.UserKey != "" {
+			claimKey = service.Authorization.UserKey
+		}
+
 		id, err := getUserIdAndVerifyAccessToken(
 			lookupRequest.Service,
+			claimKey,
 			lookupRequest.AccessToken,
 		)
 
@@ -67,7 +74,7 @@ func (u UpstreamLookupService) LookUp(lookupRequest dto.UpStreamLookupRequest) d
 /*
 JWT 인증이 필요한경우 JWT 파싱을 시도한다.
 */
-func getUserIdAndVerifyAccessToken(keyService string, accessToken *string) (any, error) {
+func getUserIdAndVerifyAccessToken(keyService string, claimKey string, accessToken *string) (any, error) {
 	codec, err := gjwt.NewCodec(keyService)
 	if err != nil {
 		return nil, err
@@ -80,5 +87,15 @@ func getUserIdAndVerifyAccessToken(keyService string, accessToken *string) (any,
 		return nil, parseResult.Err
 	}
 
-	return parseResult.Claims["user_id"], nil
+	claim, has := parseResult.Claims[claimKey]
+	if !has {
+		return nil, fmt.Errorf("jwt claim %s missing", claimKey)
+	}
+
+	claimValue, ok := claim.(string)
+	if !ok || claimValue == "" {
+		return nil, fmt.Errorf("jwt claim %s must be a non-empty string", claimKey)
+	}
+
+	return claimValue, nil
 }

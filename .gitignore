@@ -31,5 +31,9 @@ go.work.sum
 # .idea/
 # .vscode/
 
+node_modules/
+dist/
+coverage/
+
 **/agents.md
 **/copilot-instructions.md
