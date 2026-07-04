@@ -1,99 +1,102 @@
 package utils
 
 import (
-	"fmt"
-	"io"
-	"log/slog"
-	"os"
-	"strings"
+	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
-const (
-	LogFormatText = "text"
-	LogFormatJSON = "json"
-)
+var _logger Logger
 
-type LoggerConfig struct {
-	Level     slog.Level
-	Format    string
-	AddSource bool
-	Writer    io.Writer
-}
-
+// 로거를 읽는 방법은 이 방법이 최선이 아닐까 싶음. 라고 생각하지만 아닐 수도 있음
 func init() {
-	ConfigureLogger(LoggerConfig{})
-}
-
-func ConfigureLogger(config LoggerConfig) *slog.Logger {
-	logger := NewLogger(config)
-	slog.SetDefault(logger)
-
-	return logger
-}
-
-func NewLogger(config LoggerConfig) *slog.Logger {
-	writer := config.Writer
-	if writer == nil {
-		writer = os.Stderr
+	_ = godotenv.Load()
+	cfg := &config{}
+	if err := env.Parse(cfg); err != nil {
+		panic(err)
 	}
 
-	options := &slog.HandlerOptions{
-		AddSource: config.AddSource,
-		Level:     config.Level,
+	_logger = newLogger(cfg.Environment)
+}
+
+type Logger interface {
+	Debug(message string)
+	DebugW(message string, keyValue ...any)
+	Info(message string)
+	InfoW(message string, keyValue ...any)
+	Warn(message string)
+	WarnW(message string, err error, keyValue ...any)
+	Error(message string)
+	ErrorW(message string, err error, keyValue ...any)
+	Sync()
+}
+
+func GetLogger() Logger {
+	return _logger
+}
+
+type config struct {
+	Environment string `env:"ENV" envDefault:"dev"`
+}
+
+func newLogger(environment string) Logger {
+	var logger *zap.Logger
+	if environment == "local" || environment == "dev" {
+		logger, _ = zap.NewDevelopment()
+
+	} else {
+		logger, _ = zap.NewProduction()
 	}
 
-	switch normalizeLogFormat(config.Format) {
-	case LogFormatJSON:
-		return slog.New(slog.NewJSONHandler(writer, options))
-	default:
-		return slog.New(slog.NewTextHandler(writer, options))
+	logger.WithOptions(
+		zap.AddCaller(),
+		zap.AddStacktrace(zap.WarnLevel),
+	)
+
+	return &stdLogger{
+		zapLogger:        logger,
+		zapSugaredLogger: logger.Sugar(),
 	}
 }
 
-func ParseLogLevel(level string) (slog.Level, error) {
-	switch strings.ToLower(strings.TrimSpace(level)) {
-	case "", "info":
-		return slog.LevelInfo, nil
-	case "debug":
-		return slog.LevelDebug, nil
-	case "warn", "warning":
-		return slog.LevelWarn, nil
-	case "error":
-		return slog.LevelError, nil
-	default:
-		return 0, fmt.Errorf("unsupported log level: %s", level)
-	}
+type stdLogger struct {
+	zapLogger        *zap.Logger
+	zapSugaredLogger *zap.SugaredLogger
 }
 
-func Logger() *slog.Logger {
-	return slog.Default()
+func (s stdLogger) Debug(message string) {
+	s.zapLogger.Debug(message)
 }
 
-func With(args ...any) *slog.Logger {
-	return slog.Default().With(args...)
+func (s stdLogger) DebugW(message string, keyValue ...any) {
+	s.zapSugaredLogger.Debugw(message, keyValue...)
 }
 
-func Debug(msg string, args ...any) {
-	slog.Debug(msg, args...)
+func (s stdLogger) Info(message string) {
+	s.zapSugaredLogger.Info(message)
 }
 
-func Info(msg string, args ...any) {
-	slog.Info(msg, args...)
+func (s stdLogger) InfoW(message string, keyValue ...any) {
+	s.zapSugaredLogger.Infow(message, keyValue...)
 }
 
-func Warn(msg string, args ...any) {
-	slog.Warn(msg, args...)
+func (s stdLogger) Warn(message string) {
+	s.zapSugaredLogger.Warn(message)
 }
 
-func Error(msg string, args ...any) {
-	slog.Error(msg, args...)
+func (s stdLogger) WarnW(message string, err error, keyValue ...any) {
+	s.zapSugaredLogger.Warnw(message, append(keyValue, "error", err)...)
 }
 
-func normalizeLogFormat(format string) string {
-	switch strings.ToLower(strings.TrimSpace(format)) {
-	case LogFormatJSON:
-		return LogFormatJSON
-	default:
-		return LogFormatText
-	}
+func (s stdLogger) Error(message string) {
+	s.zapSugaredLogger.Error(message)
+}
+
+func (s stdLogger) ErrorW(message string, err error, keyValue ...any) {
+	s.zapSugaredLogger.Errorw(message, append(keyValue, "error", err)...)
+}
+
+func (s stdLogger) Sync() {
+	_ = s.zapSugaredLogger.Sync()
+	_ = s.zapLogger.Sync()
 }

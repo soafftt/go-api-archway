@@ -7,6 +7,8 @@ import (
 	"fmt"
 )
 
+var logger = GetLogger()
+
 var chanSource chan ParseRequest = make(chan ParseRequest, 100)
 var chanResult chan ParseResult = make(chan ParseResult, 100)
 
@@ -50,7 +52,7 @@ func parse(jobId int, source <-chan ParseRequest, result chan<- ParseResult) {
 
 		err := json.Unmarshal([]byte(request.payload), service)
 		if err != nil {
-			Error("failed to parse upstream payload", "job_id", jobId, "error", err)
+			logger.ErrorW("failed to parse upstream payload", err, "job_id", jobId)
 			result <- ParseResult{
 				err: fmt.Errorf("parse upstream payload: %w", err),
 			}
@@ -76,7 +78,7 @@ func ParseToUpstreamServiceWithInitialize(sources []ParseRequest) []*upstream.Up
 		parseResult := <-chanResult
 		if parseResult.err != nil {
 			// 에러 처리.
-			Error("err json to upstream service", parseResult.err)
+			logger.ErrorW("err json to upstream service", parseResult.err)
 			panic(parseResult.err)
 		}
 
@@ -90,7 +92,7 @@ func ParseToUpstreamServiceWithInitialize(sources []ParseRequest) []*upstream.Up
 
 			// authorization 처리를 위한 jwt 등록
 			if err := gjwt.RegisterKeyByString(parseResult.service, jwtAuthorization.KeyData, gjwt.JSONKey, jwtAuthorization.Algorithm); err != nil {
-				Error("err jwt key register", err)
+				logger.ErrorW("err jwt key register", err)
 				continue
 			}
 		}
