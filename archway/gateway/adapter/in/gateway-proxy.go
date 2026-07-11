@@ -28,8 +28,7 @@ func newProxyBufferPool() httputil.BufferPool {
 	return &proxyBufferPool{
 		bufferPool: sync.Pool{
 			New: func() any {
-				buffer := make([]byte, proxyBufferSize)
-				return &buffer
+				return new(make([]byte, proxyBufferSize))
 			},
 		},
 	}
@@ -41,10 +40,6 @@ func (p *proxyBufferPool) Get() []byte {
 }
 
 func (p *proxyBufferPool) Put(bytes []byte) {
-	if cap(bytes) < proxyBufferSize {
-		return
-	}
-
 	bytes = bytes[:proxyBufferSize]
 	clear(bytes)
 	p.bufferPool.Put(&bytes)
