@@ -80,7 +80,7 @@ projection payload는 Go `gateway-controller`가 읽는 snake_case JSON 형식�
 
 #### gateway-controller 연동
 
-이번 작업에서 `arcway/gateway-controller`도 같이 보완했다.
+이번 작업에서 `archway/gateway-controller`도 같이 보완했다.
 
 - 시작 시 Valkey route cache `LoadCache()`
 - `ROUTE_OPERATIONS` subscribe
@@ -149,7 +149,7 @@ npm run dev --workspace @console/front
 ### 5. gateway-controller 실행
 
 ```bash
-cd arcway/gateway-controller
+cd archway/gateway-controller
 VALKEY_HOSTS=127.0.0.1:8800 go run ./cmd
 ```
 
@@ -209,7 +209,7 @@ npm run test
 ### gateway-controller 검증
 
 ```bash
-cd arcway/gateway-controller
+cd archway/gateway-controller
 go test ./adapter/port/out/cache ./adapter/config ./cmd
 ```
 

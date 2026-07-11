@@ -39,5 +39,5 @@ coverage/
 **/copilot-instructions.md
 
 .idea
-.DS_Store
+.DS_Store가
 .build

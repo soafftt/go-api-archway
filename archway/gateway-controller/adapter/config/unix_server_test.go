@@ -340,11 +340,11 @@ func buildValkeyBackedServiceJSON(serviceName string, algorithm string, withAuth
 	}`, serviceName, authorizationBlock, withAuth)
 }
 
-func loadValkeyHostsForTest(t testing.TB) []string {
+func loadValkeyMasterHostForTest(t testing.TB) string {
 	t.Helper()
 
-	if hosts := os.Getenv("VALKEY_HOSTS"); hosts != "" {
-		return []string{strings.TrimSpace(strings.Split(hosts, ",")[0])}
+	if host := strings.TrimSpace(os.Getenv("VALKEY_MASTER_HOST")); host != "" {
+		return host
 	}
 
 	_, currentFile, _, ok := runtime.Caller(0)
@@ -361,11 +361,11 @@ func loadValkeyHostsForTest(t testing.TB) []string {
 				t.Fatalf("failed to read .env: %v", err)
 			}
 
-			hosts := envMap["VALKEY_HOSTS"]
-			if hosts == "" {
-				t.Fatalf("VALKEY_HOSTS missing in %s", envPath)
+			host := strings.TrimSpace(envMap["VALKEY_MASTER_HOST"])
+			if host == "" {
+				t.Fatalf("VALKEY_MASTER_HOST missing in %s", envPath)
 			}
-			return []string{strings.TrimSpace(strings.Split(hosts, ",")[0])}
+			return host
 		}
 
 		parent := filepath.Dir(dir)
@@ -375,8 +375,8 @@ func loadValkeyHostsForTest(t testing.TB) []string {
 		dir = parent
 	}
 
-	t.Fatal("failed to locate .env with VALKEY_HOSTS")
-	return nil
+	t.Fatal("failed to locate .env with VALKEY_MASTER_HOST")
+	return ""
 }
 
 func lockValkeyTestScope(t testing.TB) {
@@ -414,24 +414,26 @@ func newLiveRouteCacheWithAuth(t testing.TB, serviceName string, algorithm strin
 	lockValkeyTestScope(t)
 
 	appConfig := &AppConfig{}
-	appConfig.Valkey.Hosts = loadValkeyHostsForTest(t)
+	appConfig.Valkey.MasterHost = loadValkeyMasterHostForTest(t)
 	client := NewValkeyClient(appConfig)
-	t.Cleanup(client.SingleClient.Close)
+	valkeyClient := client.GetClient()
+	t.Cleanup(valkeyClient.Close)
+	t.Cleanup(client.GetSubscribeClient().Close)
 
 	serviceJSON := buildValkeyBackedServiceJSON(serviceName, algorithm, withAuth)
 	key := "UPSTREAM:" + serviceName
-	setCommand := client.SingleClient.B().Set().Key(key).Value(serviceJSON).Build()
-	if err := client.SingleClient.Do(context.Background(), setCommand).Error(); err != nil {
+	setCommand := valkeyClient.B().Set().Key(key).Value(serviceJSON).Build()
+	if err := valkeyClient.Do(context.Background(), setCommand).Error(); err != nil {
 		t.Fatalf("failed to seed valkey route: %v", err)
 	}
 
 	t.Cleanup(func() {
-		delCommand := client.SingleClient.B().Del().Key(key).Build()
-		_ = client.SingleClient.Do(context.Background(), delCommand).Error()
+		delCommand := valkeyClient.B().Del().Key(key).Build()
+		_ = valkeyClient.Do(context.Background(), delCommand).Error()
 	})
 
 	routeCache := &liveRouteCache{
-		client: client.SingleClient,
+		client: valkeyClient,
 		data:   make(map[string]*coreUpstream.UpstreamService),
 	}
 	routeCache.LoadCache()

@@ -20,10 +20,10 @@ RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz" -o /tmp/go
 
 WORKDIR /workspace
 
-COPY arcway /workspace/arcway
+COPY archway /workspace/archway
 COPY core /workspace/core
 
-WORKDIR /workspace/arcway
+WORKDIR /workspace/archway
 
 RUN make build
 
@@ -35,9 +35,9 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY --from=build /workspace/arcway/.build/gateway /app/gateway
-COPY --from=build /workspace/arcway/.build/gateway-controller /app/gateway-controller
-COPY arcway/.docker/entrypoint.sh /app/entrypoint.sh
+COPY --from=build /workspace/archway/.build/gateway /app/gateway
+COPY --from=build /workspace/archway/.build/gateway-controller /app/gateway-controller
+COPY archway/.docker/entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/gateway /app/gateway-controller /app/entrypoint.sh
 

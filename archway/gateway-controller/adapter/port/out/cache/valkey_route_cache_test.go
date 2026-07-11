@@ -124,11 +124,11 @@ func buildGeneratedValkeyServiceJSON(serviceName string, algorithm string, datas
 	return string(raw)
 }
 
-func loadValkeyHostsForTest(t testing.TB) []string {
+func loadValkeyMasterHostForTest(t testing.TB) string {
 	t.Helper()
 
-	if hosts := os.Getenv("VALKEY_HOSTS"); hosts != "" {
-		return []string{strings.TrimSpace(strings.Split(hosts, ",")[0])}
+	if host := strings.TrimSpace(os.Getenv("VALKEY_MASTER_HOST")); host != "" {
+		return host
 	}
 
 	_, currentFile, _, ok := runtime.Caller(0)
@@ -145,11 +145,11 @@ func loadValkeyHostsForTest(t testing.TB) []string {
 				t.Fatalf("failed to read .env: %v", err)
 			}
 
-			hosts := envMap["VALKEY_HOSTS"]
-			if hosts == "" {
-				t.Fatalf("VALKEY_HOSTS missing in %s", envPath)
+			host := strings.TrimSpace(envMap["VALKEY_MASTER_HOST"])
+			if host == "" {
+				t.Fatalf("VALKEY_MASTER_HOST missing in %s", envPath)
 			}
-			return []string{strings.TrimSpace(strings.Split(hosts, ",")[0])}
+			return host
 		}
 
 		parent := filepath.Dir(dir)
@@ -159,8 +159,8 @@ func loadValkeyHostsForTest(t testing.TB) []string {
 		dir = parent
 	}
 
-	t.Fatal("failed to locate .env with VALKEY_HOSTS")
-	return nil
+	t.Fatal("failed to locate .env with VALKEY_MASTER_HOST")
+	return ""
 }
 
 func lockValkeyTestScope(t testing.TB) {
@@ -181,36 +181,39 @@ func lockValkeyTestScope(t testing.TB) {
 	})
 }
 
-func seedValkeyService(t testing.TB, serviceName string, algorithm string) *config.ValkeyClient {
+func seedValkeyService(t testing.TB, serviceName string, algorithm string) config.ValkeyClient {
 	t.Helper()
 	lockValkeyTestScope(t)
 
 	appConfig := &config.AppConfig{}
-	appConfig.Valkey.Hosts = loadValkeyHostsForTest(t)
+	appConfig.Valkey.MasterHost = loadValkeyMasterHostForTest(t)
 	client := config.NewValkeyClient(appConfig)
-	t.Cleanup(client.SingleClient.Close)
+	valkeyClient := client.GetClient()
+	t.Cleanup(valkeyClient.Close)
+	t.Cleanup(client.GetSubscribeClient().Close)
 
 	key := "UPSTREAM:" + serviceName
 	value := buildValkeyBackedServiceJSON(serviceName, algorithm, true)
-	command := client.SingleClient.B().Set().Key(key).Value(value).Build()
-	if err := client.SingleClient.Do(context.Background(), command).Error(); err != nil {
+	command := valkeyClient.B().Set().Key(key).Value(value).Build()
+	if err := valkeyClient.Do(context.Background(), command).Error(); err != nil {
 		t.Fatalf("failed to seed valkey service: %v", err)
 	}
 
 	t.Cleanup(func() {
-		command := client.SingleClient.B().Del().Key(key).Build()
-		_ = client.SingleClient.Do(context.Background(), command).Error()
+		command := valkeyClient.B().Del().Key(key).Build()
+		_ = valkeyClient.Do(context.Background(), command).Error()
 	})
 
 	return client
 }
 
-func deleteValkeyService(t testing.TB, client *config.ValkeyClient, serviceName string) {
+func deleteValkeyService(t testing.TB, client config.ValkeyClient, serviceName string) {
 	t.Helper()
 
+	valkeyClient := client.GetClient()
 	key := "UPSTREAM:" + serviceName
-	command := client.SingleClient.B().Del().Key(key).Build()
-	if err := client.SingleClient.Do(context.Background(), command).Error(); err != nil {
+	command := valkeyClient.B().Del().Key(key).Build()
+	if err := valkeyClient.Do(context.Background(), command).Error(); err != nil {
 		t.Fatalf("failed to delete valkey service: %v", err)
 	}
 }
@@ -220,14 +223,16 @@ func seedGeneratedValkeyServices(
 	dataset generatedRouteDataset,
 	servicePrefix string,
 	algorithm string,
-) (*config.ValkeyClient, []string) {
+) (config.ValkeyClient, []string) {
 	t.Helper()
 	lockValkeyTestScope(t)
 
 	appConfig := &config.AppConfig{}
-	appConfig.Valkey.Hosts = loadValkeyHostsForTest(t)
+	appConfig.Valkey.MasterHost = loadValkeyMasterHostForTest(t)
 	client := config.NewValkeyClient(appConfig)
-	t.Cleanup(client.SingleClient.Close)
+	valkeyClient := client.GetClient()
+	t.Cleanup(valkeyClient.Close)
+	t.Cleanup(client.GetSubscribeClient().Close)
 
 	serviceNames := make([]string, 0, dataset.serviceCount)
 	keys := make([]string, 0, dataset.serviceCount)
@@ -235,8 +240,8 @@ func seedGeneratedValkeyServices(
 		serviceName := fmt.Sprintf("%s-%d", servicePrefix, index)
 		key := "UPSTREAM:" + serviceName
 		value := buildGeneratedValkeyServiceJSON(serviceName, algorithm, dataset)
-		command := client.SingleClient.B().Set().Key(key).Value(value).Build()
-		if err := client.SingleClient.Do(context.Background(), command).Error(); err != nil {
+		command := valkeyClient.B().Set().Key(key).Value(value).Build()
+		if err := valkeyClient.Do(context.Background(), command).Error(); err != nil {
 			t.Fatalf("failed to seed generated valkey service %q: %v", serviceName, err)
 		}
 		serviceNames = append(serviceNames, serviceName)
@@ -247,8 +252,8 @@ func seedGeneratedValkeyServices(
 		if len(keys) == 0 {
 			return
 		}
-		command := client.SingleClient.B().Del().Key(keys...).Build()
-		_ = client.SingleClient.Do(context.Background(), command).Error()
+		command := valkeyClient.B().Del().Key(keys...).Build()
+		_ = valkeyClient.Do(context.Background(), command).Error()
 	})
 
 	return client, serviceNames
@@ -308,6 +313,28 @@ func TestRouteValkeyCacheGet_UsesLocalCacheAfterValkeyDelete(t *testing.T) {
 	}
 }
 
+func TestRouteValkeyCacheLoadCache_LoadsAllScanPages(t *testing.T) {
+	t.Parallel()
+
+	dataset := generatedRouteDataset{
+		serviceCount:   20,
+		subdomains:     1,
+		pathsPerDomain: 1,
+		withAuth:       false,
+	}
+	servicePrefix := "multi-page-scan-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	client, serviceNames := seedGeneratedValkeyServices(t, dataset, servicePrefix, "HS256")
+	routeCache := NewRouteValkeyCache(client)
+
+	routeCache.LoadCache()
+
+	for _, serviceName := range serviceNames {
+		if _, ok := routeCache.Get(serviceName); !ok {
+			t.Fatalf("expected service %q to be loaded from valkey", serviceName)
+		}
+	}
+}
+
 func BenchmarkRouteValkeyCacheLoadCache(b *testing.B) {
 	cases := []struct {
 		name      string
@@ -324,10 +351,11 @@ func BenchmarkRouteValkeyCacheLoadCache(b *testing.B) {
 			serviceName := "member-api-load-" + tc.name + "-" + strconv.FormatInt(time.Now().UnixNano(), 10)
 			client := seedValkeyService(b, serviceName, tc.algorithm)
 			if !tc.withAuth {
+				valkeyClient := client.GetClient()
 				key := "UPSTREAM:" + serviceName
 				value := buildValkeyBackedServiceJSON(serviceName, tc.algorithm, false)
-				command := client.SingleClient.B().Set().Key(key).Value(value).Build()
-				if err := client.SingleClient.Do(context.Background(), command).Error(); err != nil {
+				command := valkeyClient.B().Set().Key(key).Value(value).Build()
+				if err := valkeyClient.Do(context.Background(), command).Error(); err != nil {
 					b.Fatalf("failed to override valkey service without auth: %v", err)
 				}
 			}

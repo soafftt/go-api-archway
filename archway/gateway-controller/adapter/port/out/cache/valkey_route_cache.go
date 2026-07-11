@@ -85,7 +85,7 @@ func (r *RouteValkeyCache) keyScan(
 
 	keys := make([]string, 0)
 	if result.Cursor > 0 {
-		keys, err := r.keyScan(ctx, result.Cursor)
+		keys, err = r.keyScan(ctx, result.Cursor)
 		if err != nil {
 			return keys, err
 		}
