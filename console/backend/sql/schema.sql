@@ -11,15 +11,49 @@ CREATE TABLE IF NOT EXISTS upstream_services (
 CREATE TABLE IF NOT EXISTS upstream_resources (
   id BIGSERIAL PRIMARY KEY,
   service_id BIGINT NOT NULL,
-  sub_domain VARCHAR(255) NOT NULL DEFAULT '',
+  domain VARCHAR(255) NOT NULL DEFAULT '',
   host VARCHAR(255) NOT NULL,
   sort_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_upstream_resources_service
     FOREIGN KEY (service_id) REFERENCES upstream_services(id) ON DELETE CASCADE,
-  CONSTRAINT uq_upstream_resources_service_subdomain UNIQUE (service_id, sub_domain)
+  CONSTRAINT uq_upstream_resources_service_domain UNIQUE (service_id, domain)
 );
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'upstream_resources'
+      AND column_name = 'sub_domain'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'upstream_resources'
+      AND column_name = 'domain'
+  ) THEN
+    ALTER TABLE upstream_resources RENAME COLUMN sub_domain TO domain;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'uq_upstream_resources_service_subdomain'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'uq_upstream_resources_service_domain'
+  ) THEN
+    ALTER TABLE upstream_resources
+      RENAME CONSTRAINT uq_upstream_resources_service_subdomain
+      TO uq_upstream_resources_service_domain;
+  END IF;
+END
+$$;
 
 CREATE TABLE IF NOT EXISTS upstream_paths (
   id BIGSERIAL PRIMARY KEY,

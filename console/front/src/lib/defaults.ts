@@ -21,7 +21,7 @@ export function createPathDraft(): UpstreamPathDraft {
 
 export function createResourceDraft(): UpstreamResourceDraft {
   return {
-    subDomain: '',
+    domain: '',
     host: '',
     paths: [createPathDraft()],
   };

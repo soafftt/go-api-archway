@@ -9,7 +9,7 @@ gateway-controller 에서 사용하는 doamain 규칙은 core/domain/upstream �
     service : 서비스 이름 (e.g. balcony... etc)
         - resources
             - domain (member 와 같은 root 도메인)
-                - subdomain (e.g member/session 와 같은 서브 도메인) 
+                - domain (e.g member/session 와 같은 서브 도메인) 
                     - host - host 명.
                     - upstreamPath
                         - path : uri path

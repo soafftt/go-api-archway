@@ -1,7 +1,7 @@
 import type { UpstreamServiceDraft } from '../types';
 
 const serviceNamePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const subDomainPattern = /^[a-z0-9.-]+$/;
+const domainPattern = /^[a-z0-9.-]+$/;
 const hostPattern = /^[A-Za-z0-9.-]+(?::\d+)?$/;
 const pathSegmentPattern = /^(?:[A-Za-z0-9._~-]+|\{[A-Za-z][A-Za-z0-9_]*\})$/;
 
@@ -12,18 +12,18 @@ export function validateDraft(draft: UpstreamServiceDraft): string[] {
     errors.push('serviceName 은 lowercase kebab-case 형식이어야 합니다.');
   }
 
-  const seenSubDomains = new Set<string>();
+  const seenDomains = new Set<string>();
   let requiresAuthorization = false;
 
   draft.resources.forEach((resource, resourceIndex) => {
-    if (resource.subDomain !== '' && !subDomainPattern.test(resource.subDomain)) {
-      errors.push(`resource #${resourceIndex + 1}: subDomain 은 소문자/숫자/점/하이픈만 허용됩니다.`);
+    if (resource.domain !== '' && !domainPattern.test(resource.domain)) {
+      errors.push(`resource #${resourceIndex + 1}: domain 은 소문자/숫자/점/하이픈만 허용됩니다.`);
     }
 
-    if (seenSubDomains.has(resource.subDomain)) {
-      errors.push(`resource #${resourceIndex + 1}: subDomain 은 service 내에서 중복될 수 없습니다.`);
+    if (seenDomains.has(resource.domain)) {
+      errors.push(`resource #${resourceIndex + 1}: domain 은 service 내에서 중복될 수 없습니다.`);
     }
-    seenSubDomains.add(resource.subDomain);
+    seenDomains.add(resource.domain);
 
     if (!hostPattern.test(resource.host)) {
       errors.push(`resource #${resourceIndex + 1}: host 는 host[:port] 형식이어야 합니다.`);

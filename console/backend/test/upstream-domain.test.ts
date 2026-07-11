@@ -10,7 +10,7 @@ const service = upstreamServiceSchema.parse({
   },
   resources: [
     {
-      subDomain: 'users',
+      domain: 'users',
       host: 'member.internal:8080',
       paths: [
         {
@@ -37,7 +37,7 @@ describe('upstream domain mapping', () => {
       },
       resources: [
         {
-          sub_domain: 'users',
+          domain: 'users',
           host: 'member.internal:8080',
           paths: [
             {
@@ -55,6 +55,15 @@ describe('upstream domain mapping', () => {
   });
 
   it('matches gateway path with parameterized route', () => {
+    expect(previewMatch(service, '/member-api/v1/users/123', 'GET')).toMatchObject({
+      matched: true,
+      host: 'member.internal:8080',
+      upstreamPath: '/{id}',
+      method: 'GET',
+    });
+  });
+
+  it('supports the legacy version-first gateway path', () => {
     expect(previewMatch(service, '/v1/member-api/users/123', 'GET')).toMatchObject({
       matched: true,
       host: 'member.internal:8080',
@@ -75,7 +84,7 @@ describe('upstream domain mapping', () => {
       },
       resources: [
         {
-          subDomain: 'users',
+          domain: 'users',
           host: 'member.internal:8080',
           paths: [
             {

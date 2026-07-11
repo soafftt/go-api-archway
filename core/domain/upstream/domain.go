@@ -1,9 +1,9 @@
 package upstream
 
 type UpstreamResource struct {
-	SubDomain  string              `json:"sub_domain"` // gateway 규칙의 서브도메인 (없으면 빈 문자열)
-	Host       string              `json:"host"`       // service host
-	Paths      []*UpstreamPath     `json:"paths"`      // proxy metadata
+	Domain     string              `json:"domain"` // gateway 규칙의 도메인 (없으면 빈 문자열)
+	Host       string              `json:"host"`   // service host
+	Paths      []*UpstreamPath     `json:"paths"`  // proxy metadata
 	pathRouter *UpStreamPathRouter // internal Trie router for fast path lookup
 }
 

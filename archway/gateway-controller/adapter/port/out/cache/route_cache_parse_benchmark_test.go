@@ -12,7 +12,7 @@ const parseBenchmarkHS256JWKJSON = `{"kty":"oct","k":"c3VwZXItc2VjcmV0LWtleS1mb3
 
 type parseBenchmarkDataset struct {
 	serviceCount   int
-	subdomains     int
+	domains        int
 	pathsPerDomain int
 	withAuth       bool
 }
@@ -23,19 +23,19 @@ func BenchmarkParseToUpstreamServiceWithInitializeScaled(b *testing.B) {
 		dataset parseBenchmarkDataset
 	}{
 		{
-			name: "10-services-x-4-subdomains-x-16-paths",
+			name: "10-services-x-4-domains-x-16-paths",
 			dataset: parseBenchmarkDataset{
 				serviceCount:   10,
-				subdomains:     4,
+				domains:        4,
 				pathsPerDomain: 16,
 				withAuth:       true,
 			},
 		},
 		{
-			name: "50-services-x-8-subdomains-x-32-paths",
+			name: "50-services-x-8-domains-x-32-paths",
 			dataset: parseBenchmarkDataset{
 				serviceCount:   50,
-				subdomains:     8,
+				domains:        8,
 				pathsPerDomain: 32,
 				withAuth:       true,
 			},
@@ -80,13 +80,13 @@ func buildParseBenchmarkServiceJSON(serviceName string, dataset parseBenchmarkDa
 		}
 	}
 
-	resources := make([]map[string]any, 0, dataset.subdomains)
-	for subdomainIndex := 0; subdomainIndex < dataset.subdomains; subdomainIndex++ {
+	resources := make([]map[string]any, 0, dataset.domains)
+	for domainIndex := 0; domainIndex < dataset.domains; domainIndex++ {
 		paths := make([]map[string]any, 0, dataset.pathsPerDomain)
 		for pathIndex := 0; pathIndex < dataset.pathsPerDomain; pathIndex++ {
-			path := fmt.Sprintf("/api/%d/items/%d", subdomainIndex, pathIndex)
+			path := fmt.Sprintf("/api/%d/items/%d", domainIndex, pathIndex)
 			if pathIndex%3 == 0 {
-				path = fmt.Sprintf("/api/%d/users/{userId}/orders/%d", subdomainIndex, pathIndex)
+				path = fmt.Sprintf("/api/%d/users/{userId}/orders/%d", domainIndex, pathIndex)
 			}
 
 			paths = append(paths, map[string]any{
@@ -94,15 +94,15 @@ func buildParseBenchmarkServiceJSON(serviceName string, dataset parseBenchmarkDa
 				"method":              "GET",
 				"request_timeout":     3000 + pathIndex,
 				"response_timeout":    5000 + pathIndex,
-				"check_authorization": dataset.withAuth && subdomainIndex == 0 && pathIndex == dataset.pathsPerDomain-1,
+				"check_authorization": dataset.withAuth && domainIndex == 0 && pathIndex == dataset.pathsPerDomain-1,
 				"cache_timeout":       pathIndex % 10,
 			})
 		}
 
 		resources = append(resources, map[string]any{
-			"sub_domain": fmt.Sprintf("api-%d.example.com", subdomainIndex),
-			"host":       fmt.Sprintf("upstream-%d.internal:8080", subdomainIndex),
-			"paths":      paths,
+			"domain": fmt.Sprintf("api-%d.example.com", domainIndex),
+			"host":   fmt.Sprintf("upstream-%d.internal:8080", domainIndex),
+			"paths":  paths,
 		})
 	}
 

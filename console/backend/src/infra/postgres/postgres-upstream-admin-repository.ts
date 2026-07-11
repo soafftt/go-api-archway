@@ -13,7 +13,7 @@ type ServiceRow = QueryResultRow & {
 
 type ResourceRow = QueryResultRow & {
   id: number;
-  sub_domain: string;
+  domain: string;
   host: string;
   sort_order: number;
 };
@@ -180,7 +180,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
   private async readAggregate(serviceRow: ServiceRow): Promise<UpstreamServiceDocument> {
     const resourceResult = await this.pool.query<ResourceRow>(
       `
-        SELECT id, sub_domain, host, sort_order
+        SELECT id, domain, host, sort_order
         FROM upstream_resources
         WHERE service_id = $1
         ORDER BY sort_order ASC, id ASC
@@ -213,7 +213,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
     );
 
     const resources = resourceResult.rows.map<UpstreamResource>((resourceRow) => ({
-      subDomain: resourceRow.sub_domain,
+      domain: resourceRow.domain,
       host: resourceRow.host,
       paths: pathResult.rows
         .filter((pathRow) => pathRow.resource_id === resourceRow.id)
@@ -246,13 +246,13 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
         `
           INSERT INTO upstream_resources (
             service_id,
-            sub_domain,
+            domain,
             host,
             sort_order
           ) VALUES ($1, $2, $3, $4)
           RETURNING id
         `,
-        [serviceId, resource.subDomain, resource.host, resourceIndex],
+        [serviceId, resource.domain, resource.host, resourceIndex],
       );
 
       for (const [pathIndex, path] of resource.paths.entries()) {

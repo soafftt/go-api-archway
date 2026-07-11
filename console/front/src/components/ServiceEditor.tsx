@@ -108,7 +108,7 @@ export function ServiceEditor({
               <div className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-300">
                 <div className="font-medium text-white">Gateway lookup segment</div>
                 <div className="mt-1 text-xs text-slate-400">
-                  현재 gateway-controller 규칙에서는 `/v1/{'{serviceName}'}/{'{subDomain}'}/...` 형태로 조회됩니다.
+                  현재 gateway-controller 규칙에서는 `/{'{serviceName}'}/v1/{'{domain}'}/...` 형태로 조회됩니다.
                 </div>
               </div>
             </div>
@@ -169,7 +169,7 @@ export function ServiceEditor({
             <div className="space-y-6">
               {draft.resources.map((resource, resourceIndex) => (
                 <ResourceEditor
-                  key={`${resource.subDomain}-${resourceIndex}`}
+                  key={`${resource.domain}-${resourceIndex}`}
                   resource={resource}
                   index={resourceIndex}
                   onChange={(nextResource) => {
@@ -210,7 +210,7 @@ export function ServiceEditor({
                   value={gatewayPath}
                   onChange={(event) => setGatewayPath(event.target.value)}
                   className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-                  placeholder="/v1/member-api/users/123"
+                  placeholder="/member-api/v1/users/123"
                 />
               </Field>
               <button
@@ -301,7 +301,7 @@ function ResourceEditor({
       <div className="mb-4 flex items-center justify-between gap-2">
         <div>
           <h4 className="font-medium text-white">Resource #{index + 1}</h4>
-          <p className="text-xs text-slate-400">subDomain 이 비어 있으면 fallback resource 로 저장됩니다.</p>
+          <p className="text-xs text-slate-400">domain 이 비어 있으면 fallback resource 로 저장됩니다.</p>
         </div>
         <button
           type="button"
@@ -313,10 +313,10 @@ function ResourceEditor({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="subDomain">
+        <Field label="domain">
           <input
-            value={resource.subDomain}
-            onChange={(event) => onChange({ ...resource, subDomain: event.target.value })}
+            value={resource.domain}
+            onChange={(event) => onChange({ ...resource, domain: event.target.value })}
             className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
             placeholder="users 또는 api.example.com"
           />

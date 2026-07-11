@@ -38,7 +38,7 @@ const unixServerBenchmarkServiceJSON = `{
 	"service_name": "member-api",
 	"resources": [
 		{
-			"sub_domain": "api.example.com",
+			"domain": "api.example.com",
 			"host": "upstream-server-1.internal:8080",
 			"paths": [
 				{
@@ -59,7 +59,7 @@ const unixServerBenchmarkServiceJSON = `{
 			]
 		},
 		{
-			"sub_domain": "",
+			"domain": "",
 			"host": "default-user.internal:8081",
 			"paths": [
 				{
@@ -96,7 +96,7 @@ type liveRouteCache struct {
 }
 
 type generatedLookupDataset struct {
-	subdomains     int
+	domains        int
 	pathsPerDomain int
 }
 
@@ -125,29 +125,29 @@ func newGeneratedStubRouteCache(
 
 	service := &coreUpstream.UpstreamService{
 		ServiceName: serviceName,
-		Resources:   make([]*coreUpstream.UpstreamResource, 0, dataset.subdomains),
+		Resources:   make([]*coreUpstream.UpstreamResource, 0, dataset.domains),
 	}
 
 	targetDomain := "api-0.example.com"
 	targetRouteSuffix := ((dataset.pathsPerDomain - 1) / 4) * 4
 
-	for subdomainIndex := 0; subdomainIndex < dataset.subdomains; subdomainIndex++ {
+	for domainIndex := 0; domainIndex < dataset.domains; domainIndex++ {
 		resource := &coreUpstream.UpstreamResource{
-			SubDomain: fmt.Sprintf("api-%d.example.com", subdomainIndex),
-			Host:      fmt.Sprintf("upstream-%d.internal:8080", subdomainIndex),
-			Paths:     make([]*coreUpstream.UpstreamPath, 0, dataset.pathsPerDomain),
+			Domain: fmt.Sprintf("api-%d.example.com", domainIndex),
+			Host:   fmt.Sprintf("upstream-%d.internal:8080", domainIndex),
+			Paths:  make([]*coreUpstream.UpstreamPath, 0, dataset.pathsPerDomain),
 		}
 
 		for pathIndex := 0; pathIndex < dataset.pathsPerDomain; pathIndex++ {
 			path := &coreUpstream.UpstreamPath{
-				Path:            fmt.Sprintf("/api/%d/items/%d", subdomainIndex, pathIndex),
+				Path:            fmt.Sprintf("/api/%d/items/%d", domainIndex, pathIndex),
 				Method:          http.MethodGet,
 				RequestTimeout:  int64(1000 + pathIndex),
 				ResponseTimeout: int64(2000 + pathIndex),
 				CacheTimeout:    int64(pathIndex % 10),
 			}
 			if pathIndex%4 == 0 {
-				path.Path = fmt.Sprintf("/api/%d/users/{userId}/posts/%d", subdomainIndex, pathIndex)
+				path.Path = fmt.Sprintf("/api/%d/users/{userId}/posts/%d", domainIndex, pathIndex)
 			}
 			resource.Paths = append(resource.Paths, path)
 		}
@@ -316,7 +316,7 @@ func buildValkeyBackedServiceJSON(serviceName string, algorithm string, withAuth
 		"service_name": %q,%s
 		"resources": [
 			{
-				"sub_domain": "api.example.com",
+				"domain": "api.example.com",
 				"host": "upstream-server-1.internal:8080",
 				"paths": [
 					{
@@ -790,16 +790,16 @@ func BenchmarkUnixServerLookupRouteOverUnixSocketScaled(b *testing.B) {
 		dataset generatedLookupDataset
 	}{
 		{
-			name: "4-subdomains-x-32-paths",
+			name: "4-domains-x-32-paths",
 			dataset: generatedLookupDataset{
-				subdomains:     4,
+				domains:        4,
 				pathsPerDomain: 32,
 			},
 		},
 		{
-			name: "16-subdomains-x-64-paths",
+			name: "16-domains-x-64-paths",
 			dataset: generatedLookupDataset{
-				subdomains:     16,
+				domains:        16,
 				pathsPerDomain: 64,
 			},
 		},

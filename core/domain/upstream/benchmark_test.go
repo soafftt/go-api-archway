@@ -9,7 +9,7 @@ var benchmarkServiceJSON = []byte(`{
 	"service_name": "member-api",
 	"resources": [
 		{
-			"sub_domain": "api.example.com",
+			"domain": "api.example.com",
 			"host": "upstream-server-1.internal:8080",
 			"paths": [
 				{
@@ -30,7 +30,7 @@ var benchmarkServiceJSON = []byte(`{
 			]
 		},
 		{
-			"sub_domain": "",
+			"domain": "",
 			"host": "default-user.internal:8081",
 			"paths": [
 				{

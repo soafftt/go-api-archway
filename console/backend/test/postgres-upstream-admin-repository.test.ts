@@ -28,7 +28,7 @@ describe('PostgresUpstreamAdminRepository', () => {
         },
         resources: [
           {
-            subDomain: 'users',
+            domain: 'users',
             host: 'member.internal:8080',
             paths: [
               {
@@ -63,7 +63,7 @@ describe('PostgresUpstreamAdminRepository', () => {
       .fn()
       .mockResolvedValueOnce({ rows: [{ service_name: 'member-api' }] })
       .mockResolvedValueOnce({ rows: [{ id: 1, service_name: 'member-api', auth_algorithm: 'RS256', auth_key_data: 'key', auth_user_key: 'user_id', updated_at: new Date() }] })
-      .mockResolvedValueOnce({ rows: [{ id: 10, sub_domain: 'users', host: 'member.internal:8080', sort_order: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 10, domain: 'users', host: 'member.internal:8080', sort_order: 0 }] })
       .mockResolvedValueOnce({ rows: [{ resource_id: 10, path: '/{id}', method: 'GET', request_timeout: 3000, response_timeout: 5000, check_authorization: true, cache_timeout: 0, sort_order: 0 }] });
     const pool = { connect: vi.fn(), query } as never;
     const repository = new PostgresUpstreamAdminRepository(pool);

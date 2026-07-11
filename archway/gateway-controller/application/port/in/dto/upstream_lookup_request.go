@@ -47,18 +47,23 @@ func NewUpStreamLookupRequest(r *http.Request) (UpStreamLookupRequest, error) {
 func parseRewritePath(path string, accessToken *string) (UpStreamLookupRequest, error) {
 	uri, err := url.Parse(path)
 	if err != nil {
-		// path 가 uri 형식이 아님.
 		return NewEmptyUpStreamLookupDto(), err
 	}
 
-	// uri 를 "/" 로 구분함.
 	segments := strings.Split(strings.Trim(uri.Path, "/"), "/")
+	if len(segments) < 4 {
+		return NewEmptyUpStreamLookupDto(), errs.ERR_INVALID_TARGET
+	}
 
-	// 하단은 URI 규칙임.
-	// e.g. v1/member/user/{1} 과 같거나.
-	// e.g. v1/member/users/abcdef/dddd
-	version := segments[0]
-	service := segments[1]
+	serviceIndex := 0
+	versionIndex := 1
+	if isVersionSegment(segments[0]) {
+		serviceIndex = 1
+		versionIndex = 0
+	}
+
+	service := segments[serviceIndex]
+	version := segments[versionIndex]
 	resourceDomain := segments[2]
 	resourcePath := strings.Join(segments[2:], "/")
 
@@ -71,7 +76,18 @@ func parseRewritePath(path string, accessToken *string) (UpStreamLookupRequest, 
 	}, nil
 }
 
-// dmain 을 찾으면, path는 도메인 이후의 경로가 되어야 하기 때문에, 이와 같이 구현
+func isVersionSegment(segment string) bool {
+	if len(segment) < 2 || segment[0] != 'v' {
+		return false
+	}
+	for _, character := range segment[1:] {
+		if character < '0' || character > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 func (u UpStreamLookupRequest) GetRelativePath(isEmptyDomain bool) string {
 	if isEmptyDomain {
 		return u.Path

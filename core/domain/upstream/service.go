@@ -11,11 +11,11 @@ type UpstreamService struct {
 	resourceIndex map[string]*UpstreamResource
 }
 
-// sudomain 을 기준으로 리소스를 조회합니다. 서브도메인이 없는 경우, 빈 문자열("")로 등록된 리소스를 조회합니다.
-func (u *UpstreamService) LookupResourceDomain(subDomain string) (resource *UpstreamResource, isEmptyDomain bool) {
-	resource, ok := u.resourceIndex[subDomain]
+// LookupResourceDomain은 domain을 기준으로 리소스를 조회합니다.
+func (u *UpstreamService) LookupResourceDomain(domain string) (resource *UpstreamResource, isEmptyDomain bool) {
+	resource, ok := u.resourceIndex[domain]
 	if !ok {
-		// 서브도메인이 없는 경우, 빈공백("")으로 등록된 리소스 조회
+		// 일치하는 domain이 없으면 빈 문자열로 등록된 fallback 리소스를 조회합니다.
 		resource, ok = u.resourceIndex[""]
 		if !ok {
 			return nil, false
@@ -25,7 +25,7 @@ func (u *UpstreamService) LookupResourceDomain(subDomain string) (resource *Upst
 	return resource, false
 }
 
-// InitializeResourceIndex 는 서비스의 리소스들을 서브도메인 기준으로 빠르게 조회할 수 있도록 맵을 초기화합니다.
+// InitializeResourceIndex는 서비스의 리소스를 domain 기준으로 조회할 수 있도록 인덱스를 초기화합니다.
 // JSON Unmarshal 후 반드시 호출되어야 합니다.
 func (u *UpstreamService) InitializeResourceIndex() {
 	if u.resourceIndex != nil {
@@ -38,6 +38,6 @@ func (u *UpstreamService) InitializeResourceIndex() {
 			continue
 		}
 		resource.InitializeRouter()
-		u.resourceIndex[resource.SubDomain] = resource
+		u.resourceIndex[resource.Domain] = resource
 	}
 }

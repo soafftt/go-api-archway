@@ -36,23 +36,23 @@ func (b *benchmarkRouteCache) Evict(service string) {
 func BenchmarkUpstreamLookupServiceLookUpScaled(b *testing.B) {
 	cases := []struct {
 		name           string
-		subdomains     int
+		domains        int
 		pathsPerDomain int
 		withAuth       bool
 	}{
 		{
-			name:           "4-subdomains-x-32-paths",
-			subdomains:     4,
+			name:           "4-domains-x-32-paths",
+			domains:        4,
 			pathsPerDomain: 32,
 		},
 		{
-			name:           "16-subdomains-x-64-paths",
-			subdomains:     16,
+			name:           "16-domains-x-64-paths",
+			domains:        16,
 			pathsPerDomain: 64,
 		},
 		{
-			name:           "16-subdomains-x-64-paths-with-hs256",
-			subdomains:     16,
+			name:           "16-domains-x-64-paths-with-hs256",
+			domains:        16,
 			pathsPerDomain: 64,
 			withAuth:       true,
 		},
@@ -61,7 +61,7 @@ func BenchmarkUpstreamLookupServiceLookUpScaled(b *testing.B) {
 	for _, tc := range cases {
 		b.Run(tc.name, func(b *testing.B) {
 			serviceName := fmt.Sprintf("lookup-bench-%d", time.Now().UnixNano())
-			service, domain, requestPath, token := buildLookupBenchmarkService(b, serviceName, tc.subdomains, tc.pathsPerDomain, tc.withAuth)
+			service, domain, requestPath, token := buildLookupBenchmarkService(b, serviceName, tc.domains, tc.pathsPerDomain, tc.withAuth)
 			lookupService := NewUpstreamLookupService(&benchmarkRouteCache{
 				data: map[string]*coreUpstream.UpstreamService{
 					service.ServiceName: service,
@@ -94,7 +94,7 @@ func BenchmarkUpstreamLookupServiceLookUpScaled(b *testing.B) {
 func buildLookupBenchmarkService(
 	tb testing.TB,
 	serviceName string,
-	subdomains int,
+	domains int,
 	pathsPerDomain int,
 	withAuth bool,
 ) (*coreUpstream.UpstreamService, string, string, *string) {
@@ -102,7 +102,7 @@ func buildLookupBenchmarkService(
 
 	service := &coreUpstream.UpstreamService{
 		ServiceName: serviceName,
-		Resources:   make([]*coreUpstream.UpstreamResource, 0, subdomains),
+		Resources:   make([]*coreUpstream.UpstreamResource, 0, domains),
 	}
 
 	if withAuth {
@@ -122,25 +122,25 @@ func buildLookupBenchmarkService(
 
 	targetDomain := "api-0.example.com"
 	targetPathSuffix := ((pathsPerDomain - 1) / 4) * 4
-	for subdomainIndex := 0; subdomainIndex < subdomains; subdomainIndex++ {
+	for domainIndex := 0; domainIndex < domains; domainIndex++ {
 		resource := &coreUpstream.UpstreamResource{
-			SubDomain: fmt.Sprintf("api-%d.example.com", subdomainIndex),
-			Host:      fmt.Sprintf("upstream-%d.internal:8080", subdomainIndex),
-			Paths:     make([]*coreUpstream.UpstreamPath, 0, pathsPerDomain),
+			Domain: fmt.Sprintf("api-%d.example.com", domainIndex),
+			Host:   fmt.Sprintf("upstream-%d.internal:8080", domainIndex),
+			Paths:  make([]*coreUpstream.UpstreamPath, 0, pathsPerDomain),
 		}
 
 		for pathIndex := 0; pathIndex < pathsPerDomain; pathIndex++ {
 			path := &coreUpstream.UpstreamPath{
-				Path:            fmt.Sprintf("/api/%d/items/%d", subdomainIndex, pathIndex),
+				Path:            fmt.Sprintf("/api/%d/items/%d", domainIndex, pathIndex),
 				Method:          http.MethodGet,
 				RequestTimeout:  int64(1000 + pathIndex),
 				ResponseTimeout: int64(2000 + pathIndex),
 				CacheTimeout:    int64(pathIndex % 10),
 			}
 			if pathIndex%4 == 0 {
-				path.Path = fmt.Sprintf("/api/%d/users/{userId}/posts/%d", subdomainIndex, pathIndex)
+				path.Path = fmt.Sprintf("/api/%d/users/{userId}/posts/%d", domainIndex, pathIndex)
 			}
-			if withAuth && subdomainIndex == 0 && pathIndex == targetPathSuffix {
+			if withAuth && domainIndex == 0 && pathIndex == targetPathSuffix {
 				path.CheckAuthorization = true
 			}
 			resource.Paths = append(resource.Paths, path)

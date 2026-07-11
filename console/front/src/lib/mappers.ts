@@ -8,7 +8,7 @@ type GatewayPreview = {
     user_key: string;
   };
   resources: Array<{
-    sub_domain: string;
+    domain: string;
     host: string;
     paths: Array<{
       path: string;
@@ -32,7 +32,7 @@ export function toGatewayPreview(draft: UpstreamServiceDraft): GatewayPreview {
         }
       : undefined,
     resources: draft.resources.map((resource) => ({
-      sub_domain: resource.subDomain,
+      domain: resource.domain,
       host: resource.host,
       paths: resource.paths.map((path) => ({
         path: path.path,
@@ -53,14 +53,14 @@ export function buildGatewaySamples(service: UpstreamServiceDraft): string[] {
 function buildResourceSamples(serviceName: string, resource: UpstreamResourceDraft): string[] {
   return resource.paths.map((path) => {
     const trimmedPath = path.path.replace(/^\/+/, '');
-    const prefix = `/v1/${serviceName || '{service}'}`;
-    if (resource.subDomain.trim() === '') {
+    const prefix = `/${serviceName || '{service}'}/v1`;
+    if (resource.domain.trim() === '') {
       if (trimmedPath === '') {
         return `${prefix}/{domain-required}`;
       }
-      return `${prefix}/${trimmedPath}`.replace(/\/+$/, '');
+      return `${prefix}/{domain-required}/${trimmedPath}`.replace(/\/+$/, '');
     }
 
-    return `${prefix}/${resource.subDomain}/${trimmedPath}`.replace(/\/+$/, '');
+    return `${prefix}/${resource.domain}/${trimmedPath}`.replace(/\/+$/, '');
   });
 }

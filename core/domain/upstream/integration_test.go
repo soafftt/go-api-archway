@@ -12,7 +12,7 @@ func TestUpStreamService_JSONUnmarshal(t *testing.T) {
 		"service_name": "member-api",
 		"resources": [
 			{
-				"sub_domain": "api.example.com",
+				"domain": "api.example.com",
 				"host": "upstream-server-1.internal:8080",
 				"paths": [
 					{
@@ -33,7 +33,7 @@ func TestUpStreamService_JSONUnmarshal(t *testing.T) {
 				]
 			},
 			{
-				"sub_domain": "",
+				"domain": "",
 				"host": "default-user.internal:8081",
 				"paths": [
 					{
@@ -91,7 +91,7 @@ func TestUpStreamService_JSONUnmarshal(t *testing.T) {
 
 	fallbackResource, fallback := service.LookupResourceDomain("unknown.example.com")
 	if fallbackResource == nil {
-		t.Fatal("Expected fallback resource for empty subdomain")
+		t.Fatal("Expected fallback resource for empty domain")
 	}
 	if !fallback {
 		t.Fatal("Expected fallback flag true")
@@ -103,7 +103,7 @@ func TestUpStreamService_ComplexScenario(t *testing.T) {
 		"service_name": "product-api",
 		"resources": [
 			{
-				"sub_domain": "api.shop.com",
+				"domain": "api.shop.com",
 				"host": "product-api.internal:8080",
 				"paths": [
 					{
@@ -195,7 +195,7 @@ func TestUpStreamService_EmptyAndEdgeCases(t *testing.T) {
 			"service_name": "test-api",
 			"resources": [
 				{
-					"sub_domain": "test.com",
+					"domain": "test.com",
 					"host": "localhost:8080",
 					"paths": []
 				}

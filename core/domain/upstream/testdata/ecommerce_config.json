@@ -2,7 +2,7 @@
   "service_name": "ecommerce-api",
   "resources": [
     {
-      "sub_domain": "api.shop.com",
+      "domain": "api.shop.com",
       "host": "product-service.internal:8080",
       "paths": [
         {
@@ -22,7 +22,7 @@
       ]
     },
     {
-      "sub_domain": "cart.shop.com",
+      "domain": "cart.shop.com",
       "host": "cart-service.internal:8082",
       "paths": [
         {
@@ -42,7 +42,7 @@
       ]
     },
     {
-      "sub_domain": "",
+      "domain": "",
       "host": "shop-default.internal:8090",
       "paths": [
         {

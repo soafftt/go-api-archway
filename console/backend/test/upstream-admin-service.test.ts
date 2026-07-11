@@ -12,7 +12,7 @@ const sampleService: UpstreamServiceDocument = {
   },
   resources: [
     {
-      subDomain: 'users',
+      domain: 'users',
       host: 'member.internal:8080',
       paths: [
         {

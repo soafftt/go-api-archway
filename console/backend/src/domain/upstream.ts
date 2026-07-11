@@ -37,9 +37,9 @@ const upstreamPathSchema = z.object({
 });
 
 const upstreamResourceSchema = z.object({
-  subDomain: z
+  domain: z
     .string()
-    .refine((value) => value === '' || /^[a-z0-9.-]+$/.test(value), 'subDomain must be empty or lowercase letters, numbers, dots, hyphens'),
+    .refine((value) => value === '' || /^[a-z0-9.-]+$/.test(value), 'domain must be empty or lowercase letters, numbers, dots, hyphens'),
   host: z.string().refine((value) => /^[A-Za-z0-9.-]+(?::\d+)?$/.test(value), 'host must be host[:port] without scheme'),
   paths: z.array(upstreamPathSchema).min(1, 'at least one path is required'),
 });
@@ -51,18 +51,18 @@ export const upstreamServiceSchema = z
     resources: z.array(upstreamResourceSchema).min(1, 'at least one resource is required'),
   })
   .superRefine((service, ctx) => {
-    const subDomains = new Set<string>();
+    const domains = new Set<string>();
     let requiresAuthorization = false;
 
     service.resources.forEach((resource, resourceIndex) => {
-      if (subDomains.has(resource.subDomain)) {
+      if (domains.has(resource.domain)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: ['resources', resourceIndex, 'subDomain'],
-          message: 'subDomain must be unique within a service',
+          path: ['resources', resourceIndex, 'domain'],
+          message: 'domain must be unique within a service',
         });
       }
-      subDomains.add(resource.subDomain);
+      domains.add(resource.domain);
 
       const pathKeys = new Set<string>();
       resource.paths.forEach((path, pathIndex) => {
@@ -132,7 +132,7 @@ export function toGatewaySnapshot(service: UpstreamServiceDocument) {
         }
       : undefined,
     resources: service.resources.map((resource) => ({
-      sub_domain: resource.subDomain,
+      domain: resource.domain,
       host: resource.host,
       paths: resource.paths.map((path) => ({
         path: path.path,
@@ -165,8 +165,8 @@ export function previewMatch(service: UpstreamServiceDocument, gatewayPath: stri
     return { ...normalized, matched: false };
   }
 
-  const directResource = service.resources.find((resource) => resource.subDomain === normalized.domain);
-  const fallbackResource = service.resources.find((resource) => resource.subDomain === '');
+  const directResource = service.resources.find((resource) => resource.domain === normalized.domain);
+  const fallbackResource = service.resources.find((resource) => resource.domain === '');
   const resource = directResource ?? fallbackResource;
   if (!resource) {
     return { ...normalized, matched: false };
@@ -191,10 +191,14 @@ export function previewMatch(service: UpstreamServiceDocument, gatewayPath: stri
 function parseGatewayPath(input: string) {
   const path = new URL(input, 'http://localhost').pathname;
   const segments = path.split('/').filter(Boolean);
-  const [version = '', serviceName = '', domain = '', ...rest] = segments;
+  const isLegacyPath = /^v\d+$/.test(segments[0] ?? '');
+  const serviceName = isLegacyPath ? (segments[1] ?? '') : (segments[0] ?? '');
+  const version = isLegacyPath ? (segments[0] ?? '') : (segments[1] ?? '');
+  const domain = segments[2] ?? '';
+  const rest = segments.slice(3);
 
   return {
-    isValid: segments.length >= 3,
+    isValid: segments.length >= 4,
     version,
     serviceName,
     domain,

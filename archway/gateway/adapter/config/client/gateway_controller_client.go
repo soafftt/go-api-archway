@@ -24,9 +24,9 @@ func NewGatewayControllerClient(config *config.AppConfig) GatewayControllerClien
 
 	client := http.Client{
 		Transport: &http.Transport{
-			MaxIdleConnsPerHost: 100,
-			MaxConnsPerHost:     100,
-			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 500,
+			MaxConnsPerHost:     500,
+			MaxIdleConns:        500,
 			IdleConnTimeout:     90 * time.Second,
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				return dialer.DialContext(ctx, config.GatewayController.Network, config.GatewayController.UNIX_SOCKET_PATH)

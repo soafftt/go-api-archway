@@ -14,7 +14,7 @@ export type UpstreamPathDraft = {
 };
 
 export type UpstreamResourceDraft = {
-  subDomain: string;
+  domain: string;
   host: string;
   paths: UpstreamPathDraft[];
 };
