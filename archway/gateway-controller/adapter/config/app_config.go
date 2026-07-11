@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/caarlos0/env/v11"
@@ -18,7 +19,7 @@ type AppConfig struct {
 	}
 
 	Valkey struct {
-		MasterHost   string   `env:"VALKEY_MASTER_HOST, require" envDefault:"127.0.0.1:6379"`
+		MasterHost   string   `env:"VALKEY_MASTER_HOST,required" envDefault:"127.0.0.1:6379"`
 		ReplicaHosts []string `env:"VALKEY_REPLICA_HOSTS"`
 		ReadFrom     string   `env:"VALKEY_READFROM" envDefault:"master"`
 	}
@@ -26,7 +27,7 @@ type AppConfig struct {
 
 func NewAppConfig() *AppConfig {
 	err := godotenv.Load(".env")
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		panic(fmt.Errorf("env_load fail  %w", err))
 	}
 

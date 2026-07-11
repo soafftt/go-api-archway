@@ -75,6 +75,10 @@ func (u UpstreamLookupService) LookUp(lookupRequest dto.UpStreamLookupRequest) d
 JWT 인증이 필요한경우 JWT 파싱을 시도한다.
 */
 func getUserIdAndVerifyAccessToken(keyService string, claimKey string, accessToken *string) (any, error) {
+	if accessToken == nil || *accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+
 	codec, err := gjwt.NewCodec(keyService)
 	if err != nil {
 		return nil, err

@@ -18,6 +18,8 @@ import (
 
 var logger = utils.GetLogger()
 
+const proxyBufferSize = 32 * 1024
+
 type proxyBufferPool struct {
 	bufferPool sync.Pool
 }
@@ -26,23 +28,26 @@ func newProxyBufferPool() httputil.BufferPool {
 	return &proxyBufferPool{
 		bufferPool: sync.Pool{
 			New: func() any {
-				return new(make([]byte, 0, 10240))
+				buffer := make([]byte, proxyBufferSize)
+				return &buffer
 			},
 		},
 	}
 }
 
 func (p *proxyBufferPool) Get() []byte {
-	//TODO implement me
 	buffer := p.bufferPool.Get().(*[]byte)
 	return *buffer
 }
 
 func (p *proxyBufferPool) Put(bytes []byte) {
-	clear(bytes)
-	bytes = bytes[:0]
-	p.bufferPool.Put(&bytes)
+	if cap(bytes) < proxyBufferSize {
+		return
+	}
 
+	bytes = bytes[:proxyBufferSize]
+	clear(bytes)
+	p.bufferPool.Put(&bytes)
 }
 
 type GatewayProxy struct {
@@ -94,6 +99,7 @@ func newReversProxy() *httputil.ReverseProxy {
 			proxy.Out.URL = &url.URL{
 				Scheme:   lookupResult.Scheme(),
 				Host:     lookupResult.GetDomain(),
+				Path:     lookupResult.Path,
 				RawQuery: proxy.In.URL.RawQuery,
 			}
 

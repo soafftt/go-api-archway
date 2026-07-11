@@ -28,7 +28,15 @@ func NewUpStreamLookupRequest(r *http.Request) (UpStreamLookupRequest, error) {
 		return NewEmptyUpStreamLookupDto(), errs.ERR_INVALID_TARGET
 	}
 
-	request, err := parseRewritePath(targetUrl, new(r.Header.Get("Authorization")))
+	authorization := strings.TrimSpace(r.Header.Get("Authorization"))
+	authorization = strings.TrimSpace(strings.TrimPrefix(authorization, "Bearer "))
+
+	var accessToken *string
+	if authorization != "" {
+		accessToken = &authorization
+	}
+
+	request, err := parseRewritePath(targetUrl, accessToken)
 	if err != nil {
 		return NewEmptyUpStreamLookupDto(), err
 	}

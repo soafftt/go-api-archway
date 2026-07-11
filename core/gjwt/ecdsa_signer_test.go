@@ -11,7 +11,7 @@ const ecdsaJWKBase64 = "eyJrdHkiOiJFQyIsImQiOiJfVXQtTUhUeGI5RG1NSUhBRTlUNmxWdklE
 var ecdsaJWK, _ = base64.StdEncoding.DecodeString(ecdsaJWKBase64)
 
 func TestRegisterECDSAKey(t *testing.T) {
-	if err := RegisterKey("ecdsa-test", ecdsaJWK, JSONKey); err != nil {
+	if err := RegisterKey("ecdsa-test", ecdsaJWK, JSONKey, ES256.String()); err != nil {
 		t.Fatalf("RegisterKey failed: %v", err)
 	}
 	if !HasKey("ecdsa-test") {
@@ -21,7 +21,10 @@ func TestRegisterECDSAKey(t *testing.T) {
 
 func TestECDSACodecSerialize(t *testing.T) {
 	const name = "ecdsa-serialize"
-	c, err := NewCodec(name, ecdsaJWK, JSONKey, ES256)
+	if err := RegisterKey(name, ecdsaJWK, JSONKey, ES256.String()); err != nil {
+		t.Fatalf("RegisterKey: %v", err)
+	}
+	c, err := NewCodec(name)
 	if err != nil {
 		t.Fatalf("NewCodec: %v", err)
 	}
@@ -45,7 +48,10 @@ func TestECDSACodecSerialize(t *testing.T) {
 
 func TestECDSACodecParse(t *testing.T) {
 	const name = "ecdsa-roundtrip"
-	c, err := NewCodec(name, ecdsaJWK, JSONKey, ES256)
+	if err := RegisterKey(name, ecdsaJWK, JSONKey, ES256.String()); err != nil {
+		t.Fatalf("RegisterKey: %v", err)
+	}
+	c, err := NewCodec(name)
 	if err != nil {
 		t.Fatalf("NewCodec: %v", err)
 	}
@@ -80,13 +86,16 @@ func BenchmarkECDSARegisterKey(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// Idempotent: measures the fast-path (key already cached).
-		_ = RegisterKey("ecdsa-bench-hot", ecdsaJWK, JSONKey)
+		_ = RegisterKey("ecdsa-bench-hot", ecdsaJWK, JSONKey, ES256.String())
 	}
 }
 
 func BenchmarkECDSASerialize(b *testing.B) {
 	const name = "ecdsa-bench-serialize"
-	c, err := NewCodec(name, ecdsaJWK, JSONKey, ES256)
+	if err := RegisterKey(name, ecdsaJWK, JSONKey, ES256.String()); err != nil {
+		b.Fatalf("RegisterKey: %v", err)
+	}
+	c, err := NewCodec(name)
 	if err != nil {
 		b.Fatalf("NewCodec: %v", err)
 	}
@@ -108,7 +117,10 @@ func BenchmarkECDSASerialize(b *testing.B) {
 
 func BenchmarkECDSADeserialize(b *testing.B) {
 	const name = "ecdsa-bench-deserialize"
-	c, err := NewCodec(name, ecdsaJWK, JSONKey, ES256)
+	if err := RegisterKey(name, ecdsaJWK, JSONKey, ES256.String()); err != nil {
+		b.Fatalf("RegisterKey: %v", err)
+	}
+	c, err := NewCodec(name)
 	if err != nil {
 		b.Fatalf("NewCodec: %v", err)
 	}

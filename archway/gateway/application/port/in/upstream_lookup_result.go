@@ -15,7 +15,7 @@ type UpstreamLookupResult struct {
 
 // udp 나 tcp 를 지원하지 않기에 http/s 만 ....
 func (u UpstreamLookupResult) Scheme() string {
-	if ok := strings.Contains(strings.ToLower(u.Host), "https://"); ok {
+	if strings.HasPrefix(strings.ToLower(u.Host), "https://") {
 		return "https"
 	}
 
@@ -24,7 +24,7 @@ func (u UpstreamLookupResult) Scheme() string {
 
 func (u UpstreamLookupResult) GetDomain() string {
 	scheme := u.Scheme()
-	return strings.ReplaceAll(u.Method, scheme+"://", "")
+	return strings.TrimPrefix(u.Host, scheme+"://")
 }
 
 func (u UpstreamLookupResult) FullUrl() string {

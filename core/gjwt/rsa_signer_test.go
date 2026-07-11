@@ -11,7 +11,7 @@ const rsaJWKBase64 = "eyJkIjoiS3V3SjFjbWRzc1pEMjkxTDVxdk5wMVZQTzMySHg4Q0hEekY1dz
 var rsaJWK, _ = base64.StdEncoding.DecodeString(rsaJWKBase64)
 
 func TestRegisterRSAKey(t *testing.T) {
-	if err := RegisterKey("rsa-test", rsaJWK, JSONKey); err != nil {
+	if err := RegisterKey("rsa-test", rsaJWK, JSONKey, RS256.String()); err != nil {
 		t.Fatalf("RegisterKey failed: %v", err)
 	}
 	if !HasKey("rsa-test") {
@@ -21,7 +21,10 @@ func TestRegisterRSAKey(t *testing.T) {
 
 func TestRSACodecSerialize(t *testing.T) {
 	const name = "rsa-serialize"
-	c, err := NewCodec(name, rsaJWK, JSONKey, RS256)
+	if err := RegisterKey(name, rsaJWK, JSONKey, RS256.String()); err != nil {
+		t.Fatalf("RegisterKey: %v", err)
+	}
+	c, err := NewCodec(name)
 	if err != nil {
 		t.Fatalf("NewCodec: %v", err)
 	}
@@ -45,7 +48,10 @@ func TestRSACodecSerialize(t *testing.T) {
 
 func TestRSACodecParse(t *testing.T) {
 	const name = "rsa-roundtrip"
-	c, err := NewCodec(name, rsaJWK, JSONKey, RS256)
+	if err := RegisterKey(name, rsaJWK, JSONKey, RS256.String()); err != nil {
+		t.Fatalf("RegisterKey: %v", err)
+	}
+	c, err := NewCodec(name)
 	if err != nil {
 		t.Fatalf("NewCodec: %v", err)
 	}
@@ -77,7 +83,10 @@ func TestRSACodecParse(t *testing.T) {
 
 func BenchmarkRSASerialize(b *testing.B) {
 	const name = "rsa-bench-serialize"
-	c, err := NewCodec(name, rsaJWK, JSONKey, RS256)
+	if err := RegisterKey(name, rsaJWK, JSONKey, RS256.String()); err != nil {
+		b.Fatalf("RegisterKey: %v", err)
+	}
+	c, err := NewCodec(name)
 	if err != nil {
 		b.Fatalf("NewCodec: %v", err)
 	}
@@ -99,7 +108,10 @@ func BenchmarkRSASerialize(b *testing.B) {
 
 func BenchmarkRSADeserialize(b *testing.B) {
 	const name = "rsa-bench-deserialize"
-	c, err := NewCodec(name, rsaJWK, JSONKey, RS256)
+	if err := RegisterKey(name, rsaJWK, JSONKey, RS256.String()); err != nil {
+		b.Fatalf("RegisterKey: %v", err)
+	}
+	c, err := NewCodec(name)
 	if err != nil {
 		b.Fatalf("NewCodec: %v", err)
 	}
