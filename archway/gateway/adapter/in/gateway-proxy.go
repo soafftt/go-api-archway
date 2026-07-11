@@ -18,7 +18,7 @@ import (
 
 var logger = utils.GetLogger()
 
-const proxyBufferSize = 32 * 1024
+const proxyBufferSize = 10 * 10 * 1024
 
 type proxyBufferPool struct {
 	bufferPool sync.Pool
