@@ -56,7 +56,7 @@ func InitializeGatewayControllerApp() (*GatewayControllerApp, error) {
 
 type GatewayControllerApp struct {
 	app                *config.AppConfig
-	valkeyClient       *config.ValkeyClient
+	valkeyClient       config.ValkeyClient
 	adapterPortOut     *di2.AdapterPortOutDi
 	serviceProvider    *di3.ServiceProvider
 	unixRouterProvider *di4.UnixRouterProvider

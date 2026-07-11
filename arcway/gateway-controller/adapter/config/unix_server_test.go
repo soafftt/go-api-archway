@@ -95,6 +95,11 @@ type liveRouteCache struct {
 	data   map[string]*coreUpstream.UpstreamService
 }
 
+type generatedLookupDataset struct {
+	subdomains     int
+	pathsPerDomain int
+}
+
 func newStubRouteCache(t testing.TB) *stubRouteCache {
 	t.Helper()
 
@@ -109,6 +114,56 @@ func newStubRouteCache(t testing.TB) *stubRouteCache {
 			service.ServiceName: &service,
 		},
 	}
+}
+
+func newGeneratedStubRouteCache(
+	t testing.TB,
+	serviceName string,
+	dataset generatedLookupDataset,
+) (*stubRouteCache, string, string) {
+	t.Helper()
+
+	service := &coreUpstream.UpstreamService{
+		ServiceName: serviceName,
+		Resources:   make([]*coreUpstream.UpstreamResource, 0, dataset.subdomains),
+	}
+
+	targetDomain := "api-0.example.com"
+	targetRouteSuffix := ((dataset.pathsPerDomain - 1) / 4) * 4
+
+	for subdomainIndex := 0; subdomainIndex < dataset.subdomains; subdomainIndex++ {
+		resource := &coreUpstream.UpstreamResource{
+			SubDomain: fmt.Sprintf("api-%d.example.com", subdomainIndex),
+			Host:      fmt.Sprintf("upstream-%d.internal:8080", subdomainIndex),
+			Paths:     make([]*coreUpstream.UpstreamPath, 0, dataset.pathsPerDomain),
+		}
+
+		for pathIndex := 0; pathIndex < dataset.pathsPerDomain; pathIndex++ {
+			path := &coreUpstream.UpstreamPath{
+				Path:            fmt.Sprintf("/api/%d/items/%d", subdomainIndex, pathIndex),
+				Method:          http.MethodGet,
+				RequestTimeout:  int64(1000 + pathIndex),
+				ResponseTimeout: int64(2000 + pathIndex),
+				CacheTimeout:    int64(pathIndex % 10),
+			}
+			if pathIndex%4 == 0 {
+				path.Path = fmt.Sprintf("/api/%d/users/{userId}/posts/%d", subdomainIndex, pathIndex)
+			}
+			resource.Paths = append(resource.Paths, path)
+		}
+
+		service.Resources = append(service.Resources, resource)
+	}
+
+	service.InitializeResourceIndex()
+
+	return &stubRouteCache{
+			data: map[string]*coreUpstream.UpstreamService{
+				service.ServiceName: service,
+			},
+		},
+		targetDomain,
+		fmt.Sprintf("/v1/%s/%s/api/0/users/123/posts/%d", serviceName, targetDomain, targetRouteSuffix)
 }
 
 func (s *stubRouteCache) LoadCache() {}
@@ -246,14 +301,19 @@ func keyDataForAlgorithm(algorithm string) string {
 	}
 }
 
-func buildValkeyBackedServiceJSON(serviceName string, algorithm string) string {
-	return fmt.Sprintf(`{
-		"service_name": %q,
+func buildValkeyBackedServiceJSON(serviceName string, algorithm string, withAuth bool) string {
+	authorizationBlock := ""
+	if withAuth {
+		authorizationBlock = fmt.Sprintf(`
 		"authorization": {
 			"algorithm": %q,
 			"key_data": %q,
 			"user_key": "user_id"
-		},
+		},`, algorithm, keyDataForAlgorithm(algorithm))
+	}
+
+	return fmt.Sprintf(`{
+		"service_name": %q,%s
 		"resources": [
 			{
 				"sub_domain": "api.example.com",
@@ -272,12 +332,12 @@ func buildValkeyBackedServiceJSON(serviceName string, algorithm string) string {
 						"method": "GET",
 						"request_timeout": 3000,
 						"response_timeout": 5000,
-						"check_authorization": true
+						"check_authorization": %t
 					}
 				]
 			}
 		]
-	}`, serviceName, algorithm, keyDataForAlgorithm(algorithm))
+	}`, serviceName, authorizationBlock, withAuth)
 }
 
 func loadValkeyHostsForTest(t testing.TB) []string {
@@ -342,6 +402,14 @@ func newLiveRouteCache(t testing.TB, serviceName string) *liveRouteCache {
 }
 
 func newLiveRouteCacheWithAlgorithm(t testing.TB, serviceName string, algorithm string) *liveRouteCache {
+	return newLiveRouteCacheWithAuth(t, serviceName, algorithm, true)
+}
+
+func newLiveRouteCacheWithoutAuth(t testing.TB, serviceName string) *liveRouteCache {
+	return newLiveRouteCacheWithAuth(t, serviceName, "HS256", false)
+}
+
+func newLiveRouteCacheWithAuth(t testing.TB, serviceName string, algorithm string, withAuth bool) *liveRouteCache {
 	t.Helper()
 	lockValkeyTestScope(t)
 
@@ -350,7 +418,7 @@ func newLiveRouteCacheWithAlgorithm(t testing.TB, serviceName string, algorithm 
 	client := NewValkeyClient(appConfig)
 	t.Cleanup(client.SingleClient.Close)
 
-	serviceJSON := buildValkeyBackedServiceJSON(serviceName, algorithm)
+	serviceJSON := buildValkeyBackedServiceJSON(serviceName, algorithm, withAuth)
 	key := "UPSTREAM:" + serviceName
 	setCommand := client.SingleClient.B().Set().Key(key).Value(serviceJSON).Build()
 	if err := client.SingleClient.Do(context.Background(), setCommand).Error(); err != nil {
@@ -714,13 +782,127 @@ func BenchmarkUnixServerLookupRouteOverUnixSocket(b *testing.B) {
 	}
 }
 
+func BenchmarkUnixServerLookupRouteOverUnixSocketScaled(b *testing.B) {
+	cases := []struct {
+		name    string
+		dataset generatedLookupDataset
+	}{
+		{
+			name: "4-subdomains-x-32-paths",
+			dataset: generatedLookupDataset{
+				subdomains:     4,
+				pathsPerDomain: 32,
+			},
+		},
+		{
+			name: "16-subdomains-x-64-paths",
+			dataset: generatedLookupDataset{
+				subdomains:     16,
+				pathsPerDomain: 64,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			serviceName := "member-api-scale-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+			routeCache, _, targetPath := newGeneratedStubRouteCache(b, serviceName, tc.dataset)
+
+			socketPath := filepath.Join(os.TempDir(), "gwc-"+strconv.FormatInt(time.Now().UnixNano(), 10)+".sock")
+			server := newLookupUnixServerWithRouteCache(socketPath, routeCache)
+
+			listener, err := net.Listen("unix", socketPath)
+			if err != nil {
+				b.Fatalf("listen unix socket: %v", err)
+			}
+
+			httpServer := server.newHTTPServer(server.newServeMux())
+			go func() {
+				_ = httpServer.Serve(listener)
+			}()
+
+			b.Cleanup(func() {
+				shutdownContext, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+
+				_ = httpServer.Shutdown(shutdownContext)
+				_ = os.Remove(socketPath)
+			})
+
+			client := newUnixSocketHTTPClient(socketPath)
+			b.Cleanup(func() {
+				if transport, ok := client.Transport.(*http.Transport); ok {
+					transport.CloseIdleConnections()
+				}
+			})
+
+			targetURL := "http://unix/v1/upstream?path=" + targetPath
+			waitForUnixServer(b, client, targetURL)
+
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				resp, err := client.Get(targetURL)
+				if err != nil {
+					b.Fatalf("request failed: %v", err)
+				}
+
+				_, err = io.Copy(io.Discard, resp.Body)
+				_ = resp.Body.Close()
+				if err != nil {
+					b.Fatalf("read body failed: %v", err)
+				}
+
+				if resp.StatusCode != http.StatusOK {
+					b.Fatalf("expected status %d, got %d", http.StatusOK, resp.StatusCode)
+				}
+			}
+		})
+	}
+}
+
 func BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWT(b *testing.B) {
-	algorithms := []string{"RS256", "ES256", "HS256"}
-	for _, algorithm := range algorithms {
-		b.Run(algorithm, func(b *testing.B) {
-			serviceName := "member-api-auth-bench-" + algorithm + "-" + strconv.FormatInt(time.Now().UnixNano(), 10)
-			routeCache := newLiveRouteCacheWithAlgorithm(b, serviceName, algorithm)
-			token := newJWTAccessToken(b, serviceName, "bench-user")
+	cases := []struct {
+		name       string
+		algorithm  string
+		withAuth   bool
+		targetPath string
+	}{
+		{
+			name:       "NoJWT",
+			algorithm:  "HS256",
+			withAuth:   false,
+			targetPath: "/api/users",
+		},
+		{
+			name:       "RS256",
+			algorithm:  "RS256",
+			withAuth:   true,
+			targetPath: "/api/users/123/posts/456",
+		},
+		{
+			name:       "ES256",
+			algorithm:  "ES256",
+			withAuth:   true,
+			targetPath: "/api/users/123/posts/456",
+		},
+		{
+			name:       "HS256",
+			algorithm:  "HS256",
+			withAuth:   true,
+			targetPath: "/api/users/123/posts/456",
+		},
+	}
+
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			serviceName := "member-api-auth-bench-" + tc.name + "-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+			routeCache := newLiveRouteCacheWithAuth(b, serviceName, tc.algorithm, tc.withAuth)
+
+			var token string
+			if tc.withAuth {
+				token = newJWTAccessToken(b, serviceName, "bench-user")
+			}
 
 			socketPath := filepath.Join(os.TempDir(), "gwc-"+strconv.FormatInt(time.Now().UnixNano(), 10)+".sock")
 			server := newLookupUnixServerWithRouteCache(socketPath, routeCache)
@@ -753,7 +935,7 @@ func BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWT(b *testing.B) 
 			readinessURL := "http://unix/v1/upstream?path=/v1/" + serviceName + "/api.example.com/api/users"
 			waitForUnixServer(b, client, readinessURL)
 
-			targetURL := "http://unix/v1/upstream?path=/v1/" + serviceName + "/api.example.com/api/users/123/posts/456"
+			targetURL := "http://unix/v1/upstream?path=/v1/" + serviceName + "/api.example.com" + tc.targetPath
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
@@ -761,7 +943,9 @@ func BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWT(b *testing.B) 
 				if err != nil {
 					b.Fatalf("create request failed: %v", err)
 				}
-				request.Header.Set("Authorization", token)
+				if tc.withAuth {
+					request.Header.Set("Authorization", token)
+				}
 
 				resp, err := client.Do(request)
 				if err != nil {

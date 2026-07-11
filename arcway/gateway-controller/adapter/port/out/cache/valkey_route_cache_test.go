@@ -4,6 +4,7 @@ import (
 	"context"
 	"core/gjwt"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,6 +24,13 @@ const rsaJWKBase64 = "eyJkIjoiS3V3SjFjbWRzc1pEMjkxTDVxdk5wMVZQTzMySHg4Q0hEekY1dz
 const ecdsaJWKBase64 = "eyJrdHkiOiJFQyIsImQiOiJfVXQtTUhUeGI5RG1NSUhBRTlUNmxWdklES3BlRGFZeHN0M05iUVE2a3BRIiwiY3J2IjoiUC0yNTYiLCJraWQiOiIzWWptSk53MjRrQ1BRT0M0aFJJYUU1ZkcwQmtTOHZvblNzWjN3ZW8yWVhFIiwieCI6IllQbmctaUlWY1R1M1ppYTFkNGdaZWtpM0ZsUzNvM2J4eUwtb2RUclNpUDAiLCJ5IjoiTmlPS1hqQWJPS2tTTGNyYlVia1dnUVQ3VG5YYjN2UXhlYTdhV2pvdW5SQSJ9"
 const hs256JWKJSON = `{"kty":"oct","k":"c3VwZXItc2VjcmV0LWtleS1mb3ItaHMyNTY","alg":"HS256"}`
 
+type generatedRouteDataset struct {
+	serviceCount   int
+	subdomains     int
+	pathsPerDomain int
+	withAuth       bool
+}
+
 func keyDataForAlgorithm(algorithm string) string {
 	switch algorithm {
 	case "RS256":
@@ -36,14 +44,19 @@ func keyDataForAlgorithm(algorithm string) string {
 	}
 }
 
-func buildValkeyBackedServiceJSON(serviceName string, algorithm string) string {
-	return fmt.Sprintf(`{
-		"service_name": %q,
+func buildValkeyBackedServiceJSON(serviceName string, algorithm string, withAuth bool) string {
+	authorizationBlock := ""
+	if withAuth {
+		authorizationBlock = fmt.Sprintf(`
 		"authorization": {
 			"algorithm": %q,
 			"key_data": %q,
 			"user_key": "user_id"
-		},
+		},`, algorithm, keyDataForAlgorithm(algorithm))
+	}
+
+	return fmt.Sprintf(`{
+		"service_name": %q,%s
 		"resources": [
 			{
 				"sub_domain": "api.example.com",
@@ -54,12 +67,61 @@ func buildValkeyBackedServiceJSON(serviceName string, algorithm string) string {
 						"method": "GET",
 						"request_timeout": 3000,
 						"response_timeout": 5000,
-						"check_authorization": true
+						"check_authorization": %t
 					}
 				]
 			}
 		]
-	}`, serviceName, algorithm, keyDataForAlgorithm(algorithm))
+	}`, serviceName, authorizationBlock, withAuth)
+}
+
+func buildGeneratedValkeyServiceJSON(serviceName string, algorithm string, dataset generatedRouteDataset) string {
+	payload := map[string]any{
+		"service_name": serviceName,
+	}
+
+	if dataset.withAuth {
+		payload["authorization"] = map[string]any{
+			"algorithm": algorithm,
+			"key_data":  keyDataForAlgorithm(algorithm),
+			"user_key":  "user_id",
+		}
+	}
+
+	resources := make([]map[string]any, 0, dataset.subdomains)
+	for subdomainIndex := 0; subdomainIndex < dataset.subdomains; subdomainIndex++ {
+		paths := make([]map[string]any, 0, dataset.pathsPerDomain)
+		for pathIndex := 0; pathIndex < dataset.pathsPerDomain; pathIndex++ {
+			path := fmt.Sprintf("/api/%d/items/%d", subdomainIndex, pathIndex)
+			if pathIndex%3 == 0 {
+				path = fmt.Sprintf("/api/%d/users/{userId}/orders/%d", subdomainIndex, pathIndex)
+			}
+
+			paths = append(paths, map[string]any{
+				"path":                path,
+				"method":              "GET",
+				"request_timeout":     3000 + pathIndex,
+				"response_timeout":    5000 + pathIndex,
+				"check_authorization": dataset.withAuth && subdomainIndex == 0 && pathIndex == dataset.pathsPerDomain-1,
+				"cache_timeout":       pathIndex % 10,
+			})
+		}
+
+		resources = append(resources, map[string]any{
+			"sub_domain": fmt.Sprintf("api-%d.example.com", subdomainIndex),
+			"host":       fmt.Sprintf("upstream-%d.internal:8080", subdomainIndex),
+			"paths":      paths,
+		})
+	}
+
+	payload["resources"] = resources
+
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		panic(fmt.Errorf("marshal generated valkey service json: %w", err))
+	}
+
+	return string(raw)
 }
 
 func loadValkeyHostsForTest(t testing.TB) []string {
@@ -129,7 +191,7 @@ func seedValkeyService(t testing.TB, serviceName string, algorithm string) *conf
 	t.Cleanup(client.SingleClient.Close)
 
 	key := "UPSTREAM:" + serviceName
-	value := buildValkeyBackedServiceJSON(serviceName, algorithm)
+	value := buildValkeyBackedServiceJSON(serviceName, algorithm, true)
 	command := client.SingleClient.B().Set().Key(key).Value(value).Build()
 	if err := client.SingleClient.Do(context.Background(), command).Error(); err != nil {
 		t.Fatalf("failed to seed valkey service: %v", err)
@@ -151,6 +213,45 @@ func deleteValkeyService(t testing.TB, client *config.ValkeyClient, serviceName 
 	if err := client.SingleClient.Do(context.Background(), command).Error(); err != nil {
 		t.Fatalf("failed to delete valkey service: %v", err)
 	}
+}
+
+func seedGeneratedValkeyServices(
+	t testing.TB,
+	dataset generatedRouteDataset,
+	servicePrefix string,
+	algorithm string,
+) (*config.ValkeyClient, []string) {
+	t.Helper()
+	lockValkeyTestScope(t)
+
+	appConfig := &config.AppConfig{}
+	appConfig.Valkey.Hosts = loadValkeyHostsForTest(t)
+	client := config.NewValkeyClient(appConfig)
+	t.Cleanup(client.SingleClient.Close)
+
+	serviceNames := make([]string, 0, dataset.serviceCount)
+	keys := make([]string, 0, dataset.serviceCount)
+	for index := 0; index < dataset.serviceCount; index++ {
+		serviceName := fmt.Sprintf("%s-%d", servicePrefix, index)
+		key := "UPSTREAM:" + serviceName
+		value := buildGeneratedValkeyServiceJSON(serviceName, algorithm, dataset)
+		command := client.SingleClient.B().Set().Key(key).Value(value).Build()
+		if err := client.SingleClient.Do(context.Background(), command).Error(); err != nil {
+			t.Fatalf("failed to seed generated valkey service %q: %v", serviceName, err)
+		}
+		serviceNames = append(serviceNames, serviceName)
+		keys = append(keys, key)
+	}
+
+	t.Cleanup(func() {
+		if len(keys) == 0 {
+			return
+		}
+		command := client.SingleClient.B().Del().Key(keys...).Build()
+		_ = client.SingleClient.Do(context.Background(), command).Error()
+	})
+
+	return client, serviceNames
 }
 
 func TestRouteValkeyCacheLoadCache_LoadsServiceAndRegistersJWTKey(t *testing.T) {
@@ -208,10 +309,28 @@ func TestRouteValkeyCacheGet_UsesLocalCacheAfterValkeyDelete(t *testing.T) {
 }
 
 func BenchmarkRouteValkeyCacheLoadCache(b *testing.B) {
-	for _, algorithm := range []string{"RS256", "ES256", "HS256"} {
-		b.Run(algorithm, func(b *testing.B) {
-			serviceName := "member-api-load-" + algorithm + "-" + strconv.FormatInt(time.Now().UnixNano(), 10)
-			client := seedValkeyService(b, serviceName, algorithm)
+	cases := []struct {
+		name      string
+		algorithm string
+		withAuth  bool
+	}{
+		{name: "NoJWT", algorithm: "HS256", withAuth: false},
+		{name: "RS256", algorithm: "RS256", withAuth: true},
+		{name: "ES256", algorithm: "ES256", withAuth: true},
+		{name: "HS256", algorithm: "HS256", withAuth: true},
+	}
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			serviceName := "member-api-load-" + tc.name + "-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+			client := seedValkeyService(b, serviceName, tc.algorithm)
+			if !tc.withAuth {
+				key := "UPSTREAM:" + serviceName
+				value := buildValkeyBackedServiceJSON(serviceName, tc.algorithm, false)
+				command := client.SingleClient.B().Set().Key(key).Value(value).Build()
+				if err := client.SingleClient.Do(context.Background(), command).Error(); err != nil {
+					b.Fatalf("failed to override valkey service without auth: %v", err)
+				}
+			}
 
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -221,6 +340,56 @@ func BenchmarkRouteValkeyCacheLoadCache(b *testing.B) {
 
 				if _, ok := routeCache.Get(serviceName); !ok {
 					b.Fatalf("expected service %q to be loaded from valkey", serviceName)
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkRouteValkeyCacheLoadCacheScaled(b *testing.B) {
+	cases := []struct {
+		name      string
+		algorithm string
+		dataset   generatedRouteDataset
+	}{
+		{
+			name:      "10-services-x-4-subdomains-x-16-paths",
+			algorithm: "HS256",
+			dataset: generatedRouteDataset{
+				serviceCount:   10,
+				subdomains:     4,
+				pathsPerDomain: 16,
+				withAuth:       true,
+			},
+		},
+		{
+			name:      "50-services-x-8-subdomains-x-32-paths",
+			algorithm: "HS256",
+			dataset: generatedRouteDataset{
+				serviceCount:   50,
+				subdomains:     8,
+				pathsPerDomain: 32,
+				withAuth:       true,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			servicePrefix := "generated-load-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+			client, serviceNames := seedGeneratedValkeyServices(b, tc.dataset, servicePrefix, tc.algorithm)
+
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				routeCache := NewRouteValkeyCache(client)
+				routeCache.LoadCache()
+
+				if _, ok := routeCache.Get(serviceNames[0]); !ok {
+					b.Fatalf("expected service %q to be loaded from valkey", serviceNames[0])
+				}
+				if _, ok := routeCache.Get(serviceNames[len(serviceNames)-1]); !ok {
+					b.Fatalf("expected service %q to be loaded from valkey", serviceNames[len(serviceNames)-1])
 				}
 			}
 		})

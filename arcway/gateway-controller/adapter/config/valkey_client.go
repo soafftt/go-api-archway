@@ -7,18 +7,62 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
-type ValkeyClient struct {
-	SingleClient valkey.Client
+type ValkeyClient interface {
+	GetClient() valkey.Client
+	GetSubscribeClient() valkey.Client
 }
 
-var VakeyClientSet = wire.NewSet(NewValkeyClient)
+type valkeyClient struct {
+	singleClient    valkey.Client
+	subscribeClient valkey.Client
+}
 
-func NewValkeyClient(appConfig *AppConfig) *ValkeyClient {
-	clientOption := valkey.ClientOption{
-		InitAddress: appConfig.Valkey.Hosts,
-		Standalone: valkey.StandaloneOption{
-			EnableRedirect: true,
+var ValkeyClientSet = wire.NewSet(NewValkeyClient)
+
+func NewValkeyClient(appConfig *AppConfig) ValkeyClient {
+	masterHost := appConfig.Valkey.MasterHost
+	replicaHosts := appConfig.Valkey.ReplicaHosts
+
+	singleClient := makeValkeyClient(
+		masterHost,
+		replicaHosts,
+		func(clientOption valkey.ClientOption) {
+			clientOption.ClientTrackingOptions = []string{"BCAST", "PREFIX", "UPSTREAM:"}
 		},
+	)
+
+	subscribeClient := makeValkeyClient(
+		masterHost,
+		replicaHosts,
+		nil,
+	)
+
+	return &valkeyClient{
+		singleClient:    singleClient,
+		subscribeClient: subscribeClient,
+	}
+}
+
+func makeValkeyClient(
+	masterHost string,
+	replicaHosts []string,
+	addOptionFn func(clientOption valkey.ClientOption),
+) valkey.Client {
+	standAloneOption := valkey.StandaloneOption{
+		EnableRedirect: true,
+	}
+
+	if replicaHosts != nil && len(replicaHosts) > 0 {
+		standAloneOption.ReplicaAddress = replicaHosts
+	}
+
+	clientOption := valkey.ClientOption{
+		InitAddress: []string{masterHost},
+		Standalone:  standAloneOption,
+	}
+
+	if addOptionFn != nil {
+		addOptionFn(clientOption)
 	}
 
 	client, err := valkey.NewClient(clientOption)
@@ -26,7 +70,13 @@ func NewValkeyClient(appConfig *AppConfig) *ValkeyClient {
 		panic(fmt.Errorf("valkey.NewClient: %w", err))
 	}
 
-	return &ValkeyClient{
-		SingleClient: client,
-	}
+	return client
+}
+
+func (c *valkeyClient) GetClient() valkey.Client {
+	return c.singleClient
+}
+
+func (c *valkeyClient) GetSubscribeClient() valkey.Client {
+	return c.subscribeClient
 }

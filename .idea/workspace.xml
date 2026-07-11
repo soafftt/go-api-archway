@@ -5,53 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f240f2fb-5683-4f9b-af8a-6d409ce9f0f6" name="변경" comment="cosole: copilot vibe coding&#10;gateway: 헥사고날로 변경 친행중.">
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/config/client/gateway_controller_client.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/config/di/adapter_config_di.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/config/gateway_proxy_server.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/in/ctxkey/router_context_key.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/in/di/adapter_in_di.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/in/gateway-proxy.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/in/middleware/middleware.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/in/middleware/request_middleware.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/out/di/adapter_out_di.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/adapter/out/gatewaycontroller/gatewaycontroller_upstream_lookup.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/application/port/in/upstream_lookup_result.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/application/port/in/upstream_lookup_usecase.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/application/port/out/upstream_lookup_port.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/application/port/out/upstream_lookup_port_result.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/application/service/di/application_service_di.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/arcway/gateway/application/service/upstream_lookup_service.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/utils/http_utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/cmd/main.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/cmd/wire.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/cmd/wire_gen.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/component/httpclient.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/config/appconfig.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway/adapter/config/appconfig.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/context/gateway_context.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/errors/lookup.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/gwe/error_code.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/model/upstream_lookup_result.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/middleware/auth_middleware.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/middleware/chain_bench_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/middleware/di/middleware_di.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/middleware/middleware.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/middleware/upstream_check_middleware.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/middleware/upstream_check_middleware_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/response/json_error_response.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/reverse_proxy.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/reverse_proxy_server.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/server/reverse_proxy_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/service/upstream_lookup_service.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/_gateway/service/upstream_lookup_service_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/gateway/cmd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway/cmd/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arcway/gateway/cmd/wire.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway/cmd/wire.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/errs/errs.go" beforeDir="false" afterPath="$PROJECT_DIR$/core/errs/errs.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/core/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/core/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/utils/logging.go" beforeDir="false" afterPath="$PROJECT_DIR$/core/utils/logging.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/utils/upstream_parser.go" beforeDir="false" afterPath="$PROJECT_DIR$/core/utils/upstream_parser.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/adapter/config/app_config.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/adapter/config/app_config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/adapter/config/unix_server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/adapter/config/unix_server_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/adapter/config/valkey_client.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/adapter/config/valkey_client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/adapter/port/out/cache/valkey_route_cache.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/adapter/port/out/cache/valkey_route_cache.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/adapter/port/out/cache/valkey_route_cache_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/adapter/port/out/cache/valkey_route_cache_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/cmd/route_sync.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/cmd/route_sync.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/cmd/wire.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/cmd/wire.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arcway/gateway-controller/cmd/wire_gen.go" beforeDir="false" afterPath="$PROJECT_DIR$/arcway/gateway-controller/cmd/wire_gen.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,6 +30,11 @@
   </component>
   <component name="GOROOT" url="file:///opt/homebrew/opt/go/libexec" />
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="e9c85d685992c91cfbe2be1cd9c1ee240631620d" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
@@ -81,61 +49,61 @@
 }</component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="2.120682651390295" />
-      <entry key="MS500" value="3.494994403850901" />
-      <entry key="S2" value="6.002136076098589" />
-      <entry key="S5" value="10.191543772265465" />
-      <entry key="S10" value="16.21461056309643" />
-      <entry key="S30" value="29.55247748484852" />
-      <entry key="S60" value="38.895894802920346" />
-      <entry key="M2" value="49.71387188779648" />
-      <entry key="M5" value="70.79713889947938" />
-      <entry key="M10" value="96.43789799775293" />
-      <entry key="M15" value="120.7645532687398" />
-      <entry key="M30" value="194.2233582165553" />
-      <entry key="H1" value="299.33250516358237" />
-      <entry key="H2" value="404.5816373674579" />
-      <entry key="H4" value="563.2768734166536" />
-      <entry key="D1" value="1923.2273600100164" />
-      <entry key="W1" value="4007.241941693812" />
+      <entry key="MS100" value="1.000103362464888" />
+      <entry key="MS500" value="1.1595410961095334" />
+      <entry key="S2" value="1.6339390434784178" />
+      <entry key="S5" value="1.9504857937782016" />
+      <entry key="S10" value="2.40064052900372" />
+      <entry key="S30" value="4.0682563951202155" />
+      <entry key="S60" value="7.648943400545163" />
+      <entry key="M2" value="15.203683313145923" />
+      <entry key="M5" value="33.61459532024166" />
+      <entry key="M10" value="56.50341255142026" />
+      <entry key="M15" value="71.84769203538833" />
+      <entry key="M30" value="95.53425636557527" />
+      <entry key="H1" value="118.09622464135491" />
+      <entry key="H2" value="179.76819562622612" />
+      <entry key="H4" value="340.69842373335257" />
+      <entry key="D1" value="1769.1198859187768" />
+      <entry key="W1" value="4051.0005452813853" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="1.643722368132622E-70" />
-      <entry key="S2" value="3.5863112123433806E-18" />
-      <entry key="S5" value="1.194451810128354E-7" />
-      <entry key="S10" value="5.734982418665005E-4" />
-      <entry key="S30" value="0.2859043205836409" />
-      <entry key="S60" value="1.7061229278915042" />
-      <entry key="M2" value="5.15452445418633" />
-      <entry key="M5" value="14.266157635859194" />
-      <entry key="M10" value="25.80278441033566" />
-      <entry key="M15" value="34.60403152376254" />
-      <entry key="M30" value="53.13873583384888" />
-      <entry key="H1" value="73.20679561267825" />
-      <entry key="H2" value="90.78255690089556" />
-      <entry key="H4" value="113.91008215566804" />
-      <entry key="D1" value="281.17839321481756" />
-      <entry key="W1" value="596.6722562658202" />
+      <entry key="MS100" value="4.8337337302597325E-12" />
+      <entry key="MS500" value="0.0057665296035237954" />
+      <entry key="S2" value="0.41525331842948005" />
+      <entry key="S5" value="1.202635446020251" />
+      <entry key="S10" value="1.8423652249415778" />
+      <entry key="S30" value="2.7676644088932196" />
+      <entry key="S60" value="4.022366243799462" />
+      <entry key="M2" value="6.0999489166000584" />
+      <entry key="M5" value="10.102141434625189" />
+      <entry key="M10" value="14.970030043399941" />
+      <entry key="M15" value="18.405706830893543" />
+      <entry key="M30" value="23.923242888724992" />
+      <entry key="H1" value="29.34177981851056" />
+      <entry key="H2" value="43.15843962031384" />
+      <entry key="H4" value="74.51655341455692" />
+      <entry key="D1" value="271.7301997145328" />
+      <entry key="W1" value="615.9339074391379" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.014339167099664" />
-      <entry key="MS500" value="3.458630870082648" />
-      <entry key="S2" value="5.986117387836003" />
-      <entry key="S5" value="10.180584591609438" />
-      <entry key="S10" value="16.206246848171915" />
-      <entry key="S30" value="29.80856876077719" />
-      <entry key="S60" value="40.52203232832889" />
-      <entry key="M2" value="54.722967972571325" />
-      <entry key="M5" value="84.87027747429092" />
-      <entry key="M10" value="122.06633229862828" />
-      <entry key="M15" value="155.215316686866" />
-      <entry key="M30" value="247.2448592554217" />
-      <entry key="H1" value="372.4564880407648" />
-      <entry key="H2" value="495.3114783430374" />
-      <entry key="H4" value="677.152945122835" />
-      <entry key="D1" value="2204.391008403134" />
-      <entry key="W1" value="4603.9099026254535" />
+      <entry key="MS100" value="0.594605412693447" />
+      <entry key="MS500" value="0.973861830168158" />
+      <entry key="S2" value="1.761245733968477" />
+      <entry key="S5" value="2.842463405425814" />
+      <entry key="S10" value="3.957775929601348" />
+      <entry key="S30" value="6.650834439434345" />
+      <entry key="S60" value="11.516977069337344" />
+      <entry key="M2" value="21.163173794033394" />
+      <entry key="M5" value="43.595295953549396" />
+      <entry key="M10" value="71.37056257105945" />
+      <entry key="M15" value="90.16571595111097" />
+      <entry key="M30" value="119.3988374223586" />
+      <entry key="H1" value="147.4018370488198" />
+      <entry key="H2" value="222.90034954281285" />
+      <entry key="H4" value="415.19233600574944" />
+      <entry key="D1" value="2040.8358544333066" />
+      <entry key="W1" value="4666.930011654996" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -147,34 +115,34 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultGoTemplateProperty": "Go File",
-    "Go Build.go build gateway/controller/cmd.executor": "Debug",
-    "Go Test.TestParseLogLevel in core/utils.executor": "Run",
-    "Go 빌드.go build gateway/cmd.executor": "Debug",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.GoLinterPluginOnboardingV2": "true",
-    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.go.analysis.ui.options.defaults": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "master",
-    "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "/Users/soft/Documents/dev/repos/kidari-gateway/arcway/gateway/adapter/config",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "run.configurations.included.in.services": "true",
-    "settings.editor.selected.configurable": "editor.preferences.folding",
-    "ts.external.directory.path": "/Users/soft/Applications/GoLand.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
+    &quot;Go Build.go build gateway/controller/cmd.executor&quot;: &quot;Debug&quot;,
+    &quot;Go Test.TestParseLogLevel in core/utils.executor&quot;: &quot;Run&quot;,
+    &quot;Go 빌드.go build gateway/cmd.executor&quot;: &quot;Debug&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoLinterPluginOnboardingV2&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoLinterPluginStorageMigration&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.analysis.ui.options.defaults&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/soft/Documents/dev/repos/kidari-gateway/arcway/gateway/adapter/config&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.folding&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/soft/Applications/GoLand.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/arcway/gateway/adapter/config" />
@@ -246,6 +214,11 @@
       <pattern value="^\QTestParseLogLevel\E$" />
       <method v="2" />
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go 테스트.TestParseLogLevel in core/utils" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>

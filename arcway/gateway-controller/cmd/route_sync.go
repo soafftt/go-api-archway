@@ -29,8 +29,11 @@ func (a *GatewayControllerApp) ListenRouteOperations(ctx context.Context, ready 
 			close(ready)
 		}
 	})
-	command := a.valkeyClient.SingleClient.B().Subscribe().Channel(cdp.ROUTE_CHANNEL).Build()
-	return a.valkeyClient.SingleClient.Receive(ctx, command, func(message valkey.PubSubMessage) {
+
+	subscribeClient := a.valkeyClient.GetSubscribeClient()
+
+	command := subscribeClient.B().Subscribe().Channel(cdp.ROUTE_CHANNEL).Build()
+	return subscribeClient.Receive(ctx, command, func(message valkey.PubSubMessage) {
 		routeMessage := routeOperationMessage{}
 		if err := json.Unmarshal([]byte(message.Message), &routeMessage); err != nil {
 			log.Printf("route update unmarshal failed: %v", err)

@@ -15,7 +15,7 @@ import (
 
 type GatewayControllerApp struct {
 	app                *adpaterConfig.AppConfig
-	valkeyClient       *adpaterConfig.ValkeyClient
+	valkeyClient       adpaterConfig.ValkeyClient
 	adapterPortOut     *adapterPortOutDi.AdapterPortOutDi
 	serviceProvider    *applicationServiceDi.ServiceProvider
 	unixRouterProvider *adapterPortInUnixDi.UnixRouterProvider
@@ -25,7 +25,7 @@ type GatewayControllerApp struct {
 func InitializeGatewayControllerApp() (*GatewayControllerApp, error) {
 	wire.Build(
 		adpaterConfig.AppConfigSet,
-		adpaterConfig.VakeyClientSet,
+		adpaterConfig.ValkeyClientSet,
 		adapterPortOutDi.AdapterPortOutDiProviderSet,
 		applicationServiceDi.ServiceProviderSet,
 		adapterPortInUnixDi.UnixRouterProviderSet,

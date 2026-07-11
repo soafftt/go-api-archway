@@ -18,9 +18,9 @@ type RouteValkeyCache struct {
 	mu     sync.RWMutex
 }
 
-func NewRouteValkeyCache(client *config.ValkeyClient) *RouteValkeyCache {
+func NewRouteValkeyCache(valkey config.ValkeyClient) *RouteValkeyCache {
 	return &RouteValkeyCache{
-		client: client.SingleClient,
+		client: valkey.GetClient(),
 		data:   make(map[string]*cdu.UpstreamService),
 	}
 }

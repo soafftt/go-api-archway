@@ -18,8 +18,9 @@ type AppConfig struct {
 	}
 
 	Valkey struct {
-		Hosts    []string `env:"VALKEY_HOSTS,required" envSeparator:","`
-		ReadFrom string   `env:"VALKEY_READFROM" envDefault:"master"`
+		MasterHost   string   `env:"VALKEY_MASTER_HOST, require" envDefault:"127.0.0.1:6379"`
+		ReplicaHosts []string `env:"VALKEY_REPLICA_HOSTS"`
+		ReadFrom     string   `env:"VALKEY_READFROM" envDefault:"master"`
 	}
 }
 
@@ -34,10 +35,8 @@ func NewAppConfig() *AppConfig {
 		panic(fmt.Errorf("env parse fail %w", err))
 	}
 
-	for _, host := range cfg.Valkey.Hosts {
-		if strings.TrimSpace(host) == "" {
-			panic(fmt.Errorf("VALKEY_HOSTS contains an empty host"))
-		}
+	if strings.TrimSpace(cfg.Valkey.MasterHost) == "" {
+		panic(fmt.Errorf("VALKEY_MASTER_HOSTS contains an empty host"))
 	}
 
 	return cfg
