@@ -385,7 +385,7 @@ docker compose version
 ### 15.1 Infra compose 실행
 
 ```bash
-cd .doker
+cd .docker
 docker compose up -d
 ```
 

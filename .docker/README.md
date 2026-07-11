@@ -1,4 +1,4 @@
-# 로컬 인프라 실행 (.doker)
+# 로컬 인프라 실행 (.docker)
 
 이 프로젝트는 로컬 실행 시 **PostgreSQL**과 **Valkey**가 필요합니다.
 
@@ -21,14 +21,14 @@ docker compose version
 ## 실행
 
 ```bash
-cd .doker
+cd .docker
 docker compose up -d
 ```
 
 ## 중지
 
 ```bash
-cd .doker
+cd .docker
 docker compose down
 ```
 
