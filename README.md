@@ -2,6 +2,11 @@
 
 `go-api-archway`는 라우팅 정책 관리와 HTTP 프록시 처리를 분리한 API Gateway 프로젝트입니다.
 
+> 1. README.md 문서는 Github Copilot 이 초안을 작성하고 검수하였습니다.
+> 2. console(backoffice) 는 Github Copilot 을 이용한 Vibe Coding 으로 작성되었습니다.
+> 3. 성능 테스트는 Copilot 이 진행하였습니다.
+
+
 - `gateway`: 외부 HTTP 요청을 받고 upstream으로 전달하는 data plane
 - `gateway-controller`: Valkey의 라우팅 정책을 메모리에 적재하고 Unix socket으로 lookup을 제공하는 control plane
 - `core`: 라우팅, JWT, 오류 응답 등 Go 애플리케이션이 공유하는 도메인 모듈
