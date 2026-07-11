@@ -59,16 +59,20 @@ flowchart LR
 gateway 요청 URI는 다음 형식을 사용합니다.
 
 ```text
-/v1/{service-name}/{resource-domain}/{resource-path...}
+/{service}/{version}/{domain}/{subdomain}/{resource...}
 ```
 
 예시:
 
 ```text
-/v1/member-api/api.example.com/api/users
+/member/v1/session/token
+/member/v1/user/info
+
+-> domain 식별자: member
+-> domain 내 서브 도메인: session, user
 ```
 
-현재 resource domain은 HTTP `Host` 헤더가 아니라 URI의 세 번째 segment에서 추출합니다.
+`domain`은 upstream host가 아니라 `sessions`, `user`처럼 service 내부의 DDD domain을 식별하는 값입니다. 실제 upstream 주소는 route의 `host`에서 별도로 결정합니다.
 
 ## Route Model
 
@@ -76,14 +80,14 @@ gateway-controller는 Valkey의 `UPSTREAM:{service-name}` key를 읽습니다.
 
 ```json
 {
-  "service_name": "member-api",
+  "service_name": "member",
   "resources": [
     {
-      "sub_domain": "api.example.com",
+      "sub_domain": "user",
       "host": "127.0.0.1:18081",
       "paths": [
         {
-          "path": "/api/users",
+          "path": "/info",
           "method": "GET",
           "request_timeout": 3000,
           "response_timeout": 5000,
@@ -98,8 +102,9 @@ gateway-controller는 Valkey의 `UPSTREAM:{service-name}` key를 읽습니다.
 
 ### Path Matching
 
-- service: URI 두 번째 segment
-- resource domain: URI 세 번째 segment
+- service: URI 첫 번째 segment
+- version: URI 두 번째 segment
+- domain: URI 세 번째 segment이며 upstream host가 아닌 DDD domain 식별자
 - resource path: domain 이후 path
 - 정적 path와 `{parameter}` 형식의 동적 path를 Trie router로 지원
 - 일치하는 domain이 없으면 `sub_domain: ""` resource를 fallback으로 조회
@@ -267,7 +272,7 @@ ThreadingHTTPServer(("127.0.0.1", 18081), Handler).serve_forever()
 
 ```bash
 docker exec valkey-master valkey-cli SET 'UPSTREAM:e2e-service' \
-'{"service_name":"e2e-service","resources":[{"sub_domain":"echo.local","host":"127.0.0.1:18081","paths":[{"path":"/echo/ping","method":"GET","request_timeout":3000,"response_timeout":5000,"check_authorization":false,"cache_timeout":15}]}]}'
+'{"service_name":"e2e-service","resources":[{"sub_domain":"echo","host":"127.0.0.1:18081","paths":[{"path":"/ping","method":"GET","request_timeout":3000,"response_timeout":5000,"check_authorization":false,"cache_timeout":15}]}]}'
 ```
 
 route는 gateway-controller 시작 전에 등록하거나, 등록 후 `ROUTE_OPERATIONS` update event를 발행해야 합니다.
@@ -285,7 +290,7 @@ controller lookup을 직접 확인할 수 있습니다.
 
 ```bash
 curl --unix-socket /tmp/gateway-controller-e2e.sock \
-  'http://unix/v1/upstream?path=/v1/e2e-service/echo.local/echo/ping'
+  'http://unix/v1/upstream?path=/e2e-service/v1/echo/ping'
 ```
 
 ### 4. Start gateway
@@ -301,7 +306,7 @@ go run ./cmd
 ```bash
 curl -i \
   -H 'Host: gateway.local' \
-  'http://127.0.0.1/v1/e2e-service/echo.local/echo/ping?source=e2e'
+  'http://127.0.0.1/e2e-service/v1/echo/ping?source=e2e'
 ```
 
 예상 upstream 응답:
@@ -310,7 +315,7 @@ curl -i \
 {
   "upstream": "ok",
   "method": "GET",
-  "path": "/echo/ping?source=e2e",
+  "path": "/ping?source=e2e",
   "request_host": "gateway.local"
 }
 ```
