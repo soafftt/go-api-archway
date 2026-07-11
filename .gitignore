@@ -37,3 +37,6 @@ coverage/
 
 **/agents.md
 **/copilot-instructions.md
+
+.idea
+.DS_Store
