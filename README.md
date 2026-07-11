@@ -363,7 +363,33 @@ npm run build
 
 ---
 
-## 15. Docker
+## 15. Docker / Compose 실행
+
+사전 준비: `docker compose` 설치
+
+```bash
+docker compose version
+```
+
+서비스 포트:
+
+| Service | Port |
+|---|---:|
+| archway-gateway | `80` |
+| console-frontend | `8081` |
+| console-backend | `8080` |
+| PostgreSQL | `5431` |
+| Valkey master | `6379` |
+| Valkey replica | `6380` |
+
+### 15.1 Infra compose 실행
+
+```bash
+cd .doker
+docker compose up -d
+```
+
+### 15.2 Gateway 앱 build/run
 
 ```bash
 docker build \
@@ -373,10 +399,26 @@ docker build \
 ```
 
 ```bash
-docker run --rm \
-  -p 8080:80 \
+docker run --rm --name archway-gateway \
+  -p 80:80 \
   -e VALKEY_MASTER_HOST=host.docker.internal:6379 \
   go-api-archway:latest
+```
+
+### 15.3 Console 앱 build/run
+
+```bash
+cd console
+POSTGRES_CONNECTION_STRING=postgres://postgres:postgres@127.0.0.1:5431/postgres \
+VALKEY_URL=redis://127.0.0.1:6379 \
+npm run docker:build
+```
+
+```bash
+cd console
+POSTGRES_CONNECTION_STRING=postgres://postgres:postgres@127.0.0.1:5431/postgres \
+VALKEY_URL=redis://127.0.0.1:6379 \
+npm run docker:run
 ```
 
 ---

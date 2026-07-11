@@ -4,10 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createPostgresPool } from '../infra/postgres/postgres.js';
 
 async function main() {
-  const connectionString = process.env.POSTGRES_CONNECTION_STRING;
-  if (!connectionString) {
-    throw new Error('POSTGRES_CONNECTION_STRING is required');
-  }
+  const connectionString = process.env.POSTGRES_CONNECTION_STRING ?? 'postgres://postgres:postgres@127.0.0.1:5431/postgres';
 
   const pool = createPostgresPool(connectionString);
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));

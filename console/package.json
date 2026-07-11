@@ -9,6 +9,8 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspace @console/backend",
     "dev:front": "npm run dev --workspace @console/front",
-    "dev:backend": "npm run dev --workspace @console/backend"
+    "dev:backend": "npm run dev --workspace @console/backend",
+    "docker:build": ".docker/build.sh",
+    "docker:run": ".docker/run.sh"
   }
 }

@@ -26,7 +26,7 @@ console/
 
 - React + TypeScript + Vite
 - Tailwind CSS 기반 UI
-- 기본 포트: `80`
+- 기본 포트: `8081`
 - `/api` 요청을 `127.0.0.1:8080`으로 proxy
 
 주요 화면/기능:
@@ -94,8 +94,8 @@ projection payload는 Go `gateway-controller`가 읽는 snake_case JSON 형식�
 ### Backend env
 
 ```bash
-POSTGRES_CONNECTION_STRING=postgresql://postgres:1234@127.0.0.1:55000/postgres
-VALKEY_URL=redis://127.0.0.1:8800
+POSTGRES_CONNECTION_STRING=postgresql://postgres:1234@127.0.0.1:5431/postgres
+VALKEY_URL=redis://127.0.0.1:6379
 PORT=8080
 OUTBOX_POLL_INTERVAL_MS=3000
 OUTBOX_BATCH_SIZE=10
@@ -104,12 +104,12 @@ OUTBOX_BATCH_SIZE=10
 ### Frontend
 
 - 별도 env 없이 Vite dev server 사용
-- 기본 포트 `80`
+- 기본 포트 `8081`
 
 ### gateway-controller
 
 ```bash
-VALKEY_HOSTS=127.0.0.1:8800
+VALKEY_HOSTS=127.0.0.1:6379,127.0.0.1:6380
 ```
 
 ## 실행 절차
@@ -125,7 +125,7 @@ npm install
 
 ```bash
 cd console
-POSTGRES_CONNECTION_STRING=postgresql://postgres:1234@127.0.0.1:55000/postgres \
+POSTGRES_CONNECTION_STRING=postgresql://postgres:1234@127.0.0.1:5431/postgres \
 npm run db:init --workspace @console/backend
 ```
 
@@ -133,8 +133,8 @@ npm run db:init --workspace @console/backend
 
 ```bash
 cd console
-POSTGRES_CONNECTION_STRING=postgresql://postgres:1234@127.0.0.1:55000/postgres \
-VALKEY_URL=redis://127.0.0.1:8800 \
+POSTGRES_CONNECTION_STRING=postgresql://postgres:1234@127.0.0.1:5431/postgres \
+VALKEY_URL=redis://127.0.0.1:6379 \
 PORT=8080 \
 npm run dev --workspace @console/backend
 ```
@@ -150,7 +150,25 @@ npm run dev --workspace @console/front
 
 ```bash
 cd archway/gateway-controller
-VALKEY_HOSTS=127.0.0.1:8800 go run ./cmd
+VALKEY_HOSTS=127.0.0.1:6379 VALKEY_REPLICA_HOSTS=127.0.0.1:6380 go run ./cmd
+```
+
+## Docker 실행
+
+`console/.docker`에 프론트/백엔드 Dockerfile을 분리했고, 빌드 산출물은 `console/.build/front`, `console/.build/backend`로 각각 패키징된다.
+
+```bash
+cd console
+POSTGRES_CONNECTION_STRING=******127.0.0.1:5431/postgres \
+VALKEY_URL=redis://127.0.0.1:6379 \
+npm run docker:build
+```
+
+```bash
+cd console
+POSTGRES_CONNECTION_STRING=******127.0.0.1:5431/postgres \
+VALKEY_URL=redis://127.0.0.1:6379 \
+npm run docker:run
 ```
 
 ## 이번 작업 절차
@@ -218,7 +236,7 @@ go test ./adapter/port/out/cache ./adapter/config ./cmd
 다음을 실제로 확인했다.
 
 1. backend `/health` 응답
-2. frontend `http://localhost:80` 응답
+2. frontend `http://localhost:8081` 응답
 3. gateway-controller unix socket 생성
 4. backend `POST`
 5. gateway-controller lookup 결과 생성 반영
@@ -231,10 +249,10 @@ go test ./adapter/port/out/cache ./adapter/config ./cmd
 
 ## 현재 운영 기준
 
-- frontend: `http://localhost:80`
-- backend: `http://127.0.0.1:8080`
-- PostgreSQL: `127.0.0.1:55000`
-- Valkey: `127.0.0.1:8800`
+- frontend: `http://localhost:8081`
+- backend: `http://console-backend:8080` (compose 네트워크 내부)
+- PostgreSQL: `127.0.0.1:5431`
+- Valkey: `127.0.0.1:6379` (master), `127.0.0.1:6380` (replica)
 - gateway-controller socket: `/tmp/gateway-controller.sock`
 
 ## 현재 알려진 비차단 사항

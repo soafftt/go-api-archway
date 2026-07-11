@@ -91,6 +91,10 @@ func getUserIdAndVerifyAccessToken(keyService string, claimKey string, accessTok
 		return nil, parseResult.Err
 	}
 
+	if !parseResult.Valid {
+		return nil, fmt.Errorf("jwt token is invalid: %v", errors.New(gjwt.ErrJwtSigned.Error()))
+	}
+
 	claim, has := parseResult.Claims[claimKey]
 	if !has {
 		return nil, fmt.Errorf("jwt claim %s missing", claimKey)

@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: .docker/backend.Dockerfile
+      target: runtime
+    container_name: console-backend
+    environment:
+      PORT: "8080"
+      POSTGRES_CONNECTION_STRING: ${POSTGRES_CONNECTION_STRING:-postgres://postgres:postgres@host.docker.internal:5431/postgres}
+      VALKEY_URL: ${VALKEY_URL:-redis://host.docker.internal:6379}
+      OUTBOX_POLL_INTERVAL_MS: ${OUTBOX_POLL_INTERVAL_MS:-3000}
+      OUTBOX_BATCH_SIZE: ${OUTBOX_BATCH_SIZE:-10}
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  front:
+    build:
+      context: ..
+      dockerfile: .docker/front.Dockerfile
+      target: runtime
+    container_name: console-frontend
+    depends_on:
+      - backend
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
