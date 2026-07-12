@@ -4,6 +4,11 @@
 
 ---
 
+> console: Github Copilot vibe coding
+> test: Github Copilot
+
+---
+
 ## 1. 핵심 구성
 
 - **gateway**: 외부 HTTP 요청 수신, 정책 lookup 호출, upstream reverse proxy 수행
