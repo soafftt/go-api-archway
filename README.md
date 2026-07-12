@@ -4,7 +4,7 @@
 
 ---
 
-> console: Github Copilot vibe coding
+> console: Github Copilot vibe coding  
 > test: Github Copilot
 
 ---
