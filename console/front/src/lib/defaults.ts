@@ -16,6 +16,8 @@ export function createPathDraft(): UpstreamPathDraft {
     responseTimeout: 5000,
     checkAuthorization: false,
     cacheTimeout: 0,
+    useRateLimit: false,
+    rateLimitCount: 0,
   };
 }
 

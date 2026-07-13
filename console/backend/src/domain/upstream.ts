@@ -34,6 +34,7 @@ const upstreamPathSchema = z.object({
   responseTimeout: z.coerce.number().int().positive(),
   checkAuthorization: z.boolean(),
   cacheTimeout: z.coerce.number().int().min(0),
+  rateLimitCount: z.coerce.number().int().min(0),
 });
 
 const upstreamResourceSchema = z.object({
@@ -94,7 +95,10 @@ export const upstreamServiceSchema = z
 export type UpstreamAuthorization = z.infer<typeof authorizationSchema>;
 export type UpstreamPath = z.infer<typeof upstreamPathSchema>;
 export type UpstreamResource = z.infer<typeof upstreamResourceSchema>;
-export type UpstreamServiceDocument = z.infer<typeof upstreamServiceSchema>;
+export type UpstreamServiceInput = z.infer<typeof upstreamServiceSchema>;
+export type UpstreamServiceDocument = UpstreamServiceInput & {
+  version?: number;
+};
 
 export type UpstreamServiceSummary = {
   serviceName: string;
@@ -108,6 +112,7 @@ export type RouteChangeRecord = {
   serviceName: string;
   eventType: RouteChangeType;
   snapshotJson: string | null;
+  serviceVersion: number;
   attempts: number;
 };
 
@@ -121,9 +126,11 @@ export type PreviewMatchResult = {
   method?: string;
 };
 
-export function toGatewaySnapshot(service: UpstreamServiceDocument) {
+export function toGatewaySnapshot(service: UpstreamServiceDocument, version?: number) {
+  const resolvedVersion = version ?? service.version;
   return {
     service_name: service.serviceName,
+    ...(typeof resolvedVersion === 'number' ? { version: resolvedVersion } : {}),
     authorization: service.authorization
       ? {
           algorithm: service.authorization.algorithm,
@@ -141,13 +148,14 @@ export function toGatewaySnapshot(service: UpstreamServiceDocument) {
         response_timeout: path.responseTimeout,
         check_authorization: path.checkAuthorization,
         cache_timeout: path.cacheTimeout,
+        rate_limit_count: path.rateLimitCount,
       })),
     })),
   };
 }
 
-export function toGatewaySnapshotJson(service: UpstreamServiceDocument): string {
-  return JSON.stringify(toGatewaySnapshot(service));
+export function toGatewaySnapshotJson(service: UpstreamServiceDocument, version?: number): string {
+  return JSON.stringify(toGatewaySnapshot(service, version));
 }
 
 export function summarizeService(service: UpstreamServiceDocument, updatedAt?: string): UpstreamServiceSummary {

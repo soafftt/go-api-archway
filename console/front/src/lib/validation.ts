@@ -40,6 +40,12 @@ export function validateDraft(draft: UpstreamServiceDraft): string[] {
       if (path.cacheTimeout < 0) {
         errors.push(`resource #${resourceIndex + 1} / path #${pathIndex + 1}: cache timeout 은 0 이상이어야 합니다.`);
       }
+      if (path.useRateLimit && path.rateLimitCount <= 0) {
+        errors.push(`resource #${resourceIndex + 1} / path #${pathIndex + 1}: rate limit 사용 시 0보다 큰 값을 입력해야 합니다.`);
+      }
+      if (!path.useRateLimit && path.rateLimitCount !== 0) {
+        errors.push(`resource #${resourceIndex + 1} / path #${pathIndex + 1}: rate limit 미사용 시 값은 0이어야 합니다.`);
+      }
 
       const key = path.path;
       if (pathKeys.has(key)) {

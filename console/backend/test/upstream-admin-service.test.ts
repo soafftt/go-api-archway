@@ -22,6 +22,7 @@ const sampleService: UpstreamServiceDocument = {
           responseTimeout: 5000,
           checkAuthorization: true,
           cacheTimeout: 0,
+          rateLimitCount: 0,
         },
       ],
     },

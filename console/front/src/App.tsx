@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { deleteService, getService, listServices, createService, updateService } from './lib/api';
 import { createServiceDraft } from './lib/defaults';
+import { normalizeDraftFromApi } from './lib/mappers';
 import { validateDraft } from './lib/validation';
 import { ServiceEditor } from './components/ServiceEditor';
 import { ServiceList } from './components/ServiceList';
@@ -56,7 +57,7 @@ export default function App() {
         if (cancelled) {
           return;
         }
-        setDraft(service);
+        setDraft(normalizeDraftFromApi(service));
         setMode('edit');
       })
       .catch((loadError: Error) => {
@@ -102,13 +103,13 @@ export default function App() {
       if (mode === 'create') {
         const created = await createService(draft);
         setSelectedServiceName(created.serviceName);
-        setDraft(created);
+        setDraft(normalizeDraftFromApi(created));
         setMode('edit');
         setMessage('규칙을 생성했습니다.');
         await loadServices(created.serviceName);
       } else {
         const updated = await updateService(draft.serviceName, draft);
-        setDraft(updated);
+        setDraft(normalizeDraftFromApi(updated));
         setMessage('규칙을 저장했습니다.');
         await loadServices(updated.serviceName);
       }

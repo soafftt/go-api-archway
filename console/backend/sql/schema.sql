@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS upstream_services (
   id BIGSERIAL PRIMARY KEY,
   service_name VARCHAR(255) NOT NULL UNIQUE,
+  version BIGINT NOT NULL DEFAULT 0,
   auth_algorithm VARCHAR(32),
   auth_key_data TEXT,
   auth_user_key VARCHAR(255),
@@ -64,6 +65,7 @@ CREATE TABLE IF NOT EXISTS upstream_paths (
   response_timeout BIGINT NOT NULL,
   check_authorization BOOLEAN NOT NULL DEFAULT FALSE,
   cache_timeout BIGINT NOT NULL DEFAULT 0,
+  rate_limit_count BIGINT NOT NULL DEFAULT 0,
   sort_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -77,6 +79,7 @@ CREATE TABLE IF NOT EXISTS route_change_outbox (
   service_name VARCHAR(255) NOT NULL,
   event_type VARCHAR(64) NOT NULL,
   snapshot_json TEXT,
+  service_version BIGINT NOT NULL DEFAULT 0,
   status VARCHAR(32) NOT NULL DEFAULT 'pending',
   attempts INT NOT NULL DEFAULT 0,
   last_error TEXT,
@@ -84,6 +87,43 @@ CREATE TABLE IF NOT EXISTS route_change_outbox (
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'upstream_services'
+      AND column_name = 'version'
+  ) THEN
+    ALTER TABLE upstream_services
+      ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'upstream_paths'
+      AND column_name = 'rate_limit_count'
+  ) THEN
+    ALTER TABLE upstream_paths
+      ADD COLUMN rate_limit_count BIGINT NOT NULL DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'route_change_outbox'
+      AND column_name = 'service_version'
+  ) THEN
+    ALTER TABLE route_change_outbox
+      ADD COLUMN service_version BIGINT NOT NULL DEFAULT 0;
+  END IF;
+END
+$$;
 
 CREATE INDEX IF NOT EXISTS idx_route_change_outbox_status_id
   ON route_change_outbox (status, id);

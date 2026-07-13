@@ -5,6 +5,7 @@ import type { RouteChangeType, UpstreamResource, UpstreamServiceDocument, Upstre
 type ServiceRow = QueryResultRow & {
   id: number;
   service_name: string;
+  version: number;
   auth_algorithm: string | null;
   auth_key_data: string | null;
   auth_user_key: string | null;
@@ -26,6 +27,7 @@ type PathRow = QueryResultRow & {
   response_timeout: number;
   check_authorization: boolean;
   cache_timeout: number;
+  rate_limit_count: number;
   sort_order: number;
 };
 
@@ -72,7 +74,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
   async get(serviceName: string): Promise<UpstreamServiceDocument | null> {
     const result = await this.pool.query<ServiceRow>(
       `
-        SELECT id, service_name, auth_algorithm, auth_key_data, auth_user_key, updated_at
+        SELECT id, service_name, version, auth_algorithm, auth_key_data, auth_user_key, updated_at
         FROM upstream_services
         WHERE service_name = $1
       `,
@@ -88,18 +90,20 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
 
   async create(service: UpstreamServiceDocument, snapshotJson: string): Promise<void> {
     await this.withTransaction(async (client) => {
-      const result = await client.query<{ id: number }>(
+      const result = await client.query<{ id: number; version: number }>(
         `
           INSERT INTO upstream_services (
             service_name,
+            version,
             auth_algorithm,
             auth_key_data,
             auth_user_key
-          ) VALUES ($1, $2, $3, $4)
-          RETURNING id
+          ) VALUES ($1, $2, $3, $4, $5)
+          RETURNING id, version
         `,
         [
           service.serviceName,
+          1,
           service.authorization?.algorithm ?? null,
           service.authorization?.keyData ?? null,
           service.authorization?.userKey ?? null,
@@ -107,7 +111,13 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
       );
 
       await this.insertResources(client, result.rows[0].id, service.resources);
-      await this.insertOutbox(client, service.serviceName, 'ROUTE_MESSAGE_ADD', snapshotJson);
+      await this.insertOutbox(
+        client,
+        service.serviceName,
+        'ROUTE_MESSAGE_ADD',
+        attachVersionToSnapshot(snapshotJson, Number(result.rows[0].version)),
+        Number(result.rows[0].version),
+      );
     });
   }
 
@@ -123,11 +133,12 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
       }
 
       const serviceId = existing.rows[0].id;
-      await client.query(
+      const updatedService = await client.query<{ version: number }>(
         `
           UPDATE upstream_services
-          SET auth_algorithm = $1, auth_key_data = $2, auth_user_key = $3
+          SET auth_algorithm = $1, auth_key_data = $2, auth_user_key = $3, version = version + 1
           WHERE id = $4
+          RETURNING version
         `,
         [
           service.authorization?.algorithm ?? null,
@@ -139,15 +150,21 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
 
       await client.query(`DELETE FROM upstream_resources WHERE service_id = $1`, [serviceId]);
       await this.insertResources(client, serviceId, service.resources);
-      await this.insertOutbox(client, service.serviceName, 'ROUTE_MESSAGE_UPDATE', snapshotJson);
+      await this.insertOutbox(
+        client,
+        service.serviceName,
+        'ROUTE_MESSAGE_UPDATE',
+        attachVersionToSnapshot(snapshotJson, Number(updatedService.rows[0].version)),
+        Number(updatedService.rows[0].version),
+      );
       return true;
     });
   }
 
   async delete(serviceName: string): Promise<boolean> {
     return this.withTransaction(async (client) => {
-      const existing = await client.query<{ id: number }>(
-        `SELECT id FROM upstream_services WHERE service_name = $1 FOR UPDATE`,
+      const existing = await client.query<{ id: number; version: number }>(
+        `SELECT id, version FROM upstream_services WHERE service_name = $1 FOR UPDATE`,
         [serviceName],
       );
 
@@ -155,16 +172,17 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
         return false;
       }
 
+      const nextVersion = Number(existing.rows[0].version) + 1;
       await client.query(`DELETE FROM upstream_services WHERE id = $1`, [existing.rows[0].id]);
-      await this.insertOutbox(client, serviceName, 'ROUTE_MESSAGE_DELETE', null);
+      await this.insertOutbox(client, serviceName, 'ROUTE_MESSAGE_DELETE', null, nextVersion);
       return true;
     });
   }
 
   async republish(serviceName: string, snapshotJson: string): Promise<boolean> {
     return this.withTransaction(async (client) => {
-      const existing = await client.query<{ id: number }>(
-        `SELECT id FROM upstream_services WHERE service_name = $1 FOR UPDATE`,
+      const existing = await client.query<{ id: number; version: number }>(
+        `SELECT id, version FROM upstream_services WHERE service_name = $1 FOR UPDATE`,
         [serviceName],
       );
 
@@ -172,7 +190,13 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
         return false;
       }
 
-      await this.insertOutbox(client, serviceName, 'ROUTE_MESSAGE_UPDATE', snapshotJson);
+      await this.insertOutbox(
+        client,
+        serviceName,
+        'ROUTE_MESSAGE_UPDATE',
+        attachVersionToSnapshot(snapshotJson, Number(existing.rows[0].version)),
+        Number(existing.rows[0].version),
+      );
       return true;
     });
   }
@@ -191,6 +215,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
     if (resourceResult.rows.length === 0) {
       return {
         serviceName: serviceRow.service_name,
+        version: Number(serviceRow.version ?? 0),
         authorization: serviceRow.auth_algorithm && serviceRow.auth_key_data && serviceRow.auth_user_key
           ? {
               algorithm: serviceRow.auth_algorithm as NonNullable<UpstreamServiceDocument['authorization']>['algorithm'],
@@ -204,7 +229,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
 
     const pathResult = await this.pool.query<PathRow>(
       `
-        SELECT resource_id, path, method, request_timeout, response_timeout, check_authorization, cache_timeout, sort_order
+        SELECT resource_id, path, method, request_timeout, response_timeout, check_authorization, cache_timeout, rate_limit_count, sort_order
         FROM upstream_paths
         WHERE resource_id = ANY($1::bigint[])
         ORDER BY resource_id ASC, sort_order ASC, id ASC
@@ -224,11 +249,13 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
           responseTimeout: Number(pathRow.response_timeout),
           checkAuthorization: Boolean(pathRow.check_authorization),
           cacheTimeout: Number(pathRow.cache_timeout),
+          rateLimitCount: Number(pathRow.rate_limit_count ?? 0),
         })),
     }));
 
     return {
       serviceName: serviceRow.service_name,
+      version: Number(serviceRow.version ?? 0),
       authorization: serviceRow.auth_algorithm && serviceRow.auth_key_data && serviceRow.auth_user_key
         ? {
             algorithm: serviceRow.auth_algorithm as NonNullable<UpstreamServiceDocument['authorization']>['algorithm'],
@@ -266,8 +293,9 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
               response_timeout,
               check_authorization,
               cache_timeout,
+              rate_limit_count,
               sort_order
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
           `,
           [
             resourceResult.rows[0].id,
@@ -277,6 +305,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
             path.responseTimeout,
             path.checkAuthorization,
             path.cacheTimeout,
+            path.rateLimitCount,
             pathIndex,
           ],
         );
@@ -289,6 +318,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
     serviceName: string,
     eventType: RouteChangeType,
     snapshotJson: string | null,
+    serviceVersion: number,
   ) {
     return client.query(
       `
@@ -296,11 +326,12 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
           service_name,
           event_type,
           snapshot_json,
+          service_version,
           status,
           attempts
-        ) VALUES ($1, $2, $3, 'pending', 0)
+        ) VALUES ($1, $2, $3, $4, 'pending', 0)
       `,
-      [serviceName, eventType, snapshotJson],
+      [serviceName, eventType, snapshotJson, serviceVersion],
     );
   }
 
@@ -318,4 +349,10 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
       client.release();
     }
   }
+}
+
+function attachVersionToSnapshot(snapshotJson: string, serviceVersion: number): string {
+  const parsed = JSON.parse(snapshotJson) as Record<string, unknown>;
+  parsed.version = serviceVersion;
+  return JSON.stringify(parsed);
 }

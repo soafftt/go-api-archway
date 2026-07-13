@@ -17,6 +17,7 @@ type GatewayPreview = {
       response_timeout: number;
       check_authorization: boolean;
       cache_timeout: number;
+      rate_limit_count: number;
     }>;
   }>;
 };
@@ -41,7 +42,25 @@ export function toGatewayPreview(draft: UpstreamServiceDraft): GatewayPreview {
         response_timeout: path.responseTimeout,
         check_authorization: path.checkAuthorization,
         cache_timeout: path.cacheTimeout,
+        rate_limit_count: path.useRateLimit ? path.rateLimitCount : 0,
       })),
+    })),
+  };
+}
+
+export function normalizeDraftFromApi(draft: UpstreamServiceDraft): UpstreamServiceDraft {
+  return {
+    ...draft,
+    resources: draft.resources.map((resource) => ({
+      ...resource,
+      paths: resource.paths.map((path) => {
+        const rateLimitCount = Number(path.rateLimitCount ?? 0);
+        return {
+          ...path,
+          rateLimitCount,
+          useRateLimit: rateLimitCount > 0,
+        };
+      }),
     })),
   };
 }

@@ -34,7 +34,8 @@ async function main() {
   const app = createApp(service);
   const snapshots = await service.listDocuments();
   for (const snapshot of snapshots) {
-    await projectionRepository.setSnapshot(snapshot.serviceName, toGatewaySnapshotJson(snapshot));
+    const version = parseServiceVersion(snapshot.version, snapshot.serviceName);
+    await projectionRepository.setSnapshot(snapshot.serviceName, toGatewaySnapshotJson(snapshot, version), version);
   }
   const server = app.listen(config.PORT, () => {
     console.log(`console backend listening on ${config.PORT}`);
@@ -66,3 +67,12 @@ async function main() {
 }
 
 void main();
+
+function parseServiceVersion(rawVersion: unknown, serviceName: string): number {
+  const version = Number(rawVersion ?? 0);
+  if (!Number.isSafeInteger(version) || version < 0) {
+    throw new Error(`invalid service version for "${serviceName}": ${String(rawVersion)}`);
+  }
+
+  return version;
+}

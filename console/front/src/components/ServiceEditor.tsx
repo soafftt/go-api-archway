@@ -340,6 +340,7 @@ function ResourceEditor({
               <th className="pb-2">req timeout</th>
               <th className="pb-2">res timeout</th>
               <th className="pb-2">cache</th>
+              <th className="pb-2">rate limit</th>
               <th className="pb-2">auth</th>
               <th className="pb-2"></th>
             </tr>
@@ -419,6 +420,34 @@ function PathRow({
         <NumberInput value={path.cacheTimeout} onChange={(value) => onChange({ ...path, cacheTimeout: value })} />
       </td>
       <td className="py-3 pr-2">
+        <div className="flex items-center gap-2">
+          <label className="inline-flex items-center justify-center">
+            <input
+              type="checkbox"
+              checked={path.useRateLimit}
+              onChange={(event) =>
+                onChange({
+                  ...path,
+                  useRateLimit: event.target.checked,
+                  rateLimitCount: event.target.checked ? Math.max(1, path.rateLimitCount) : 0,
+                })
+              }
+            />
+          </label>
+          <NumberInput
+            value={path.rateLimitCount}
+            min={path.useRateLimit ? 1 : 0}
+            disabled={!path.useRateLimit}
+            onChange={(value) =>
+              onChange({
+                ...path,
+                rateLimitCount: path.useRateLimit ? Math.max(1, value) : 0,
+              })
+            }
+          />
+        </div>
+      </td>
+      <td className="py-3 pr-2">
         <label className="inline-flex items-center justify-center">
           <input
             type="checkbox"
@@ -440,14 +469,25 @@ function PathRow({
   );
 }
 
-function NumberInput({ value, onChange }: { value: number; onChange: (next: number) => void }) {
+function NumberInput({
+  value,
+  onChange,
+  min = 0,
+  disabled = false,
+}: {
+  value: number;
+  onChange: (next: number) => void;
+  min?: number;
+  disabled?: boolean;
+}) {
   return (
     <input
       type="number"
-      min={0}
+      min={min}
       value={value}
       onChange={(event) => onChange(Number(event.target.value))}
-      className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-white"
+      disabled={disabled}
+      className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-60"
     />
   );
 }

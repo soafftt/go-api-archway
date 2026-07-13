@@ -11,6 +11,8 @@ export type UpstreamPathDraft = {
   responseTimeout: number;
   checkAuthorization: boolean;
   cacheTimeout: number;
+  useRateLimit: boolean;
+  rateLimitCount: number;
 };
 
 export type UpstreamResourceDraft = {

@@ -23,7 +23,7 @@ export class PostgresRouteChangeOutboxRepository implements RouteChangeOutboxRep
         SET status = 'processing', last_error = NULL
         FROM claimed
         WHERE o.id = claimed.id
-        RETURNING o.id, o.service_name AS "serviceName", o.event_type AS "eventType", o.snapshot_json AS "snapshotJson", o.attempts
+        RETURNING o.id, o.service_name AS "serviceName", o.event_type AS "eventType", o.snapshot_json AS "snapshotJson", o.service_version AS "serviceVersion", o.attempts
       `,
       [limit, PROCESSING_LEASE_SECONDS],
     );
