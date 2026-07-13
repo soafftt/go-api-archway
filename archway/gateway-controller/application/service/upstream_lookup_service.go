@@ -34,10 +34,11 @@ func (u UpstreamLookupService) LookUp(lookupRequest dto.UpStreamLookupRequest) d
 		return dto.NewErrUpStreamLookupResult(errs.ERR_NOT_FOUND_DOMAIN_RESOURCE)
 	}
 
-	resourcePath := resource.LookupPath(lookupRequest.GetRelativePath(isEmptyDomain))
-	if resourcePath == nil {
+	resourcePathMatch := resource.LookupPath(lookupRequest.GetRelativePath(isEmptyDomain))
+	if resourcePathMatch == nil {
 		return dto.NewErrUpStreamLookupResult(errs.ERR_NOT_FOUND_DOMAIN_RESROUCE_PATH)
 	}
+	resourcePath := resourcePathMatch.Path
 
 	var userKey any
 	if resourcePath.CheckAuthorization {
@@ -61,12 +62,14 @@ func (u UpstreamLookupService) LookUp(lookupRequest dto.UpStreamLookupRequest) d
 
 	info := dto.NewUpStreamInfo(
 		resource.Host,
-		resourcePath.Path,
+		resourcePathMatch.RewrittenPath,
+		resourcePathMatch.OriginalPath,
 		resourcePath.Method,
 		resourcePath.RequestTimeout,
 		resourcePath.ResponseTimeout,
 		resourcePath.CacheTimeout,
 		userKey,
+		resourcePath.RateLimitCount,
 	)
 	return dto.NewUpStreamLookupResult(info)
 }

@@ -1,6 +1,6 @@
 package rewrite
 
-import upstreamDto "core/model/upstream"
+import upstreamDto "core/domain/upstream"
 
 type RewritePathDTO struct {
 	Host            string `json:"domain"`             // 도메인 이름
@@ -10,6 +10,7 @@ type RewritePathDTO struct {
 	RequestTimeout  int64  `json:"request_timeout"`    // 요청 타임아웃
 	CacheTimeout    int64  `json:"cache_timeout"`      // 캐시 타임아웃
 	UserKey         any    `json:"user_key:omitempty"` // 인증 체크이후의 유저키.
+	RateLimitCount  int64  `json:"rate_limit_count"`   // RateLimitCount
 }
 
 func NewEmptyRewritePathDTO() RewritePathDTO {
@@ -24,6 +25,7 @@ func NewRewritePathDTO(domain string, upstreamPath *upstreamDto.UpstreamPath) Re
 		ResponseTimeout: upstreamPath.ResponseTimeout,
 		RequestTimeout:  upstreamPath.RequestTimeout,
 		CacheTimeout:    upstreamPath.CacheTimeout,
+		RateLimitCount:  upstreamPath.RateLimitCount,
 	}
 }
 

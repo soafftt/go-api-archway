@@ -67,7 +67,8 @@ func buildValkeyBackedServiceJSON(serviceName string, algorithm string, withAuth
 						"method": "GET",
 						"request_timeout": 3000,
 						"response_timeout": 5000,
-						"check_authorization": %t
+						"check_authorization": %t,
+						"rate_limit_count": 0
 					}
 				]
 			}
@@ -104,6 +105,7 @@ func buildGeneratedValkeyServiceJSON(serviceName string, algorithm string, datas
 				"response_timeout":    5000 + pathIndex,
 				"check_authorization": dataset.withAuth && domainIndex == 0 && pathIndex == dataset.pathsPerDomain-1,
 				"cache_timeout":       pathIndex % 10,
+				"rate_limit_count":    0,
 			})
 		}
 

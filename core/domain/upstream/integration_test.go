@@ -85,7 +85,7 @@ func TestUpStreamService_JSONUnmarshal(t *testing.T) {
 
 	apiResource.InitializeRouter()
 	result := apiResource.LookupPath("/api/users/123")
-	if result == nil || result.Path != "/api/users/{id}" {
+	if result == nil || result.OriginalPath != "/api/users/{id}" || result.RewrittenPath != "/api/users/123" {
 		t.Fatalf("Expected path '/api/users/{id}', got %#v", result)
 	}
 
@@ -157,14 +157,14 @@ func TestUpStreamService_ComplexScenario(t *testing.T) {
 			if result == nil {
 				t.Fatalf("Expected to find path %s", tt.path)
 			}
-			if result.Path != tt.expectedPattern {
-				t.Errorf("Expected pattern %s, got %s", tt.expectedPattern, result.Path)
+			if result.OriginalPath != tt.expectedPattern {
+				t.Errorf("Expected pattern %s, got %s", tt.expectedPattern, result.OriginalPath)
 			}
-			if result.RequestTimeout != tt.expectedTimeout {
-				t.Errorf("Expected timeout %d, got %d", tt.expectedTimeout, result.RequestTimeout)
+			if result.Path.RequestTimeout != tt.expectedTimeout {
+				t.Errorf("Expected timeout %d, got %d", tt.expectedTimeout, result.Path.RequestTimeout)
 			}
-			if result.CheckAuthorization != tt.expectedAuthCheck {
-				t.Errorf("Expected auth check %v, got %v", tt.expectedAuthCheck, result.CheckAuthorization)
+			if result.Path.CheckAuthorization != tt.expectedAuthCheck {
+				t.Errorf("Expected auth check %v, got %v", tt.expectedAuthCheck, result.Path.CheckAuthorization)
 			}
 		})
 	}

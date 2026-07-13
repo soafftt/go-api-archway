@@ -332,7 +332,8 @@ func buildValkeyBackedServiceJSON(serviceName string, algorithm string, withAuth
 						"method": "GET",
 						"request_timeout": 3000,
 						"response_timeout": 5000,
-						"check_authorization": %t
+						"check_authorization": %t,
+						"rate_limit_count": 0
 					}
 				]
 			}
@@ -578,8 +579,11 @@ func TestUnixServerLookupRoute_ReturnsMatchedUpstreamInfo(t *testing.T) {
 	if result.Host != "upstream-server-1.internal:8080" {
 		t.Fatalf("expected host %q, got %q", "upstream-server-1.internal:8080", result.Host)
 	}
-	if result.Path != "/api/users/{userId}/posts/{postId}" {
-		t.Fatalf("expected path %q, got %q", "/api/users/{userId}/posts/{postId}", result.Path)
+	if result.Path != "/api/users/123/posts/456" {
+		t.Fatalf("expected path %q, got %q", "/api/users/123/posts/456", result.Path)
+	}
+	if result.OriginalPath != "/api/users/{userId}/posts/{postId}" {
+		t.Fatalf("expected original path %q, got %q", "/api/users/{userId}/posts/{postId}", result.OriginalPath)
 	}
 	if result.Method != http.MethodGet {
 		t.Fatalf("expected method %q, got %q", http.MethodGet, result.Method)

@@ -28,6 +28,7 @@ func (u upstreamLookupService) Lookup(srcPath string, accessToken *string) (in.U
 	result = in.UpstreamLookupResult{
 		Host:            controllerLookupResult.Host,
 		Path:            controllerLookupResult.Path,
+		OriginPath:      controllerLookupResult.OriginalPath,
 		Method:          controllerLookupResult.Method,
 		ResponseTimeout: controllerLookupResult.ResponseTimeout,
 		RequestTimeout:  controllerLookupResult.RequestTimeout,

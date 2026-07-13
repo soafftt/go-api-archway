@@ -17,7 +17,7 @@ func (u *UpstreamResource) InitializeRouter() {
 
 // LookupPath 는 Trie 기반 라우팅을 사용하여 일치하는 경로를 찾습니다.
 // 정확한 일치와 경로 변수(예: /users/{id})를 모두 지원합니다.
-func (u *UpstreamResource) LookupPath(path string) *UpstreamPath {
+func (u *UpstreamResource) LookupPath(path string) *UpStreamPathMatch {
 	if u.pathRouter == nil {
 		return nil
 	}

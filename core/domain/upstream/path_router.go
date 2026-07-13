@@ -7,6 +7,13 @@ type UpStreamPathRouter struct {
 	root *upstreamPathNode
 }
 
+type UpStreamPathMatch struct {
+	Path          *UpstreamPath
+	OriginalPath  string
+	RewrittenPath string
+	PathParams    map[string]string
+}
+
 // trie 알고리즘으로 구현된 UpStreamPathRouter는 다음과 같은 특징을 가집니다:
 // 1. 경로를 '/' 기준으로 분할하여 트리 구조로 저장합니다.
 // 2. 각 노드는 고유한 경로 세그먼트를 나타내며, path variable (예: {id})도 지원합니다.
@@ -62,39 +69,68 @@ func (uspr *UpStreamPathRouter) Insert(upstreamPath *UpstreamPath) {
 }
 
 // Search finds a matching path in the router
-func (uspr *UpStreamPathRouter) Search(requestPath string) *UpstreamPath {
+func (uspr *UpStreamPathRouter) Search(requestPath string) *UpStreamPathMatch {
 	if uspr.root == nil {
 		return nil
 	}
 
 	segments := splitPath(requestPath)
-	return uspr.search(uspr.root, segments, 0)
+	return uspr.search(uspr.root, segments, 0, map[string]string{})
 }
 
 // search recursively searches for a matching path
-func (uspr *UpStreamPathRouter) search(node *upstreamPathNode, segments []string, index int) *UpstreamPath {
+func (uspr *UpStreamPathRouter) search(node *upstreamPathNode, segments []string, index int, pathParams map[string]string) *UpStreamPathMatch {
 	// Base case: reached the end of segments
 	if index == len(segments) {
-		return node.path
+		if node.path == nil {
+			return nil
+		}
+
+		return &UpStreamPathMatch{
+			Path:          node.path,
+			OriginalPath:  node.path.Path,
+			RewrittenPath: rewritePath(node.path.Path, pathParams),
+			PathParams:    copyPathParams(pathParams),
+		}
 	}
 
 	segment := segments[index]
 
 	// Try exact match first (higher priority)
 	if child, exists := node.child[segment]; exists {
-		if result := uspr.search(child, segments, index+1); result != nil {
+		if result := uspr.search(child, segments, index+1, pathParams); result != nil {
 			return result
 		}
 	}
 
 	// Try path variable match
 	if node.childParam != nil {
-		if result := uspr.search(node.childParam, segments, index+1); result != nil {
+		pathParams[node.childParam.pathVariable] = segment
+		if result := uspr.search(node.childParam, segments, index+1, pathParams); result != nil {
 			return result
 		}
+		delete(pathParams, node.childParam.pathVariable)
 	}
 
 	return nil
+}
+
+func rewritePath(path string, pathParams map[string]string) string {
+	rewrittenPath := path
+
+	for key, value := range pathParams {
+		rewrittenPath = strings.ReplaceAll(rewrittenPath, "{"+key+"}", value)
+	}
+
+	return rewrittenPath
+}
+
+func copyPathParams(pathParams map[string]string) map[string]string {
+	copiedPathParams := make(map[string]string, len(pathParams))
+	for key, value := range pathParams {
+		copiedPathParams[key] = value
+	}
+	return copiedPathParams
 }
 
 // splitPath splits a path into segments, removing empty strings

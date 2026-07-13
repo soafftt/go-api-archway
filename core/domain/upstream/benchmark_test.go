@@ -95,7 +95,7 @@ func BenchmarkUpstreamResource_LookupPath(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		result := resource.LookupPath("/api/users/123")
-		if result == nil {
+		if result == nil || result.Path == nil {
 			b.Fatal("path not found")
 		}
 	}

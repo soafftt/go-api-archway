@@ -28,8 +28,17 @@ func TestPathRouter_ExactMatch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := router.Search(tt.path)
-			if result != tt.expected {
+			if tt.expected == nil {
+				if result != nil {
+					t.Errorf("Expected nil, got %v", result)
+				}
+				return
+			}
+			if result == nil || result.Path != tt.expected {
 				t.Errorf("Expected %v, got %v", tt.expected, result)
+			}
+			if result != nil && result.RewrittenPath != tt.path {
+				t.Errorf("Expected rewritten path %s, got %s", tt.path, result.RewrittenPath)
 			}
 		})
 	}
@@ -61,7 +70,13 @@ func TestPathRouter_PathVariables(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := router.Search(tt.path)
-			if result != tt.expected {
+			if tt.expected == nil {
+				if result != nil {
+					t.Errorf("Expected nil, got %v", result)
+				}
+				return
+			}
+			if result == nil || result.Path != tt.expected {
 				t.Errorf("Expected %v, got %v", tt.expected, result)
 			}
 		})
@@ -90,7 +105,7 @@ func TestPathRouter_MixedStaticAndDynamic(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := router.Search(tt.path)
-			if result != tt.expected {
+			if result == nil || result.Path != tt.expected {
 				t.Errorf("Expected %v, got %v", tt.expected, result)
 			}
 		})
@@ -129,8 +144,8 @@ func TestUpStreamHost_LookupPath(t *testing.T) {
 			if tt.shouldMatch {
 				if result == nil {
 					t.Errorf("Expected to find match for %s", tt.requestPath)
-				} else if result.Path != tt.expectedPath {
-					t.Errorf("Expected path %s, got %s", tt.expectedPath, result.Path)
+				} else if result.OriginalPath != tt.expectedPath {
+					t.Errorf("Expected original path %s, got %s", tt.expectedPath, result.OriginalPath)
 				}
 			} else {
 				if result != nil {

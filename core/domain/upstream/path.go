@@ -7,4 +7,5 @@ type UpstreamPath struct {
 	ResponseTimeout    int64  `json:"response_timeout"`    // Response timeout
 	CheckAuthorization bool   `json:"check_authorization"` // authorization check
 	CacheTimeout       int64  `json:"cache_timeout"`       // Cache timeout
+	RateLimitCount     int64  `json:"rate_limit_count"`    // RateLimit Count Per 1s
 }
