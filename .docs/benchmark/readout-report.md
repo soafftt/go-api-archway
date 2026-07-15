@@ -1,7 +1,7 @@
 # Archway API Gateway - 100k RPS 기준의 관점
 
 ## 1. 목적
-- 본 문서는 사내 자체개발 Archway API Gateway - 100k RPS 기준의 관점 용량/성능 기준 보고서입니다.
+- 본 문서는 자체개발 Archway API Gateway - 100k RPS 기준의 관점 용량/성능 기준 보고서입니다.
 - 범위는 `RateLimit + JWT 검증`이 포함된 게이트웨이 요청 경로입니다.
 - ES256 는 애초에 느리기에 제외...
 
