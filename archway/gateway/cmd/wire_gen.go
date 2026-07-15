@@ -15,6 +15,7 @@ import (
 	"gateway/adapter/in/middleware"
 	di2 "gateway/adapter/out/di"
 	"gateway/adapter/out/gatewaycontroller"
+	"gateway/adapter/out/ratelimit"
 	"gateway/application/service"
 	di4 "gateway/application/service/di"
 )
@@ -29,11 +30,13 @@ func InitializeApp() (*GatewayProxyApp, error) {
 		GatewayControllerClient: gatewayControllerClient,
 	}
 	upstreamLookupPort := gatewaycontroller.NewUpstreamLookup(appConfig, gatewayControllerClient)
+	rateLimit := ratelimit.NewRateLimit()
 	adapterOutDI := &di2.AdapterOutDI{
 		GatewayControllerClient: upstreamLookupPort,
+		RateLimiter:             rateLimit,
 	}
 	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort)
-	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase)
+	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase, rateLimit)
 	middlewareContainer := middleware.NewMiddlewareContainer(requestMiddleware)
 	gatewayProxy := in.NewGatewayProxy()
 	adapterInDI := &di3.AdapterInDI{

@@ -11,6 +11,7 @@ type upstreamLookupService struct {
 
 func NewUpstreamLookupService(
 	upstreamLookupPort out.UpstreamLookupPort,
+
 ) in.UpstreamLookupUseCase {
 	return &upstreamLookupService{
 		upstreamLookupPort: upstreamLookupPort,
@@ -20,20 +21,22 @@ func NewUpstreamLookupService(
 func (u upstreamLookupService) Lookup(srcPath string, accessToken *string) (in.UpstreamLookupResult, error) {
 	var result in.UpstreamLookupResult
 
-	controllerLookupResult, err := u.upstreamLookupPort.GetUpstreamInfo(srcPath, accessToken)
+	lookupResult, err := u.upstreamLookupPort.GetUpstreamInfo(srcPath, accessToken)
 	if err != nil {
 		return result, err
 	}
 
 	result = in.UpstreamLookupResult{
-		Host:            controllerLookupResult.Host,
-		Path:            controllerLookupResult.Path,
-		OriginPath:      controllerLookupResult.OriginalPath,
-		Method:          controllerLookupResult.Method,
-		ResponseTimeout: controllerLookupResult.ResponseTimeout,
-		RequestTimeout:  controllerLookupResult.RequestTimeout,
-		CacheTimeout:    controllerLookupResult.CacheTimeout,
-		UserKey:         controllerLookupResult.UserKey,
+		ServiceName:     lookupResult.ServiceName,
+		Host:            lookupResult.Host,
+		Path:            lookupResult.Path,
+		OriginPath:      lookupResult.OriginalPath,
+		Method:          lookupResult.Method,
+		ResponseTimeout: lookupResult.ResponseTimeout,
+		RequestTimeout:  lookupResult.RequestTimeout,
+		CacheTimeout:    lookupResult.CacheTimeout,
+		UserKey:         lookupResult.UserKey,
+		RateLimitCount:  lookupResult.RateLimitCount,
 	}
 
 	return result, nil

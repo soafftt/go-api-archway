@@ -61,6 +61,7 @@ func (u UpstreamLookupService) LookUp(lookupRequest dto.UpStreamLookupRequest) d
 	}
 
 	info := dto.NewUpStreamInfo(
+		service.ServiceName,
 		resource.Host,
 		resourcePathMatch.RewrittenPath,
 		resourcePathMatch.OriginalPath,

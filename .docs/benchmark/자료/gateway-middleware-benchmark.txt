@@ -1,0 +1,54 @@
+goos: darwin
+goarch: arm64
+pkg: gateway/adapter/in/middleware
+cpu: Apple M4
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_AllRateLimitDistinct_HS256/P1-10      	 1338192	       889.2 ns/op	    218952 rps_p50	   1119240 rps_p95	   1119240 rps_p99	    2434 B/op	      43 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_AllRateLimitDistinct_HS256/P8-10      	 1431555	       831.1 ns/op	    221388 rps_p50	   1210167 rps_p95	   1210167 rps_p99	    2432 B/op	      43 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_AllRateLimitDistinct_HS256/P32-10     	 1581680	       732.0 ns/op	    215186 rps_p50	   1366494 rps_p95	   1366494 rps_p99	    2429 B/op	      43 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_AllRateLimitDistinct_RS256/P1-10      	  394569	      3346 ns/op	     98624 rps_p50	    295945 rps_p95	    295945 rps_p99	    3347 B/op	      41 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_AllRateLimitDistinct_RS256/P8-10      	  318402	      3198 ns/op	      5759 rps_p50	    312643 rps_p95	    312643 rps_p99	    3276 B/op	      43 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_AllRateLimitDistinct_RS256/P32-10     	  387135	      3251 ns/op	     85772 rps_p50	    301363 rps_p95	    301363 rps_p99	    3277 B/op	      43 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_2_to_3_HS256/P1-10          	 1629828	       739.0 ns/op	    269077 rps_p50	   1360751 rps_p95	   1360751 rps_p99	    2540 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_2_to_3_HS256/P8-10          	 1606970	       732.1 ns/op	    238545 rps_p50	   1368425 rps_p95	   1368425 rps_p99	    2540 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_2_to_3_HS256/P32-10         	 1695546	       688.0 ns/op	    239242 rps_p50	   1456304 rps_p95	   1456304 rps_p99	    2539 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_2_to_3_RS256/P1-10          	  367915	      3431 ns/op	     78168 rps_p50	    289747 rps_p95	    289747 rps_p99	    3376 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_2_to_3_RS256/P8-10          	  359982	      3289 ns/op	     56679 rps_p50	    303303 rps_p95	    303303 rps_p99	    3346 B/op	      39 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_2_to_3_RS256/P32-10         	  350220	      3128 ns/op	     30267 rps_p50	    319953 rps_p95	    319953 rps_p99	    3344 B/op	      39 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_1_to_3_HS256/P1-10          	 1650378	       724.3 ns/op	    280256 rps_p50	   1370122 rps_p95	   1370122 rps_p99	    2568 B/op	      36 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_1_to_3_HS256/P8-10          	 1623661	       714.3 ns/op	    219649 rps_p50	   1404012 rps_p95	   1404012 rps_p99	    2568 B/op	      36 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_1_to_3_HS256/P32-10         	 1713615	       677.6 ns/op	    234974 rps_p50	   1478641 rps_p95	   1478641 rps_p99	    2567 B/op	      36 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_1_to_3_RS256/P1-10          	  364388	      3461 ns/op	     77819 rps_p50	    286569 rps_p95	    286569 rps_p99	    3381 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_1_to_3_RS256/P8-10          	  368242	      3320 ns/op	     69079 rps_p50	    299163 rps_p95	    299163 rps_p99	    3363 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI100_RateLimit_1_to_3_RS256/P32-10         	  361996	      3202 ns/op	     49901 rps_p50	    312095 rps_p95	    312095 rps_p99	    3362 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_AllRateLimitDistinct_HS256/P1-10     	 1669488	       690.0 ns/op	    226522 rps_p50	   1442966 rps_p95	   1442966 rps_p99	    2676 B/op	      34 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_AllRateLimitDistinct_HS256/P16-10    	 1678495	       700.1 ns/op	    255840 rps_p50	   1422655 rps_p95	   1422655 rps_p99	    2671 B/op	      34 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_AllRateLimitDistinct_HS256/P64-10    	 1729917	       666.5 ns/op	    226756 rps_p50	   1503161 rps_p95	   1503161 rps_p99	    2663 B/op	      35 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_AllRateLimitDistinct_RS256/P1-10     	  368704	      3332 ns/op	     71107 rps_p50	    297597 rps_p95	    297597 rps_p99	    3452 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_AllRateLimitDistinct_RS256/P16-10    	  366026	      3261 ns/op	     59675 rps_p50	    306351 rps_p95	    306351 rps_p99	    3452 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_AllRateLimitDistinct_RS256/P64-10    	  391314	      3194 ns/op	     76900 rps_p50	    314414 rps_p95	    314414 rps_p99	    3452 B/op	      37 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_2_to_3_HS256/P1-10         	 1800555	       668.5 ns/op	    304400 rps_p50	   1496155 rps_p95	   1496155 rps_p99	    2637 B/op	      33 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_2_to_3_HS256/P16-10        	 1799769	       660.7 ns/op	    287489 rps_p50	   1512280 rps_p95	   1512280 rps_p99	    2634 B/op	      34 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_2_to_3_HS256/P64-10        	 1827026	       635.6 ns/op	    252434 rps_p50	   1574592 rps_p95	   1574592 rps_p99	    2630 B/op	      34 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_2_to_3_RS256/P1-10         	  306038	      3353 ns/op	      8235 rps_p50	    297803 rps_p95	    297803 rps_p99	    3413 B/op	      36 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_2_to_3_RS256/P16-10        	  391305	      3271 ns/op	     86297 rps_p50	    305008 rps_p95	    305008 rps_p99	    3413 B/op	      36 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_2_to_3_RS256/P64-10        	  389569	      3187 ns/op	     77384 rps_p50	    312185 rps_p95	    312185 rps_p99	    3414 B/op	      36 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_1_to_3_HS256/P1-10         	 1791146	       662.8 ns/op	    282054 rps_p50	   1509092 rps_p95	   1509092 rps_p99	    2628 B/op	      33 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_1_to_3_HS256/P16-10        	 1806025	       645.5 ns/op	    254737 rps_p50	   1551288 rps_p95	   1551288 rps_p99	    2626 B/op	      33 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_1_to_3_HS256/P64-10        	 1850994	       628.9 ns/op	    271687 rps_p50	   1579307 rps_p95	   1579307 rps_p99	    2624 B/op	      33 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_1_to_3_RS256/P1-10         	  349840	      3352 ns/op	     53352 rps_p50	    296488 rps_p95	    296488 rps_p99	    3404 B/op	      36 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_1_to_3_RS256/P16-10        	  378046	      3483 ns/op	     96427 rps_p50	    281619 rps_p95	    281619 rps_p99	    3404 B/op	      36 allocs/op
+BenchmarkRequestMiddleware_RateLimitMatrix/URI1000_RateLimit_1_to_3_RS256/P64-10        	  372272	      3241 ns/op	     64635 rps_p50	    307637 rps_p95	    307637 rps_p99	    3404 B/op	      36 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI100_AllRateLimitDistinct_HS256-10        	  135987	      7861 ns/op	      8824 rps_p50	    127163 rps_p95	    127163 rps_p99	   10019 B/op	     116 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI100_AllRateLimitDistinct_RS256-10        	  107185	     10261 ns/op	      9430 rps_p50	     97755 rps_p95	     97755 rps_p99	   11140 B/op	     118 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI100_RateLimit_2_to_3_HS256-10            	  133874	      7882 ns/op	      7242 rps_p50	    126632 rps_p95	    126632 rps_p99	    9895 B/op	     115 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI100_RateLimit_2_to_3_RS256-10            	   97936	     10328 ns/op	      1285 rps_p50	     96651 rps_p95	     96651 rps_p99	   11020 B/op	     118 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI100_RateLimit_1_to_3_HS256-10            	  133842	      7892 ns/op	      7328 rps_p50	    126514 rps_p95	    126514 rps_p99	    9948 B/op	     115 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI100_RateLimit_1_to_3_RS256-10            	   98841	     10261 ns/op	      1539 rps_p50	     97302 rps_p95	     97302 rps_p99	   11118 B/op	     117 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI1000_AllRateLimitDistinct_HS256-10       	  130495	      7767 ns/op	      1996 rps_p50	    128499 rps_p95	    128499 rps_p99	    9862 B/op	     116 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI1000_AllRateLimitDistinct_RS256-10       	  119911	      9964 ns/op	     20091 rps_p50	     99820 rps_p95	     99820 rps_p99	   11149 B/op	     118 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI1000_RateLimit_2_to_3_HS256-10           	  156051	      7697 ns/op	     26465 rps_p50	    129586 rps_p95	    129586 rps_p99	    9716 B/op	     115 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI1000_RateLimit_2_to_3_RS256-10           	  118032	     10041 ns/op	     19060 rps_p50	     98972 rps_p95	     98972 rps_p99	   11191 B/op	     118 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI1000_RateLimit_1_to_3_HS256-10           	  153795	      7717 ns/op	     24625 rps_p50	    129170 rps_p95	    129170 rps_p99	    9782 B/op	     115 allocs/op
+BenchmarkGatewayPipeline_RateLimitMatrixE2E/URI1000_RateLimit_1_to_3_RS256-10           	   97965	     10237 ns/op	       321.0 rps_p50	     97644 rps_p95	     97644 rps_p99	   10981 B/op	     117 allocs/op
+PASS
+ok  	gateway/adapter/in/middleware	75.557s

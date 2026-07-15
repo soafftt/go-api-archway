@@ -16,6 +16,7 @@ func NewErrUpStreamLookupResult(err error) UpStreamLookupResult {
 }
 
 type UpStreamInfo struct {
+	ServiceName     string `json:"service_name"`       // 서비스명.
 	Host            string `json:"domain"`             // 도메인 이름
 	Path            string `json:"path"`               // 치환된 프록시 경로
 	OriginalPath    string `json:"original_path"`      // 원본 프록시 경로 템플릿
@@ -28,11 +29,12 @@ type UpStreamInfo struct {
 }
 
 func NewUpStreamInfo(
-	host, path, originalPath, method string,
+	serviceName, host, path, originalPath, method string,
 	requestTimeout, responseTimeout, cacheTimeout int64,
 	userKey any, rateLimitCount int64,
 ) UpStreamInfo {
 	return UpStreamInfo{
+		ServiceName:     serviceName,
 		Host:            host,
 		Path:            path,
 		OriginalPath:    originalPath,

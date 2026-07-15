@@ -4,6 +4,7 @@ import "strings"
 
 // Lookup 결과.
 type UpstreamLookupResult struct {
+	ServiceName     string // 서비스
 	Host            string // 도메인 이름
 	Path            string // 프록시 경로
 	OriginPath      string // 설정되어 있는 Origin Path

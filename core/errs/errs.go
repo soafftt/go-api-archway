@@ -16,6 +16,7 @@ const (
 	ERR_JWT_DESERIALIZE                ArchwayError = "ERR_JWT_DESERIALIZE"
 	ERR_INVALID_TARGET                 ArchwayError = "ERR_INVALID_TARGET"
 	ERR_GATEWAY_CONTROLLER_SEND        ArchwayError = "ERR_GATEWAY_CONTROLLER_SEND"
+	ERR_TOO_MANY_REQUESTS              ArchwayError = "ERR_TOO_MANY_REQUESTS"
 )
 
 // 검색효율을 위하여 공간을 희생함.

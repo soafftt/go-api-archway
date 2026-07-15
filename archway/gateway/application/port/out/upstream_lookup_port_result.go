@@ -2,6 +2,7 @@ package out
 
 // gateway-controller 를 이용하여 응답 받는 결과
 type UpStreamLookupPortResult struct {
+	ServiceName     string `json:"service_name"`       // 서비스명
 	Host            string `json:"domain"`             // 도메인 이름
 	Path            string `json:"path"`               // 프록시 경로
 	OriginalPath    string `json:"original_path"`      // original path

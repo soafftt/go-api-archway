@@ -8,6 +8,7 @@ import (
 	ingateway "gateway/adapter/in"
 	"gateway/adapter/in/middleware"
 	"gateway/adapter/out/gatewaycontroller"
+	"gateway/adapter/out/ratelimit"
 	"gateway/application/service"
 	"net"
 	"net/http"
@@ -76,7 +77,7 @@ func TestGatewayE2E_RewritePathVariableViaGatewayController(t *testing.T) {
 	gatewayControllerClient := client.NewGatewayControllerClient(appConfig)
 	upstreamLookupPort := gatewaycontroller.NewUpstreamLookup(appConfig, gatewayControllerClient)
 	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort)
-	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase)
+	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase, ratelimit.NewRateLimit())
 
 	handler := middleware.Chain(ingateway.NewGatewayProxy().HttpProxy, requestMiddleware)
 

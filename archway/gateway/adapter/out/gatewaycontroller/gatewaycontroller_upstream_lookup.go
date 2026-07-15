@@ -51,7 +51,6 @@ func (u upstreamLookup) GetUpstreamInfo(
 		_ = httpResponse.Body.Close()
 	}()
 
-	// TODO:  에러 핸들링 하는 유틸을 만들어야 함.
 	if httpResponse.StatusCode != http.StatusOK {
 		errorResponse, err := utils.ToStruct[coreAdapterIn.ErrorResponse](httpResponse)
 		if err != nil {
