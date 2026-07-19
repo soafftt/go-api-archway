@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package adapter.config.proto.grpc;
+// "github.com/사용자명/프로젝트명/경로" 형태로 적는 것이 관례입니다.
+option go_package = "github.com/soafftt/go-api-archway/archway/pb";
+
+service UpstreamLookupService {
+    rpc Lookup(UpstreamLookupRequest) returns (UpstreamLookupResponse);
+}
+
+message UpstreamLookupRequest {
+  string Version = 1;
+  string Service = 2;
+  string Domain = 3;
+  string Path = 4;
+  string AccessToken = 5;
+}
+
+message UpstreamLookupResponse {
+  UpstreamInfo Info = 1;
+  string Error = 2;
+}
+
+message UpstreamInfo {
+  string Host = 1;
+  string Path = 2;
+  string OriginalPath = 3;
+  string Method = 4;
+  int64 RequestTimeout = 5;
+  int64 ResponseTimeout = 6;
+  int64 CacheTimeout = 7;
+  string UserKey = 8;
+  int64 RateLimitCount = 9;
+}
+
+message ErrorResponse {
+  string Message = 1;
+  string Detail = 2;
+}

@@ -6,8 +6,9 @@ ROOT_DIR := $(CURDIR)
 BUILD_DIR := $(ROOT_DIR)/.build
 GATEWAY_DIR := $(ROOT_DIR)/gateway
 GATEWAY_CONTROLLER_DIR := $(ROOT_DIR)/gateway-controller
+PROTOBUF_DIR := $(ROOT_DIR)/../protobuf
 
-.PHONY: all wire build clean wire-bin wire-gateway wire-gateway-controller build-gateway build-gateway-controller
+.PHONY: all wire build clean wire-bin wire-gateway wire-gateway-controller build-gateway build-gateway-controller proto-upstream-lookup
 
 all: build
 
@@ -39,3 +40,6 @@ build-gateway: wire-gateway
 build-gateway-controller: wire-gateway-controller
 	mkdir -p $(BUILD_DIR)
 	cd $(GATEWAY_CONTROLLER_DIR) && $(GO) build -o $(BUILD_DIR)/gateway-controller ./cmd
+
+proto-upstream-lookup:
+	cd $(PROTOBUF_DIR) && protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative upstream_lookup.proto

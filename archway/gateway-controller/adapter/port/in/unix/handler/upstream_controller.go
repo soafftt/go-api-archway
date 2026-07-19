@@ -41,7 +41,7 @@ func (h *upStreamHandler) upStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := h.upStreamLookupUseCase.LookUp(request)
+	result := h.upStreamLookupUseCase.LookUpFromRequest(request)
 	if result.Error != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(in2.NewErrorResponse(result.Error)); err != nil {

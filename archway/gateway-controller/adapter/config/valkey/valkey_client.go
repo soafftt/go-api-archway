@@ -1,7 +1,8 @@
-package config
+package valkey
 
 import (
 	"fmt"
+	"gateway/controller/adapter/config/app_config"
 
 	"github.com/google/wire"
 	"github.com/valkey-io/valkey-go"
@@ -19,7 +20,7 @@ type valkeyClient struct {
 
 var ValkeyClientSet = wire.NewSet(NewValkeyClient)
 
-func NewValkeyClient(appConfig *AppConfig) ValkeyClient {
+func NewValkeyClient(appConfig *app_config.AppConfig) ValkeyClient {
 	masterHost := appConfig.Valkey.MasterHost
 	replicaHosts := appConfig.Valkey.ReplicaHosts
 

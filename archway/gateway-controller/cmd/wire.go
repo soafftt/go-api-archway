@@ -5,7 +5,12 @@
 package main
 
 import (
-	adpaterConfig "gateway/controller/adapter/config"
+	adapderConfigAppConfig "gateway/controller/adapter/config/app_config"
+	adapterConfigListener "gateway/controller/adapter/config/server"
+	"gateway/controller/adapter/config/server/grpc_server"
+	"gateway/controller/adapter/config/server/unixsocket_server"
+	adpaterConfigValkey "gateway/controller/adapter/config/valkey"
+	adapterPortInGrpcDi "gateway/controller/adapter/port/in/grpc/di"
 	adapterPortInUnixDi "gateway/controller/adapter/port/in/unix/di"
 	adapterPortOutDi "gateway/controller/adapter/port/out/di"
 	applicationServiceDi "gateway/controller/application/service/di"
@@ -14,22 +19,28 @@ import (
 )
 
 type GatewayControllerApp struct {
-	app                *adpaterConfig.AppConfig
-	valkeyClient       adpaterConfig.ValkeyClient
-	adapterPortOut     *adapterPortOutDi.AdapterPortOutDi
-	serviceProvider    *applicationServiceDi.ServiceProvider
-	unixRouterProvider *adapterPortInUnixDi.UnixRouterProvider
-	unixServer         *adpaterConfig.UnixServer
+	app                 *adapderConfigAppConfig.AppConfig
+	valkeyClient        adpaterConfigValkey.ValkeyClient
+	adapterPortOut      *adapterPortOutDi.AdapterPortOutDi
+	serviceProvider     *applicationServiceDi.ServiceProvider
+	unixRouterProvider  *adapterPortInUnixDi.UnixRouterProvider
+	grpcServiceProvider *adapterPortInGrpcDi.GrpcServiceProvider
+	unixServer          adapterConfigListener.UnixServer
+	grpcServer          adapterConfigListener.GrpcServer
+	listenerServer      adapterConfigListener.ListenerServer
 }
 
 func InitializeGatewayControllerApp() (*GatewayControllerApp, error) {
 	wire.Build(
-		adpaterConfig.AppConfigSet,
-		adpaterConfig.ValkeyClientSet,
+		adapderConfigAppConfig.AppConfigSet,
+		adpaterConfigValkey.ValkeyClientSet,
 		adapterPortOutDi.AdapterPortOutDiProviderSet,
 		applicationServiceDi.ServiceProviderSet,
 		adapterPortInUnixDi.UnixRouterProviderSet,
-		adpaterConfig.UnixServerProvider,
+		adapterPortInGrpcDi.GrpcServiceProviderSet,
+		unixsocket_server.UnixServerProvider,
+		grpc_server.GrpcServerProvider,
+		adapterConfigListener.NewListenerServer,
 		wire.Struct(new(GatewayControllerApp), "*"),
 	)
 	return nil, nil

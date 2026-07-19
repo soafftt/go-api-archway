@@ -5,7 +5,7 @@ import (
 	cdu "core/domain/upstream"
 	"core/utils"
 	"fmt"
-	"gateway/controller/adapter/config"
+	valkey2 "gateway/controller/adapter/config/valkey"
 	"strings"
 	"sync"
 
@@ -18,7 +18,7 @@ type RouteValkeyCache struct {
 	mu     sync.RWMutex
 }
 
-func NewRouteValkeyCache(valkey config.ValkeyClient) *RouteValkeyCache {
+func NewRouteValkeyCache(valkey valkey2.ValkeyClient) *RouteValkeyCache {
 	return &RouteValkeyCache{
 		client: valkey.GetClient(),
 		data:   make(map[string]*cdu.UpstreamService),

@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"gateway/controller/adapter/config/valkey"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -14,8 +15,6 @@ import (
 	"syscall"
 	"testing"
 	"time"
-
-	"gateway/controller/adapter/config"
 
 	"github.com/joho/godotenv"
 )
@@ -183,13 +182,13 @@ func lockValkeyTestScope(t testing.TB) {
 	})
 }
 
-func seedValkeyService(t testing.TB, serviceName string, algorithm string) config.ValkeyClient {
+func seedValkeyService(t testing.TB, serviceName string, algorithm string) valkey.ValkeyClient {
 	t.Helper()
 	lockValkeyTestScope(t)
 
-	appConfig := &config.AppConfig{}
+	appConfig := &app_config.AppConfig{}
 	appConfig.Valkey.MasterHost = loadValkeyMasterHostForTest(t)
-	client := config.NewValkeyClient(appConfig)
+	client := valkey.NewValkeyClient(appConfig)
 	valkeyClient := client.GetClient()
 	t.Cleanup(valkeyClient.Close)
 	t.Cleanup(client.GetSubscribeClient().Close)
@@ -209,7 +208,7 @@ func seedValkeyService(t testing.TB, serviceName string, algorithm string) confi
 	return client
 }
 
-func deleteValkeyService(t testing.TB, client config.ValkeyClient, serviceName string) {
+func deleteValkeyService(t testing.TB, client valkey.ValkeyClient, serviceName string) {
 	t.Helper()
 
 	valkeyClient := client.GetClient()
@@ -225,13 +224,13 @@ func seedGeneratedValkeyServices(
 	dataset generatedRouteDataset,
 	servicePrefix string,
 	algorithm string,
-) (config.ValkeyClient, []string) {
+) (valkey.ValkeyClient, []string) {
 	t.Helper()
 	lockValkeyTestScope(t)
 
-	appConfig := &config.AppConfig{}
+	appConfig := &app_config.AppConfig{}
 	appConfig.Valkey.MasterHost = loadValkeyMasterHostForTest(t)
-	client := config.NewValkeyClient(appConfig)
+	client := valkey.NewValkeyClient(appConfig)
 	valkeyClient := client.GetClient()
 	t.Cleanup(valkeyClient.Close)
 	t.Cleanup(client.GetSubscribeClient().Close)

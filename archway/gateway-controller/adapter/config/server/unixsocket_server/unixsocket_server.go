@@ -1,7 +1,9 @@
-package config
+package unixsocket_server
 
 import (
 	"context"
+	appConfig "gateway/controller/adapter/config/app_config"
+	"gateway/controller/adapter/config/server"
 	adapterPortInUnixDi "gateway/controller/adapter/port/in/unix/di"
 	"log"
 	"net"
@@ -14,15 +16,24 @@ import (
 	"github.com/google/wire"
 )
 
-type UnixServer struct {
+type unixServer struct {
 	UnixRouterProvider *adapterPortInUnixDi.UnixRouterProvider
-	AppConfig          *AppConfig
+	AppConfig          *appConfig.AppConfig
 }
 
 // Router 를 등록해야 함.
 // 즉, Router 를 inject 하여 해야 함.
+func NewUnixSocketServer(
+	UnixRouterProvider *adapterPortInUnixDi.UnixRouterProvider,
+	AppConfig *appConfig.AppConfig,
+) server.UnixServer {
+	return &unixServer{
+		UnixRouterProvider: UnixRouterProvider,
+		AppConfig:          AppConfig,
+	}
+}
 
-func (u *UnixServer) newServeMux() *http.ServeMux {
+func (u *unixServer) newServeMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	routes := u.UnixRouterProvider.UpStreamRouter.Routes()
 	for i := range routes {
@@ -33,7 +44,7 @@ func (u *UnixServer) newServeMux() *http.ServeMux {
 	return mux
 }
 
-func (u *UnixServer) newHTTPServer(handler http.Handler) *http.Server {
+func (u *unixServer) newHTTPServer(handler http.Handler) *http.Server {
 	return &http.Server{
 		ReadTimeout:  time.Duration(u.AppConfig.Server.ReadTimeoutMillisecond) * time.Millisecond,
 		WriteTimeout: time.Duration(u.AppConfig.Server.WriteTimeoutMillisecond) * time.Millisecond,
@@ -42,7 +53,7 @@ func (u *UnixServer) newHTTPServer(handler http.Handler) *http.Server {
 	}
 }
 
-func (u *UnixServer) Start() {
+func (u *unixServer) Start() {
 	// unix socket path 를 제거.
 	_ = os.Remove(u.AppConfig.Server.UnixSocketPath)
 
@@ -86,4 +97,7 @@ func (u *UnixServer) Start() {
 	}
 }
 
-var UnixServerProvider = wire.Struct(new(UnixServer), "*")
+var UnixServerProvider = wire.NewSet(
+	NewUnixSocketServer,
+	wire.Struct(new(unixServer), "*"),
+)

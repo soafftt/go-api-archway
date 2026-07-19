@@ -79,7 +79,7 @@ func BenchmarkUpstreamLookupServiceLookUpScaled(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				result := lookupService.LookUp(request)
+				result := lookupService.LookUpFromRequest(request)
 				if result.Error != nil {
 					b.Fatalf("lookup failed: %v", result.Error)
 				}
