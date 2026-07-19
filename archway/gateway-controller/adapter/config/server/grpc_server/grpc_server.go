@@ -43,12 +43,20 @@ func (g *grpcServer) newServer() *grpc.Server {
 	}
 
 	return grpc.NewServer(
+		// 최대 ReceiveMessageSize (Bytes)
 		grpc.MaxRecvMsgSize(grpcConfig.MaxRecvMsgBytes),
+		// 최대 SendMessageSize (Bytes)
 		grpc.MaxSendMsgSize(grpcConfig.MaxSendMsgBytes),
+		// ReadBufferSize (byte)
 		grpc.ReadBufferSize(grpcConfig.ReadBufferBytes),
+		// WriteBufferSize (byte)
 		grpc.WriteBufferSize(grpcConfig.WriteBufferBytes),
+		// ConnectionTime 지정.
 		grpc.ConnectionTimeout(time.Duration(grpcConfig.ConnectionTimeoutMillisecond)*time.Millisecond),
+		// 회대 연결 동시성 Stream - 1024가 기본이나 2048까지 늘림.
 		grpc.MaxConcurrentStreams(grpcConfig.MaxConcurrentStreams),
+		// stream 처리를 위한 goworkers - CPU 개수만큼 처리.
+		//
 		grpc.NumStreamWorkers(numStreamWorkers),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle: time.Duration(grpcConfig.KeepaliveMaxConnectionIdleMs) * time.Millisecond,
