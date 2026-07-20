@@ -24,7 +24,7 @@ func NewRequestMiddleware(
 	upstreamLookupUseCase portIn.UpstreamLookupUseCase,
 	rateLimiterPort portOutRateLimit.RateLimiterPort,
 ) RequestMiddleware {
-	return requestMiddleware{
+	return &requestMiddleware{
 		upstreamLookupUseCase: upstreamLookupUseCase,
 		rateLimiterPort:       rateLimiterPort,
 	}
@@ -50,7 +50,7 @@ func (r requestMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 			accessToken = nil
 		}
 
-		lookupResult, err := r.upstreamLookupUseCase.Lookup(target, accessToken)
+		lookupResult, err := r.upstreamLookupUseCase.Lookup(target, accessToken, portIn.UnixGrpc)
 		// toto: handle ErrorResponse 같은 것을 만들면 좋을듯
 		if err != nil {
 			// 에러처리.

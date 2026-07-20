@@ -7,7 +7,6 @@ import (
 	"gateway/adapter/config/client"
 	ingateway "gateway/adapter/in"
 	"gateway/adapter/in/middleware"
-	"gateway/adapter/out/gatewaycontroller"
 	"gateway/adapter/out/ratelimit"
 	"gateway/application/service"
 	"net"
@@ -69,13 +68,13 @@ func TestGatewayE2E_RewritePathVariableViaGatewayController(t *testing.T) {
 	waitForGatewayControllerSocket(t, socketPath)
 
 	appConfig := &config.AppConfig{}
-	appConfig.GatewayController.BaseURL = "http://unix/v1/upstream?path="
-	appConfig.GatewayController.Network = "unix"
-	appConfig.GatewayController.UNIX_SOCKET_PATH = socketPath
+	appConfig.ClientNetworkConfig.BaseURL = "http://unix/v1/upstream?path="
+	appConfig.ClientNetworkConfig.Network = "unix"
+	appConfig.ClientNetworkConfig.UnixSocketPath = socketPath
 	appConfig.HttpClient.TimeoutMilliSeconds = 3000
 
-	gatewayControllerClient := client.NewGatewayControllerClient(appConfig)
-	upstreamLookupPort := gatewaycontroller.NewUpstreamLookup(appConfig, gatewayControllerClient)
+	gatewayControllerClient := client.NewHttpClient(appConfig)
+	upstreamLookupPort := controlplane.NewUpstreamLookup(appConfig, gatewayControllerClient)
 	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort)
 	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase, ratelimit.NewRateLimit())
 

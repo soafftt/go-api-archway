@@ -1,0 +1,9 @@
+goos: darwin
+goarch: arm64
+pkg: gateway/controller/adapter/config/server/unixsocket_server
+cpu: Apple M4
+BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWT/NoJWT-10         	   58368	     19241 ns/op	    7076 B/op	      82 allocs/op
+BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWT/RS256-10         	   22356	     53772 ns/op	   12769 B/op	     145 allocs/op
+BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWT/HS256-10         	   48022	     24292 ns/op	   11171 B/op	     140 allocs/op
+PASS
+ok  	gateway/controller/adapter/config/server/unixsocket_server	5.065s

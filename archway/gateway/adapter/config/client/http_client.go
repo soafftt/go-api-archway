@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-type GatewayControllerClient interface {
+type HttpClient interface {
 	GetClient() *http.Client
 }
 
-type gatewayControllerClient struct {
+type httpClient struct {
 	client *http.Client
 }
 
-func NewGatewayControllerClient(config *config.AppConfig) GatewayControllerClient {
+func NewHttpClient(config *config.AppConfig) HttpClient {
 	dialer := &net.Dialer{
 		Timeout:   time.Duration(config.HttpClient.TimeoutMilliSeconds) * time.Millisecond,
 		KeepAlive: 30 * time.Second,
@@ -29,17 +29,17 @@ func NewGatewayControllerClient(config *config.AppConfig) GatewayControllerClien
 			MaxIdleConns:        500,
 			IdleConnTimeout:     90 * time.Second,
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return dialer.DialContext(ctx, config.GatewayController.Network, config.GatewayController.UNIX_SOCKET_PATH)
+				return dialer.DialContext(ctx, config.ClientNetworkConfig.Network, config.ClientNetworkConfig.UnixSocketPath)
 			},
 		},
 		Timeout: time.Duration(config.HttpClient.TimeoutMilliSeconds) * time.Millisecond,
 	}
 
-	return &gatewayControllerClient{
+	return &httpClient{
 		client: &client,
 	}
 }
 
-func (gcc *gatewayControllerClient) GetClient() *http.Client {
+func (gcc *httpClient) GetClient() *http.Client {
 	return gcc.client
 }

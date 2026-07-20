@@ -1,0 +1,12 @@
+goos: darwin
+goarch: arm64
+pkg: gateway/controller/adapter/config/server/grpc_server
+cpu: Apple M4
+BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWT/NoJWT-10         	   51082	     20902 ns/op	   10405 B/op	     168 allocs/op
+BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWT/HS256-10         	   42832	     26612 ns/op	   14514 B/op	     225 allocs/op
+BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWT/RS256-10         	   21228	     57660 ns/op	   15604 B/op	     230 allocs/op
+BenchmarkGrpcLookupOverTCPWithValkeyAndJWT/NoJWT-10                	   33566	     33660 ns/op	   10445 B/op	     168 allocs/op
+BenchmarkGrpcLookupOverTCPWithValkeyAndJWT/HS256-10                	   30228	     37496 ns/op	   14456 B/op	     225 allocs/op
+BenchmarkGrpcLookupOverTCPWithValkeyAndJWT/RS256-10                	   17943	     65730 ns/op	   15740 B/op	     231 allocs/op
+PASS
+ok  	gateway/controller/adapter/config/server/grpc_server	9.949s

@@ -1,0 +1,18 @@
+goos: darwin
+goarch: arm64
+pkg: gateway/adapter/in/middleware
+cpu: Apple M4
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI100_AllRateLimitDistinct_HS256-10         	   83366	     13933 ns/op	     11634 rps_p50	     71732 rps_p95	     71732 rps_p99	   16805 B/op	     185 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI100_AllRateLimitDistinct_RS256-10         	   76285	     15859 ns/op	     13420 rps_p50	     62865 rps_p95	     62865 rps_p99	   17129 B/op	     186 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI100_RateLimit_2_to_3_HS256-10             	   83925	     13817 ns/op	     11639 rps_p50	     72286 rps_p95	     72286 rps_p99	   16612 B/op	     185 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI100_RateLimit_2_to_3_RS256-10             	   77536	     15785 ns/op	     14706 rps_p50	     62830 rps_p95	     62830 rps_p99	   17230 B/op	     185 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI100_RateLimit_1_to_3_HS256-10             	   82930	     13787 ns/op	     10565 rps_p50	     72365 rps_p95	     72365 rps_p99	   16803 B/op	     185 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI100_RateLimit_1_to_3_RS256-10             	   73683	     16112 ns/op	     11537 rps_p50	     62146 rps_p95	     62146 rps_p99	   17126 B/op	     185 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI1000_AllRateLimitDistinct_HS256-10        	   99837	     11950 ns/op	     16575 rps_p50	     83262 rps_p95	     83262 rps_p99	   16259 B/op	     185 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI1000_AllRateLimitDistinct_RS256-10        	   81446	     14204 ns/op	     11315 rps_p50	     70131 rps_p95	     70131 rps_p99	   16228 B/op	     185 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI1000_RateLimit_2_to_3_HS256-10            	   94105	     12152 ns/op	     11794 rps_p50	     82311 rps_p95	     82311 rps_p99	   16071 B/op	     184 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI1000_RateLimit_2_to_3_RS256-10            	   87375	     14026 ns/op	     16284 rps_p50	     71091 rps_p95	     71091 rps_p99	   16470 B/op	     184 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI1000_RateLimit_1_to_3_HS256-10            	   99910	     12011 ns/op	     16228 rps_p50	     83682 rps_p95	     83682 rps_p99	   15769 B/op	     184 allocs/op
+BenchmarkGatewayFullChainRateLimitMatrixE2E/URI1000_RateLimit_1_to_3_RS256-10            	   87127	     13965 ns/op	     15505 rps_p50	     71622 rps_p95	     71622 rps_p99	   16628 B/op	     184 allocs/op
+PASS
+ok  	gateway/adapter/in/middleware	166.385s

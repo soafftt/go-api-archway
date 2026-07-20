@@ -1,0 +1,24 @@
+goos: darwin
+goarch: arm64
+pkg: gateway/controller/adapter/config/server/grpc_server
+cpu: Apple M4
+BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWTThroughputParallel/NoJWT/P1-10         	  188720	      6505 ns/op	    153754 req/s	   10143 B/op	     155 allocs/op
+BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWTThroughputParallel/NoJWT/P8-10         	  207327	      5315 ns/op	    188209 req/s	   10131 B/op	     153 allocs/op
+BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWTThroughputParallel/HS256/P1-10         	  134944	      8768 ns/op	    114074 req/s	   14497 B/op	     211 allocs/op
+BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWTThroughputParallel/HS256/P8-10         	  163599	      6476 ns/op	    154450 req/s	   14115 B/op	     209 allocs/op
+BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWTThroughputParallel/RS256/P1-10         	   82372	     13816 ns/op	     72400 req/s	   15422 B/op	     217 allocs/op
+BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWTThroughputParallel/RS256/P8-10         	   92990	     11354 ns/op	     88093 req/s	   15415 B/op	     214 allocs/op
+PASS
+ok  	gateway/controller/adapter/config/server/grpc_server	9.798s
+goos: darwin
+goarch: arm64
+pkg: gateway/controller/adapter/config/server/unixsocket_server
+cpu: Apple M4
+BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWTThroughputParallel/NoJWT/P1-10         	  113634	     10295 ns/op	     97137 req/s	   10448 B/op	      94 allocs/op
+BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWTThroughputParallel/NoJWT/P8-10         	  108842	     11255 ns/op	     88847 req/s	   11497 B/op	      97 allocs/op
+BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWTThroughputParallel/HS256/P1-10         	  107404	     11883 ns/op	     84152 req/s	   14480 B/op	     152 allocs/op
+BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWTThroughputParallel/HS256/P8-10         	  100963	     11600 ns/op	     86204 req/s	   15395 B/op	     155 allocs/op
+BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWTThroughputParallel/RS256/P1-10         	   96692	     11940 ns/op	     83754 req/s	   14196 B/op	     150 allocs/op
+BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWTThroughputParallel/RS256/P8-10         	   88382	     12759 ns/op	     78378 req/s	   15477 B/op	     154 allocs/op
+PASS
+ok  	gateway/controller/adapter/config/server/unixsocket_server	9.321s

@@ -13,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -26,6 +28,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/test/bufconn"
 )
 
@@ -38,6 +41,24 @@ type stubUpstreamLookupUseCase struct {
 type stubListenerServer struct{}
 
 func (stubListenerServer) Start() {}
+
+func applyDefaultGrpcServerConfig(cfg *app_config.AppConfig) {
+	cfg.Server.Grpc.Network = "unix"
+	cfg.Server.Grpc.MaxRecvMsgBytes = 4 * 1024 * 1024
+	cfg.Server.Grpc.MaxSendMsgBytes = 10 * 1024 * 1024
+	cfg.Server.Grpc.ReadBufferBytes = 32 * 1024
+	cfg.Server.Grpc.WriteBufferBytes = 32 * 1024
+	cfg.Server.Grpc.ConnectionTimeoutMillisecond = 5000
+	cfg.Server.Grpc.MaxConcurrentStreams = 2048
+	cfg.Server.Grpc.NumStreamWorkers = 0
+	cfg.Server.Grpc.KeepaliveMaxConnectionIdleMs = 15 * 60 * 1000
+	cfg.Server.Grpc.KeepaliveMaxConnectionAgeMs = 30 * 60 * 1000
+	cfg.Server.Grpc.KeepaliveTimeMs = 2 * 60 * 1000
+	cfg.Server.Grpc.KeepaliveTimeoutMs = 20 * 1000
+	cfg.Server.Grpc.KeepaliveEnforcementMinTimeMs = 20 * 1000
+	cfg.Server.Grpc.PermitWithoutStream = true
+	cfg.Server.Grpc.GracefulStopTimeoutMillisecond = 300
+}
 
 func (s stubUpstreamLookupUseCase) LookUpFromRequest(_ applicationDto.UpStreamLookupRequest) applicationDto.UpStreamLookupResult {
 	return s.result
@@ -112,9 +133,7 @@ func newTestGrpcServer(routeCache applicationCache.RouteCache) *grpcServer {
 	registrars := adapterPortInGrpcDi.NewGrpcServiceRegistrars(controller)
 
 	cfg := &app_config.AppConfig{}
-	cfg.Server.Grpc.MaxRecvMsgBytes = 4 * 1024 * 1024
-	cfg.Server.Grpc.MaxSendMsgBytes = 4 * 1024 * 1024
-	cfg.Server.Grpc.GracefulStopTimeoutMillisecond = 300
+	applyDefaultGrpcServerConfig(cfg)
 
 	return &grpcServer{
 		GrpcServiceProvider: &adapterPortInGrpcDi.GrpcServiceProvider{Registrars: registrars},
@@ -246,10 +265,7 @@ func TestGrpcServerLookup_ReturnsMatchedUpstreamInfo(t *testing.T) {
 	defer cleanup()
 
 	response, err := client.Lookup(context.Background(), &pb.UpstreamLookupRequest{
-		Version: "v1",
-		Service: serviceName,
-		Domain:  "api.example.com",
-		Path:    "api.example.com/api/users",
+		Path: "/v1/" + serviceName + "/api.example.com/api/users",
 	})
 	if err != nil {
 		t.Fatalf("lookup failed: %v", err)
@@ -295,8 +311,7 @@ func TestGrpcServerLookup_BusinessErrorInResponse(t *testing.T) {
 		GrpcServiceProvider: &adapterPortInGrpcDi.GrpcServiceProvider{Registrars: registrars},
 		AppConfig:           &app_config.AppConfig{},
 	}
-	server.AppConfig.Server.Grpc.MaxRecvMsgBytes = 4 * 1024 * 1024
-	server.AppConfig.Server.Grpc.MaxSendMsgBytes = 4 * 1024 * 1024
+	applyDefaultGrpcServerConfig(server.AppConfig)
 
 	client, _, cleanup := newBufconnGrpcClient(t, server)
 	defer cleanup()
@@ -319,12 +334,9 @@ func TestGrpcServerLookup_WithJWT_ReturnsStringUserKey(t *testing.T) {
 	client, _, cleanup := newBufconnGrpcClient(t, server)
 	defer cleanup()
 
-	response, err := client.Lookup(context.Background(), &pb.UpstreamLookupRequest{
-		Version:     "v1",
-		Service:     serviceName,
-		Domain:      "api.example.com",
-		Path:        "api.example.com/api/users/123/posts/456",
-		AccessToken: token,
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("authorization", token))
+	response, err := client.Lookup(ctx, &pb.UpstreamLookupRequest{
+		Path: "/v1/" + serviceName + "/api.example.com/api/users/123/posts/456",
 	})
 	if err != nil {
 		t.Fatalf("lookup failed: %v", err)
@@ -345,22 +357,20 @@ func benchmarkGrpcLookup(b *testing.B, algorithm string, withAuth bool) {
 	defer cleanup()
 
 	request := &pb.UpstreamLookupRequest{
-		Version: "v1",
-		Service: serviceName,
-		Domain:  "api.example.com",
+		Path: "/v1/" + serviceName + "/api.example.com/api/users",
 	}
 
+	requestContext := context.Background()
 	if withAuth {
-		request.Path = "api.example.com/api/users/123/posts/456"
-		request.AccessToken = newJWTAccessToken(b, serviceName, "bench-user")
-	} else {
-		request.Path = "api.example.com/api/users"
+		request.Path = "/v1/" + serviceName + "/api.example.com/api/users/123/posts/456"
+		token := newJWTAccessToken(b, serviceName, "bench-user")
+		requestContext = metadata.NewOutgoingContext(context.Background(), metadata.Pairs("authorization", token))
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		response, err := client.Lookup(context.Background(), request)
+		response, err := client.Lookup(requestContext, request)
 		if err != nil {
 			b.Fatalf("lookup failed: %v", err)
 		}
@@ -428,18 +438,16 @@ func BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWT(b *testing.B) {
 			}
 
 			request := &pb.UpstreamLookupRequest{
-				Version: "v1",
-				Service: serviceName,
-				Domain:  "api.example.com",
-				Path:    tc.path,
+				Path: "/v1/" + serviceName + "/" + tc.path,
 			}
+			requestContext := context.Background()
 			if tc.withAuth {
-				request.AccessToken = token
+				requestContext = metadata.NewOutgoingContext(context.Background(), metadata.Pairs("authorization", token))
 			}
 
 			readinessDeadline := time.Now().Add(2 * time.Second)
 			for {
-				response, err := client.Lookup(context.Background(), request)
+				response, err := client.Lookup(requestContext, request)
 				if err == nil && response.GetError() == "" {
 					break
 				}
@@ -452,7 +460,7 @@ func BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWT(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				response, err := client.Lookup(context.Background(), request)
+				response, err := client.Lookup(requestContext, request)
 				if err != nil {
 					b.Fatalf("lookup failed: %v", err)
 				}
@@ -508,18 +516,16 @@ func BenchmarkGrpcLookupOverTCPWithValkeyAndJWT(b *testing.B) {
 			}
 
 			request := &pb.UpstreamLookupRequest{
-				Version: "v1",
-				Service: serviceName,
-				Domain:  "api.example.com",
-				Path:    tc.path,
+				Path: "/v1/" + serviceName + "/" + tc.path,
 			}
+			requestContext := context.Background()
 			if tc.withAuth {
-				request.AccessToken = token
+				requestContext = metadata.NewOutgoingContext(context.Background(), metadata.Pairs("authorization", token))
 			}
 
 			readinessDeadline := time.Now().Add(2 * time.Second)
 			for {
-				response, err := client.Lookup(context.Background(), request)
+				response, err := client.Lookup(requestContext, request)
 				if err == nil && response.GetError() == "" {
 					break
 				}
@@ -532,7 +538,7 @@ func BenchmarkGrpcLookupOverTCPWithValkeyAndJWT(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				response, err := client.Lookup(context.Background(), request)
+				response, err := client.Lookup(requestContext, request)
 				if err != nil {
 					b.Fatalf("lookup failed: %v", err)
 				}
@@ -542,6 +548,95 @@ func BenchmarkGrpcLookupOverTCPWithValkeyAndJWT(b *testing.B) {
 				if tc.withAuth && response.GetInfo().GetUserKey() == "" {
 					b.Fatal("expected user key in auth benchmark")
 				}
+			}
+		})
+	}
+}
+
+func BenchmarkGrpcLookupOverUnixSocketWithValkeyAndJWTThroughputParallel(b *testing.B) {
+	cases := []struct {
+		name        string
+		algorithm   string
+		withAuth    bool
+		path        string
+		parallelism int
+	}{
+		{name: "NoJWT/P1", algorithm: "HS256", withAuth: false, path: "api.example.com/api/users", parallelism: 1},
+		{name: "NoJWT/P8", algorithm: "HS256", withAuth: false, path: "api.example.com/api/users", parallelism: 8},
+		{name: "HS256/P1", algorithm: "HS256", withAuth: true, path: "api.example.com/api/users/123/posts/456", parallelism: 1},
+		{name: "HS256/P8", algorithm: "HS256", withAuth: true, path: "api.example.com/api/users/123/posts/456", parallelism: 8},
+		{name: "RS256/P1", algorithm: "RS256", withAuth: true, path: "api.example.com/api/users/123/posts/456", parallelism: 1},
+		{name: "RS256/P8", algorithm: "RS256", withAuth: true, path: "api.example.com/api/users/123/posts/456", parallelism: 8},
+	}
+
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			serviceKey := strings.ReplaceAll(tc.name, "/", "-")
+			serviceName := "member-api-grpc-throughput-" + serviceKey + "-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+			routeCache := newLiveRouteCacheWithAuth(b, serviceName, tc.algorithm, tc.withAuth)
+			server := newTestGrpcServer(routeCache)
+
+			socketPath := filepath.Join(os.TempDir(), "gwc-grpc-throughput-"+strconv.FormatInt(time.Now().UnixNano(), 10)+".sock")
+			client, _, cleanup := newUnixSocketGrpcClient(b, server, socketPath)
+			defer cleanup()
+
+			request := &pb.UpstreamLookupRequest{
+				Path: "/v1/" + serviceName + "/" + tc.path,
+			}
+			requestContext := context.Background()
+			if tc.withAuth {
+				token := newJWTAccessToken(b, serviceName, "bench-user")
+				requestContext = metadata.NewOutgoingContext(context.Background(), metadata.Pairs("authorization", token))
+			}
+
+			readinessDeadline := time.Now().Add(2 * time.Second)
+			for {
+				response, err := client.Lookup(requestContext, request)
+				if err == nil && response.GetError() == "" {
+					break
+				}
+				if time.Now().After(readinessDeadline) {
+					b.Fatalf("grpc unix server was not ready: err=%v response_error=%v", err, response.GetError())
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+
+			var failed atomic.Bool
+			var failureMessage atomic.Value
+
+			b.SetParallelism(tc.parallelism)
+			b.ReportAllocs()
+			b.ResetTimer()
+			start := time.Now()
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					if failed.Load() {
+						continue
+					}
+					response, err := client.Lookup(requestContext, request)
+					if err != nil {
+						failureMessage.Store(fmt.Sprintf("lookup failed: %v", err))
+						failed.Store(true)
+						continue
+					}
+					if response.GetError() != "" {
+						failureMessage.Store(fmt.Sprintf("unexpected business error: %s", response.GetError()))
+						failed.Store(true)
+						continue
+					}
+					if tc.withAuth && response.GetInfo().GetUserKey() == "" {
+						failureMessage.Store("expected user key in auth benchmark")
+						failed.Store(true)
+						continue
+					}
+				}
+			})
+			elapsed := time.Since(start)
+			b.ReportMetric(float64(b.N)/elapsed.Seconds(), "req/s")
+
+			if failed.Load() {
+				message, _ := failureMessage.Load().(string)
+				b.Fatal(message)
 			}
 		})
 	}

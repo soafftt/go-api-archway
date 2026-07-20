@@ -1,0 +1,18 @@
+goos: darwin
+goarch: arm64
+pkg: gateway/adapter/in/middleware
+cpu: Apple M4
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/NoJWT/gRPC/P1-10 	   59264	     19982 ns/op	      9261 rps_p50	     50003 rps_p95	     50003 rps_p99	   17491 B/op	     187 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/NoJWT/gRPC/P8-10 	   98478	     14000 ns/op	     27811 rps_p50	     70667 rps_p95	     70667 rps_p99	   15978 B/op	     186 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/NoJWT/unixHTTP/P1-10      	   44260	     26316 ns/op	      6684 rps_p50	     37576 rps_p95	     37576 rps_p99	   25128 B/op	     183 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/NoJWT/unixHTTP/P8-10      	   67738	     17225 ns/op	     10041 rps_p50	     57697 rps_p95	     57697 rps_p99	   22277 B/op	     184 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/HS256/gRPC/P1-10          	   55984	     21487 ns/op	      9567 rps_p50	     46417 rps_p95	     46417 rps_p99	   20050 B/op	     204 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/HS256/gRPC/P8-10          	   90860	     13207 ns/op	     14800 rps_p50	     76060 rps_p95	     76060 rps_p99	   18480 B/op	     203 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/HS256/unixHTTP/P1-10      	   38224	     30916 ns/op	      5874 rps_p50	     32350 rps_p95	     32350 rps_p99	   29655 B/op	     199 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/HS256/unixHTTP/P8-10      	   59270	     18541 ns/op	      5439 rps_p50	     53831 rps_p95	     53831 rps_p99	   23895 B/op	     199 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/RS256/gRPC/P1-10          	   44361	     26429 ns/op	      7077 rps_p50	     37284 rps_p95	     37284 rps_p99	   20782 B/op	     205 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/RS256/gRPC/P8-10          	   69240	     17941 ns/op	     13640 rps_p50	     55600 rps_p95	     55600 rps_p99	   19161 B/op	     203 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/RS256/unixHTTP/P1-10      	   37647	     32691 ns/op	      7303 rps_p50	     30344 rps_p95	     30344 rps_p99	   31791 B/op	     199 allocs/op
+BenchmarkGatewayFullChainE2E_RewriteViaGatewayController/RS256/unixHTTP/P8-10      	   52662	     22582 ns/op	      7521 rps_p50	     45141 rps_p95	     45141 rps_p99	   25210 B/op	     199 allocs/op
+PASS
+ok  	gateway/adapter/in/middleware	171.271s

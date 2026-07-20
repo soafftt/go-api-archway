@@ -13,8 +13,8 @@ import (
 	"gateway/adapter/in"
 	di3 "gateway/adapter/in/di"
 	"gateway/adapter/in/middleware"
+	"gateway/adapter/out/controlplane"
 	di2 "gateway/adapter/out/di"
-	"gateway/adapter/out/gatewaycontroller"
 	"gateway/adapter/out/ratelimit"
 	"gateway/application/service"
 	di4 "gateway/application/service/di"
@@ -24,19 +24,23 @@ import (
 
 func InitializeApp() (*GatewayProxyApp, error) {
 	appConfig := config.NewAppConfig()
-	gatewayControllerClient := client.NewGatewayControllerClient(appConfig)
+	httpClient := client.NewHttpClient(appConfig)
+	grpcClient := client.NewGrpcClient(appConfig)
 	adapterConfig := &di.AdapterConfig{
-		AppConfig:               appConfig,
-		GatewayControllerClient: gatewayControllerClient,
+		AppConfig:  appConfig,
+		HttpClient: httpClient,
+		GrpcClient: grpcClient,
 	}
-	upstreamLookupPort := gatewaycontroller.NewUpstreamLookup(appConfig, gatewayControllerClient)
-	rateLimit := ratelimit.NewRateLimit()
+	upstreamLookupPort := controlplane.NewUpstreamLookup(appConfig, httpClient)
+	upstreamLookupGrpcPort := controlplane.NewUpstreamLookupGrpc(grpcClient)
+	rateLimiterPort := ratelimit.NewRateLimit()
 	adapterOutDI := &di2.AdapterOutDI{
-		GatewayControllerClient: upstreamLookupPort,
-		RateLimiter:             rateLimit,
+		HttpUpstreamLookupPort: upstreamLookupPort,
+		GrpcUpstreamLookupPort: upstreamLookupGrpcPort,
+		RateLimiter:            rateLimiterPort,
 	}
-	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort)
-	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase, rateLimit)
+	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort, upstreamLookupGrpcPort)
+	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase, rateLimiterPort)
 	middlewareContainer := middleware.NewMiddlewareContainer(requestMiddleware)
 	gatewayProxy := in.NewGatewayProxy()
 	adapterInDI := &di3.AdapterInDI{

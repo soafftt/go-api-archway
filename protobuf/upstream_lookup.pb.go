@@ -23,11 +23,7 @@ const (
 
 type UpstreamLookupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Version       string                 `protobuf:"bytes,1,opt,name=Version,proto3" json:"Version,omitempty"`
-	Service       string                 `protobuf:"bytes,2,opt,name=Service,proto3" json:"Service,omitempty"`
-	Domain        string                 `protobuf:"bytes,3,opt,name=Domain,proto3" json:"Domain,omitempty"`
-	Path          string                 `protobuf:"bytes,4,opt,name=Path,proto3" json:"Path,omitempty"`
-	AccessToken   string                 `protobuf:"bytes,5,opt,name=AccessToken,proto3" json:"AccessToken,omitempty"`
+	Path          string                 `protobuf:"bytes,1,opt,name=Path,proto3" json:"Path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -62,37 +58,9 @@ func (*UpstreamLookupRequest) Descriptor() ([]byte, []int) {
 	return file_upstream_lookup_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *UpstreamLookupRequest) GetVersion() string {
-	if x != nil {
-		return x.Version
-	}
-	return ""
-}
-
-func (x *UpstreamLookupRequest) GetService() string {
-	if x != nil {
-		return x.Service
-	}
-	return ""
-}
-
-func (x *UpstreamLookupRequest) GetDomain() string {
-	if x != nil {
-		return x.Domain
-	}
-	return ""
-}
-
 func (x *UpstreamLookupRequest) GetPath() string {
 	if x != nil {
 		return x.Path
-	}
-	return ""
-}
-
-func (x *UpstreamLookupRequest) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
 	}
 	return ""
 }
@@ -151,15 +119,16 @@ func (x *UpstreamLookupResponse) GetError() string {
 
 type UpstreamInfo struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	Host            string                 `protobuf:"bytes,1,opt,name=Host,proto3" json:"Host,omitempty"`
-	Path            string                 `protobuf:"bytes,2,opt,name=Path,proto3" json:"Path,omitempty"`
-	OriginalPath    string                 `protobuf:"bytes,3,opt,name=OriginalPath,proto3" json:"OriginalPath,omitempty"`
-	Method          string                 `protobuf:"bytes,4,opt,name=Method,proto3" json:"Method,omitempty"`
-	RequestTimeout  int64                  `protobuf:"varint,5,opt,name=RequestTimeout,proto3" json:"RequestTimeout,omitempty"`
-	ResponseTimeout int64                  `protobuf:"varint,6,opt,name=ResponseTimeout,proto3" json:"ResponseTimeout,omitempty"`
-	CacheTimeout    int64                  `protobuf:"varint,7,opt,name=CacheTimeout,proto3" json:"CacheTimeout,omitempty"`
-	UserKey         string                 `protobuf:"bytes,8,opt,name=UserKey,proto3" json:"UserKey,omitempty"`
-	RateLimitCount  int64                  `protobuf:"varint,9,opt,name=RateLimitCount,proto3" json:"RateLimitCount,omitempty"`
+	ServiceName     string                 `protobuf:"bytes,1,opt,name=ServiceName,proto3" json:"ServiceName,omitempty"`
+	Host            string                 `protobuf:"bytes,2,opt,name=Host,proto3" json:"Host,omitempty"`
+	Path            string                 `protobuf:"bytes,3,opt,name=Path,proto3" json:"Path,omitempty"`
+	OriginalPath    string                 `protobuf:"bytes,4,opt,name=OriginalPath,proto3" json:"OriginalPath,omitempty"`
+	Method          string                 `protobuf:"bytes,5,opt,name=Method,proto3" json:"Method,omitempty"`
+	RequestTimeout  int64                  `protobuf:"varint,6,opt,name=RequestTimeout,proto3" json:"RequestTimeout,omitempty"`
+	ResponseTimeout int64                  `protobuf:"varint,7,opt,name=ResponseTimeout,proto3" json:"ResponseTimeout,omitempty"`
+	CacheTimeout    int64                  `protobuf:"varint,8,opt,name=CacheTimeout,proto3" json:"CacheTimeout,omitempty"`
+	UserKey         string                 `protobuf:"bytes,9,opt,name=UserKey,proto3" json:"UserKey,omitempty"`
+	RateLimitCount  int64                  `protobuf:"varint,10,opt,name=RateLimitCount,proto3" json:"RateLimitCount,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -192,6 +161,13 @@ func (x *UpstreamInfo) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UpstreamInfo.ProtoReflect.Descriptor instead.
 func (*UpstreamInfo) Descriptor() ([]byte, []int) {
 	return file_upstream_lookup_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *UpstreamInfo) GetServiceName() string {
+	if x != nil {
+		return x.ServiceName
+	}
+	return ""
 }
 
 func (x *UpstreamInfo) GetHost() string {
@@ -313,26 +289,24 @@ var File_upstream_lookup_proto protoreflect.FileDescriptor
 
 const file_upstream_lookup_proto_rawDesc = "" +
 	"\n" +
-	"\x15upstream_lookup.proto\x12\x19adapter.config.proto.grpc\"\x99\x01\n" +
-	"\x15UpstreamLookupRequest\x12\x18\n" +
-	"\aVersion\x18\x01 \x01(\tR\aVersion\x12\x18\n" +
-	"\aService\x18\x02 \x01(\tR\aService\x12\x16\n" +
-	"\x06Domain\x18\x03 \x01(\tR\x06Domain\x12\x12\n" +
-	"\x04Path\x18\x04 \x01(\tR\x04Path\x12 \n" +
-	"\vAccessToken\x18\x05 \x01(\tR\vAccessToken\"k\n" +
+	"\x15upstream_lookup.proto\x12\x19adapter.config.proto.grpc\"+\n" +
+	"\x15UpstreamLookupRequest\x12\x12\n" +
+	"\x04Path\x18\x01 \x01(\tR\x04Path\"k\n" +
 	"\x16UpstreamLookupResponse\x12;\n" +
 	"\x04Info\x18\x01 \x01(\v2'.adapter.config.proto.grpc.UpstreamInfoR\x04Info\x12\x14\n" +
-	"\x05Error\x18\x02 \x01(\tR\x05Error\"\xaa\x02\n" +
-	"\fUpstreamInfo\x12\x12\n" +
-	"\x04Host\x18\x01 \x01(\tR\x04Host\x12\x12\n" +
-	"\x04Path\x18\x02 \x01(\tR\x04Path\x12\"\n" +
-	"\fOriginalPath\x18\x03 \x01(\tR\fOriginalPath\x12\x16\n" +
-	"\x06Method\x18\x04 \x01(\tR\x06Method\x12&\n" +
-	"\x0eRequestTimeout\x18\x05 \x01(\x03R\x0eRequestTimeout\x12(\n" +
-	"\x0fResponseTimeout\x18\x06 \x01(\x03R\x0fResponseTimeout\x12\"\n" +
-	"\fCacheTimeout\x18\a \x01(\x03R\fCacheTimeout\x12\x18\n" +
-	"\aUserKey\x18\b \x01(\tR\aUserKey\x12&\n" +
-	"\x0eRateLimitCount\x18\t \x01(\x03R\x0eRateLimitCount\"A\n" +
+	"\x05Error\x18\x02 \x01(\tR\x05Error\"\xcc\x02\n" +
+	"\fUpstreamInfo\x12 \n" +
+	"\vServiceName\x18\x01 \x01(\tR\vServiceName\x12\x12\n" +
+	"\x04Host\x18\x02 \x01(\tR\x04Host\x12\x12\n" +
+	"\x04Path\x18\x03 \x01(\tR\x04Path\x12\"\n" +
+	"\fOriginalPath\x18\x04 \x01(\tR\fOriginalPath\x12\x16\n" +
+	"\x06Method\x18\x05 \x01(\tR\x06Method\x12&\n" +
+	"\x0eRequestTimeout\x18\x06 \x01(\x03R\x0eRequestTimeout\x12(\n" +
+	"\x0fResponseTimeout\x18\a \x01(\x03R\x0fResponseTimeout\x12\"\n" +
+	"\fCacheTimeout\x18\b \x01(\x03R\fCacheTimeout\x12\x18\n" +
+	"\aUserKey\x18\t \x01(\tR\aUserKey\x12&\n" +
+	"\x0eRateLimitCount\x18\n" +
+	" \x01(\x03R\x0eRateLimitCount\"A\n" +
 	"\rErrorResponse\x12\x18\n" +
 	"\aMessage\x18\x01 \x01(\tR\aMessage\x12\x16\n" +
 	"\x06Detail\x18\x02 \x01(\tR\x06Detail2\x86\x01\n" +

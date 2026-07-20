@@ -20,6 +20,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -876,30 +877,10 @@ func BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWT(b *testing.B) 
 		withAuth   bool
 		targetPath string
 	}{
-		{
-			name:       "NoJWT",
-			algorithm:  "HS256",
-			withAuth:   false,
-			targetPath: "/api/users",
-		},
-		{
-			name:       "RS256",
-			algorithm:  "RS256",
-			withAuth:   true,
-			targetPath: "/api/users/123/posts/456",
-		},
-		{
-			name:       "ES256",
-			algorithm:  "ES256",
-			withAuth:   true,
-			targetPath: "/api/users/123/posts/456",
-		},
-		{
-			name:       "HS256",
-			algorithm:  "HS256",
-			withAuth:   true,
-			targetPath: "/api/users/123/posts/456",
-		},
+		{name: "NoJWT", algorithm: "HS256", withAuth: false, targetPath: "/api/users"},
+		{name: "RS256", algorithm: "RS256", withAuth: true, targetPath: "/api/users/123/posts/456"},
+		{name: "ES256", algorithm: "ES256", withAuth: true, targetPath: "/api/users/123/posts/456"},
+		{name: "HS256", algorithm: "HS256", withAuth: true, targetPath: "/api/users/123/posts/456"},
 	}
 
 	for _, tc := range cases {
@@ -969,6 +950,119 @@ func BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWT(b *testing.B) 
 				if resp.StatusCode != http.StatusOK {
 					b.Fatalf("expected status %d, got %d", http.StatusOK, resp.StatusCode)
 				}
+			}
+		})
+	}
+}
+
+func BenchmarkUnixServerLookupRouteOverUnixSocketWithValkeyAndJWTThroughputParallel(b *testing.B) {
+	cases := []struct {
+		name        string
+		algorithm   string
+		withAuth    bool
+		targetPath  string
+		parallelism int
+	}{
+		{name: "NoJWT/P1", algorithm: "HS256", withAuth: false, targetPath: "/api/users", parallelism: 1},
+		{name: "NoJWT/P8", algorithm: "HS256", withAuth: false, targetPath: "/api/users", parallelism: 8},
+		{name: "HS256/P1", algorithm: "HS256", withAuth: true, targetPath: "/api/users/123/posts/456", parallelism: 1},
+		{name: "HS256/P8", algorithm: "HS256", withAuth: true, targetPath: "/api/users/123/posts/456", parallelism: 8},
+		{name: "RS256/P1", algorithm: "RS256", withAuth: true, targetPath: "/api/users/123/posts/456", parallelism: 1},
+		{name: "RS256/P8", algorithm: "RS256", withAuth: true, targetPath: "/api/users/123/posts/456", parallelism: 8},
+	}
+
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			serviceKey := strings.ReplaceAll(tc.name, "/", "-")
+			serviceName := "member-api-http-throughput-" + serviceKey + "-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+			routeCache := newLiveRouteCacheWithAuth(b, serviceName, tc.algorithm, tc.withAuth)
+
+			socketPath := filepath.Join(os.TempDir(), "gwc-http-throughput-"+strconv.FormatInt(time.Now().UnixNano(), 10)+".sock")
+			server := newLookupUnixServerWithRouteCache(socketPath, routeCache)
+
+			listener, err := net.Listen("unix", socketPath)
+			if err != nil {
+				b.Fatalf("listen unix socket: %v", err)
+			}
+
+			httpServer := server.newHTTPServer(server.newServeMux())
+			go func() {
+				_ = httpServer.Serve(listener)
+			}()
+
+			b.Cleanup(func() {
+				shutdownContext, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				_ = httpServer.Shutdown(shutdownContext)
+				_ = os.Remove(socketPath)
+			})
+
+			client := newUnixSocketHTTPClient(socketPath)
+			b.Cleanup(func() {
+				if transport, ok := client.Transport.(*http.Transport); ok {
+					transport.CloseIdleConnections()
+				}
+			})
+
+			readinessURL := "http://unix/v1/upstream?path=/v1/" + serviceName + "/api.example.com/api/users"
+			waitForUnixServer(b, client, readinessURL)
+
+			targetURL := "http://unix/v1/upstream?path=/v1/" + serviceName + "/api.example.com" + tc.targetPath
+			var token string
+			if tc.withAuth {
+				token = newJWTAccessToken(b, serviceName, "bench-user")
+			}
+
+			var failed atomic.Bool
+			var failureMessage atomic.Value
+
+			b.SetParallelism(tc.parallelism)
+			b.ReportAllocs()
+			b.ResetTimer()
+			start := time.Now()
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					if failed.Load() {
+						continue
+					}
+
+					request, err := http.NewRequest(http.MethodGet, targetURL, nil)
+					if err != nil {
+						failureMessage.Store(fmt.Sprintf("create request failed: %v", err))
+						failed.Store(true)
+						continue
+					}
+					if tc.withAuth {
+						request.Header.Set("Authorization", token)
+					}
+
+					resp, err := client.Do(request)
+					if err != nil {
+						failureMessage.Store(fmt.Sprintf("request failed: %v", err))
+						failed.Store(true)
+						continue
+					}
+
+					_, err = io.Copy(io.Discard, resp.Body)
+					_ = resp.Body.Close()
+					if err != nil {
+						failureMessage.Store(fmt.Sprintf("read body failed: %v", err))
+						failed.Store(true)
+						continue
+					}
+					if resp.StatusCode != http.StatusOK {
+						failureMessage.Store(fmt.Sprintf("expected status %d, got %d", http.StatusOK, resp.StatusCode))
+						failed.Store(true)
+						continue
+					}
+				}
+			})
+			elapsed := time.Since(start)
+			b.ReportMetric(float64(b.N)/elapsed.Seconds(), "req/s")
+
+			if failed.Load() {
+				message, _ := failureMessage.Load().(string)
+				b.Fatal(message)
 			}
 		})
 	}

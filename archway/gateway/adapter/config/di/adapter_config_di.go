@@ -8,12 +8,14 @@ import (
 )
 
 type AdapterConfig struct {
-	AppConfig               *config.AppConfig
-	GatewayControllerClient client.GatewayControllerClient
+	AppConfig  *config.AppConfig
+	HttpClient client.HttpClient
+	GrpcClient client.GrpcClient
 }
 
 var AdapterConfigProviderSet = wire.NewSet(
 	config.NewAppConfig,
-	client.NewGatewayControllerClient,
+	client.NewHttpClient,
+	client.NewGrpcClient,
 	wire.Struct(new(AdapterConfig), "*"),
 )

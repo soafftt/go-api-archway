@@ -1,4 +1,4 @@
-package gatewaycontroller
+package controlplane
 
 import (
 	coreAdapterIn "core/adapter/in"
@@ -18,11 +18,11 @@ type upstreamLookup struct {
 
 func NewUpstreamLookup(
 	appConfig *config.AppConfig,
-	gatewayControllerClient client.GatewayControllerClient,
+	httpUpstreamLookClient client.HttpClient,
 ) out.UpstreamLookupPort {
 	return &upstreamLookup{
-		uri:    appConfig.GatewayController.BaseURL,
-		client: gatewayControllerClient.GetClient(),
+		uri:    appConfig.ClientNetworkConfig.BaseURL,
+		client: httpUpstreamLookClient.GetClient(),
 	}
 }
 

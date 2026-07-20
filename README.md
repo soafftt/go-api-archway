@@ -308,6 +308,8 @@ npm run build
 
 ## 13. 성능 벤치마크 요약
 
+전체 벤치마크 상세 결과와 해석은 [.docs/benchmark/readout-report.md](.docs/benchmark/readout-report.md)를 참고하세요.
+
 측정 환경:
 
 - Apple M4, Darwin arm64
@@ -350,21 +352,19 @@ npm run build
 
 가정:
 
-- gateway + gateway-controller를 동일 Pod에 배치
-- Pod CPU request `3.5`, limit `4`
-- CPU headroom `25%`
-- 산식: `RequiredCPU = CombinedCPU × (100K / Throughput) × 1.25`
-- 여기서 `RequiredCPU`는 **Pod 1대가 아니라 전체 클러스터 총 CPU**입니다.
-- Pod 1대 기준 체감은 `CPU per Pod at min pods = RequiredCPU / RequiredPods(min)`으로 봅니다.
+- 기준은 `.docs/benchmark/readout-report.md`의 **Gateway full-chain E2E (Gateway → Gateway-Controller → Upstream)** 결과다.
+- 산식: `Required Cluster CPU = Combined CPU × (100K / Sustained Throughput) × 1.25`
+- 25% headroom을 포함했다.
+- `P50 / P95 / P99`는 **무인증 / HS256 / RS256 운영 프로파일**에 대응시켰다.
+- Pod 수는 `Pod CPU request = 3.5` 기준으로 계산했다.
 
-| Scenario | Total CPU for 100K (cluster) | Required Pods (min) | CPU per Pod at min pods | Recommended Pods (+1 spare) |
-|---|---:|---:|---:|---:|
-| No JWT | 16.6 cores | 5 | 3.32 cores/pod | 6 |
-| HS256 | 18.3 cores | 6 | 3.05 cores/pod | 7 |
-| RS256 | 23.7 cores | 7 | 3.39 cores/pod | 8 |
-| ES256 | 25.3 cores | 8 | 3.16 cores/pod | 9 |
+| Profile | Sustained throughput | Combined CPU | Combined RSS | Required Cluster CPU | Required Cluster RSS | Required Pods | CPU / Pod | RSS / Pod |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| P50 · No JWT | 42.2K req/s | 5.59 cores | 53 MiB | 16.6 cores | 157.2 MiB | 5 | 3.32 cores | 31.4 MiB |
+| P95 · HS256 | 36.8K req/s | 5.39 cores | 57.1 MiB | 18.4 cores | 193.8 MiB | 6 | 3.06 cores | 32.3 MiB |
+| P99 · RS256 | 31.8K req/s | 6.02 cores | 57.5 MiB | 23.7 cores | 226.1 MiB | 7 | 3.39 cores | 32.3 MiB |
 
-메모리는 실측 RSS 기준으로 `53–59 MiB`이므로, 현재 프로파일에서는 Pod당 `request 256Mi / limit 512Mi`로 시작 가능하며, route 수/키 수/sidecar 증가 시 재측정이 필요합니다.
+메모리 값은 full-chain에서 실측한 Combined RSS를 100K 기준으로 선형 환산한 운영 추정치다.
 
 ---
 

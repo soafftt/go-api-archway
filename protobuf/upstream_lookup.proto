@@ -9,11 +9,7 @@ service UpstreamLookupService {
 }
 
 message UpstreamLookupRequest {
-  string Version = 1;
-  string Service = 2;
-  string Domain = 3;
-  string Path = 4;
-  string AccessToken = 5;
+  string Path = 1;
 }
 
 message UpstreamLookupResponse {
@@ -22,15 +18,16 @@ message UpstreamLookupResponse {
 }
 
 message UpstreamInfo {
-  string Host = 1;
-  string Path = 2;
-  string OriginalPath = 3;
-  string Method = 4;
-  int64 RequestTimeout = 5;
-  int64 ResponseTimeout = 6;
-  int64 CacheTimeout = 7;
-  string UserKey = 8;
-  int64 RateLimitCount = 9;
+  string ServiceName = 1;
+  string Host = 2;
+  string Path = 3;
+  string OriginalPath = 4;
+  string Method = 5;
+  int64 RequestTimeout = 6;
+  int64 ResponseTimeout = 7;
+  int64 CacheTimeout = 8;
+  string UserKey = 9;
+  int64 RateLimitCount = 10;
 }
 
 message ErrorResponse {
