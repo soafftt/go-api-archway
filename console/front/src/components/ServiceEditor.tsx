@@ -7,12 +7,13 @@ import type { AuthorizationDraft, PreviewMatchResult, UpstreamPathDraft, Upstrea
 
 type ServiceEditorProps = {
   draft: UpstreamServiceDraft;
+  baselineDraft: UpstreamServiceDraft | null;
   mode: 'create' | 'edit';
   busy: boolean;
   message: string | null;
   error: string | null;
   onChange: (next: UpstreamServiceDraft) => void;
-  onSave: () => void;
+  onSaveResource: (resource: UpstreamResourceDraft, previousDomain: string) => void;
   onDelete: () => void;
 };
 
@@ -21,18 +22,22 @@ const algorithms = ['RS256', 'RS512', 'ES256', 'ES512', 'HS256', 'HS512'] as con
 
 export function ServiceEditor({
   draft,
+  baselineDraft,
   mode,
   busy,
   message,
   error,
   onChange,
-  onSave,
+  onSaveResource,
   onDelete,
 }: ServiceEditorProps) {
   const previewJson = JSON.stringify(toGatewayPreview(draft), null, 2);
   const samples = buildGatewaySamples(draft);
   const validationErrors = useMemo(() => validateDraft(draft), [draft]);
   const [gatewayPath, setGatewayPath] = useState('');
+  const [selectedSampleIndex, setSelectedSampleIndex] = useState(0);
+  const [selectedResourceIndex, setSelectedResourceIndex] = useState(0);
+  const [selectedResourcePreviousDomain, setSelectedResourcePreviousDomain] = useState('');
   const [matchResult, setMatchResult] = useState<PreviewMatchResult | null>(null);
   const [matchError, setMatchError] = useState<string | null>(null);
   const [matching, setMatching] = useState(false);
@@ -41,6 +46,36 @@ export function ServiceEditor({
     setMatchResult(null);
     setMatchError(null);
   }, [draft]);
+
+  useEffect(() => {
+    if (samples.length === 0) {
+      setSelectedSampleIndex(0);
+      return;
+    }
+    if (selectedSampleIndex > samples.length - 1) {
+      setSelectedSampleIndex(0);
+    }
+  }, [samples.length, selectedSampleIndex]);
+
+  useEffect(() => {
+    if (draft.resources.length === 0) {
+      setSelectedResourceIndex(0);
+      setSelectedResourcePreviousDomain('');
+      return;
+    }
+    if (selectedResourceIndex > draft.resources.length - 1) {
+      const nextIndex = Math.max(0, draft.resources.length - 1);
+      setSelectedResourceIndex(nextIndex);
+      setSelectedResourcePreviousDomain(draft.resources[nextIndex]?.domain ?? '');
+    }
+  }, [draft.resources.length, selectedResourceIndex]);
+
+  useEffect(() => {
+    if (!draft.resources[selectedResourceIndex]) {
+      return;
+    }
+    setSelectedResourcePreviousDomain(draft.resources[selectedResourceIndex].domain);
+  }, [draft.resources, selectedResourceIndex]);
 
   const handlePreviewMatch = async () => {
     setMatching(true);
@@ -56,6 +91,38 @@ export function ServiceEditor({
     }
   };
 
+  const bindSampleToPreview = () => {
+    if (samples.length === 0) {
+      return;
+    }
+    const sample = samples[selectedSampleIndex] ?? samples[0];
+    setGatewayPath(sample.gatewayPath);
+    setMatchResult(null);
+    setMatchError(null);
+  };
+
+  const selectResource = (resourceIndex: number) => {
+    setSelectedResourceIndex(resourceIndex);
+    setSelectedResourcePreviousDomain(draft.resources[resourceIndex]?.domain ?? '');
+  };
+
+  const addResourceDomain = () => {
+    const nextResources = [...draft.resources, createResourceDraft()];
+    onChange({ ...draft, resources: nextResources });
+    const nextIndex = nextResources.length - 1;
+    setSelectedResourceIndex(nextIndex);
+    setSelectedResourcePreviousDomain(nextResources[nextIndex].domain);
+  };
+
+  const selectedResource = draft.resources[selectedResourceIndex];
+  const baselineSelectedResource = selectedResource
+    ? findResourceByDomain(
+      baselineDraft?.resources ?? [],
+      selectedResourcePreviousDomain || selectedResource.domain,
+    )
+    : undefined;
+  const isAddedSelectedResource = Boolean(selectedResource && !baselineSelectedResource);
+
   return (
     <section className="flex min-h-screen flex-1 flex-col bg-slate-950">
       <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/95 px-6 py-4 backdrop-blur">
@@ -67,26 +134,16 @@ export function ServiceEditor({
             <p className="text-sm text-slate-400">gateway-controller 의 Valkey projection 형식에 맞춰 편집합니다.</p>
           </div>
 
-          <div className="flex items-center gap-2">
-            {mode === 'edit' ? (
-              <button
-                type="button"
-                onClick={onDelete}
-                disabled={busy}
-                className="rounded-md border border-rose-500/40 px-3 py-2 text-sm font-medium text-rose-200 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                삭제
-              </button>
-            ) : null}
+          {mode === 'edit' ? (
             <button
               type="button"
-              onClick={onSave}
+              onClick={onDelete}
               disabled={busy}
-              className="rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-md border border-rose-500/40 px-3 py-2 text-sm font-medium text-rose-200 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {busy ? '저장 중...' : '저장'}
+              삭제
             </button>
-          </div>
+          ) : null}
         </div>
         {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}
         {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
@@ -159,43 +216,115 @@ export function ServiceEditor({
             action={
               <button
                 type="button"
-                onClick={() => onChange({ ...draft, resources: [...draft.resources, createResourceDraft()] })}
+                onClick={addResourceDomain}
                 className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-100 transition hover:border-slate-500"
               >
-                resource 추가
+                domain 추가
               </button>
             }
           >
-            <div className="space-y-6">
-              {draft.resources.map((resource, resourceIndex) => (
-                <ResourceEditor
-                  key={`${resource.domain}-${resourceIndex}`}
-                  resource={resource}
-                  index={resourceIndex}
-                  onChange={(nextResource) => {
-                    const resources = [...draft.resources];
-                    resources[resourceIndex] = nextResource;
-                    onChange({ ...draft, resources });
-                  }}
-                  onRemove={() => {
-                    const resources = draft.resources.filter((_, index) => index !== resourceIndex);
-                    onChange({ ...draft, resources: resources.length > 0 ? resources : [createResourceDraft()] });
-                  }}
-                />
-              ))}
+            <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+              <aside className="max-h-[720px] overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                <p className="mb-3 text-xs uppercase tracking-wide text-slate-400">Domain tree</p>
+                <ul className="space-y-2">
+                  {draft.resources.map((resource, resourceIndex) => {
+                    const domainLabel = resource.domain.trim() === '' ? '(fallback)' : resource.domain;
+                    const isSelected = selectedResourceIndex === resourceIndex;
+                    const isAdded = !findResourceByDomain(baselineDraft?.resources ?? [], resource.domain);
+
+                    return (
+                      <li key={resourceIndex}>
+                        <button
+                          type="button"
+                          onClick={() => selectResource(resourceIndex)}
+                          className={`w-full rounded-lg border px-3 py-2 text-left transition ${
+                            isSelected
+                              ? 'border-sky-400 bg-sky-500/10 text-white'
+                              : 'border-slate-800 bg-slate-900/40 text-slate-200 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="truncate text-sm font-medium">{domainLabel}</div>
+                          <div className="mt-1 truncate text-xs text-slate-400">
+                            paths {resource.paths.length} · {resource.host || 'host 미지정'}
+                          </div>
+                          {isAdded ? <div className="mt-1 text-[11px] text-emerald-300">추가됨</div> : null}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </aside>
+
+              <div className="max-h-[720px] overflow-y-auto pr-1">
+                {selectedResource ? (
+                  <div key={selectedResourceIndex}>
+                    <ResourceEditor
+                      resource={selectedResource}
+                      baselineResource={baselineSelectedResource}
+                      isAddedResource={isAddedSelectedResource}
+                      index={selectedResourceIndex}
+                      busy={busy}
+                      onSave={() => onSaveResource(selectedResource, selectedResourcePreviousDomain)}
+                      onChange={(nextResource) => {
+                        const resources = [...draft.resources];
+                        resources[selectedResourceIndex] = nextResource;
+                        onChange({ ...draft, resources });
+                      }}
+                      onRemove={() => {
+                        const resources = draft.resources.filter((_, index) => index !== selectedResourceIndex);
+                        const nextResources = resources.length > 0 ? resources : [createResourceDraft()];
+                        const nextSelectedIndex = Math.min(selectedResourceIndex, nextResources.length - 1);
+                        setSelectedResourceIndex(Math.max(0, nextSelectedIndex));
+                        setSelectedResourcePreviousDomain(nextResources[Math.max(0, nextSelectedIndex)]?.domain ?? '');
+                        onChange({ ...draft, resources: nextResources });
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-slate-700 p-4 text-sm text-slate-400">
+                    편집할 domain 을 왼쪽 트리에서 선택하세요.
+                  </div>
+                )}
+              </div>
             </div>
           </Card>
         </div>
 
         <div className="space-y-6">
-          <Card title="Gateway path samples">
+          <Card
+            title="Gateway path samples"
+            action={
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedSampleIndex}
+                  onChange={(event) => setSelectedSampleIndex(Number(event.target.value))}
+                  disabled={samples.length === 0}
+                  className="w-72 rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {samples.map((sample, index) => (
+                    <option key={`${sample.method}-${sample.gatewayPath}-${index}`} value={index}>
+                      {sample.display}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={bindSampleToPreview}
+                  disabled={samples.length === 0}
+                  className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-100 transition hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Preview 테스트 바인드
+                </button>
+              </div>
+            }
+          >
             {samples.length === 0 ? (
-              <p className="text-sm text-slate-400">resource/path 를 추가하면 샘플 path 가 생성됩니다.</p>
+              <p className="text-sm text-slate-400">domain/path 를 추가하면 샘플 path 가 생성됩니다.</p>
             ) : (
               <ul className="space-y-2 text-sm text-slate-300">
                 {samples.map((sample, index) => (
-                  <li key={`${sample}-${index}`} className="rounded-md bg-slate-950 px-3 py-2 font-mono text-xs text-sky-200">
-                    {sample}
+                  <li key={`${sample.method}-${sample.gatewayPath}-${index}`} className="rounded-md bg-slate-950 px-3 py-2 font-mono text-xs text-sky-200">
+                    {sample.display}
                   </li>
                 ))}
               </ul>
@@ -287,29 +416,63 @@ function AuthorizationFields({
 
 function ResourceEditor({
   resource,
+  baselineResource,
+  isAddedResource,
   index,
+  busy,
+  onSave,
   onChange,
   onRemove,
 }: {
   resource: UpstreamResourceDraft;
+  baselineResource?: UpstreamResourceDraft;
+  isAddedResource: boolean;
   index: number;
+  busy: boolean;
+  onSave: () => void;
   onChange: (next: UpstreamResourceDraft) => void;
   onRemove: () => void;
 }) {
+  const domainChanged = isFieldChanged(resource.domain, baselineResource?.domain);
+  const resourceDescriptionChanged = isFieldChanged(resource.description, baselineResource?.description);
+  const hostChanged = isFieldChanged(resource.host, baselineResource?.host);
+  const sortedPaths = resource.paths
+    .map((path, index) => ({ path, index }))
+    .sort((a, b) => {
+      const byMethod = getMethodCrudOrder(a.path.method) - getMethodCrudOrder(b.path.method);
+      if (byMethod !== 0) {
+        return byMethod;
+      }
+      return a.path.path.localeCompare(b.path.path);
+    });
+
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-5">
+    <div className={`rounded-xl border bg-slate-900/80 p-5 ${isAddedResource ? 'border-emerald-400/60' : 'border-slate-800'}`}>
       <div className="mb-4 flex items-center justify-between gap-2">
         <div>
-          <h4 className="font-medium text-white">Resource #{index + 1}</h4>
-          <p className="text-xs text-slate-400">domain 이 비어 있으면 fallback resource 로 저장됩니다.</p>
+          <h4 className="font-medium text-white">
+            Resource #{index + 1}
+            {isAddedResource ? <span className="ml-2 rounded-md bg-emerald-500/20 px-2 py-1 text-xs text-emerald-300">추가됨</span> : null}
+          </h4>
+          <p className="text-xs text-slate-400">domain 은 DDD context 키(예: users, orders)로 사용하며, 비어 있으면 fallback resource 로 저장됩니다.</p>
         </div>
-        <button
-          type="button"
-          onClick={onRemove}
-          className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200 transition hover:border-rose-500 hover:text-rose-200"
-        >
-          제거
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={busy}
+            className="rounded-md bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {busy ? '저장 중...' : '이 domain 저장'}
+          </button>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200 transition hover:border-rose-500 hover:text-rose-200"
+          >
+            제거
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -317,26 +480,35 @@ function ResourceEditor({
           <input
             value={resource.domain}
             onChange={(event) => onChange({ ...resource, domain: event.target.value })}
-            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-            placeholder="users 또는 api.example.com"
+            className={buildInputClass(domainChanged, isAddedResource)}
+            placeholder="users, orders, billing"
+          />
+        </Field>
+        <Field label="domain description (nullable)">
+          <input
+            value={resource.description}
+            onChange={(event) => onChange({ ...resource, description: event.target.value })}
+            className={buildInputClass(resourceDescriptionChanged, isAddedResource)}
+            placeholder="도메인 설명 (선택)"
           />
         </Field>
         <Field label="host">
           <input
             value={resource.host}
             onChange={(event) => onChange({ ...resource, host: event.target.value })}
-            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+            className={buildInputClass(hostChanged, isAddedResource)}
             placeholder="member.internal:8080"
           />
         </Field>
       </div>
 
-      <div className="mt-5 overflow-x-auto">
+      <div className="mt-5 max-h-[420px] overflow-auto">
         <table className="min-w-full text-left text-sm text-slate-200">
           <thead className="text-xs uppercase tracking-wide text-slate-400">
             <tr>
               <th className="pb-2">method</th>
               <th className="pb-2">path</th>
+              <th className="pb-2">description</th>
               <th className="pb-2">req timeout</th>
               <th className="pb-2">res timeout</th>
               <th className="pb-2">cache</th>
@@ -346,17 +518,19 @@ function ResourceEditor({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
-            {resource.paths.map((path, pathIndex) => (
+            {sortedPaths.map(({ path, index: originalPathIndex }) => (
               <PathRow
-                key={`${path.path}-${pathIndex}`}
+                key={`${path.method}-${path.path}-${originalPathIndex}`}
                 path={path}
+                baselinePath={baselineResource?.paths[originalPathIndex]}
+                isAdded={isAddedResource || !baselineResource?.paths[originalPathIndex]}
                 onChange={(nextPath) => {
                   const paths = [...resource.paths];
-                  paths[pathIndex] = nextPath;
+                  paths[originalPathIndex] = nextPath;
                   onChange({ ...resource, paths });
                 }}
                 onRemove={() => {
-                  const paths = resource.paths.filter((_, indexToRemove) => indexToRemove !== pathIndex);
+                  const paths = resource.paths.filter((_, indexToRemove) => indexToRemove !== originalPathIndex);
                   onChange({ ...resource, paths: paths.length > 0 ? paths : [createPathDraft()] });
                 }}
               />
@@ -380,20 +554,27 @@ function ResourceEditor({
 
 function PathRow({
   path,
+  baselinePath,
+  isAdded,
   onChange,
   onRemove,
 }: {
   path: UpstreamPathDraft;
+  baselinePath?: UpstreamPathDraft;
+  isAdded: boolean;
   onChange: (next: UpstreamPathDraft) => void;
   onRemove: () => void;
 }) {
+  const pathChanged = isFieldChanged(path.path, baselinePath?.path);
+  const descriptionChanged = isFieldChanged(path.description, baselinePath?.description);
+
   return (
-    <tr>
+    <tr className={isAdded ? 'bg-emerald-500/15' : undefined}>
       <td className="py-3 pr-2">
         <select
           value={path.method}
           onChange={(event) => onChange({ ...path, method: event.target.value })}
-          className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-white"
+          className={buildInputClass(isFieldChanged(path.method, baselinePath?.method), isAdded, 'w-full px-2 py-2 text-xs')}
         >
           {methods.map((method) => (
             <option key={method} value={method}>
@@ -406,18 +587,43 @@ function PathRow({
         <input
           value={path.path}
           onChange={(event) => onChange({ ...path, path: event.target.value })}
-          className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-white"
+          className={buildInputClass(pathChanged, isAdded, 'w-full px-2 py-2 text-xs')}
           placeholder="/{id}"
         />
       </td>
       <td className="py-3 pr-2">
-        <NumberInput value={path.requestTimeout} onChange={(value) => onChange({ ...path, requestTimeout: value })} />
+        <input
+          value={path.description}
+          onChange={(event) => onChange({ ...path, description: event.target.value })}
+          className={buildInputClass(descriptionChanged, isAdded, 'w-full px-2 py-2 text-xs')}
+          placeholder="path 설명 (선택)"
+        />
       </td>
       <td className="py-3 pr-2">
-        <NumberInput value={path.responseTimeout} onChange={(value) => onChange({ ...path, responseTimeout: value })} />
+        <NumberInput
+          value={path.requestTimeout}
+          min={1}
+          isChanged={path.requestTimeout !== (baselinePath?.requestTimeout ?? path.requestTimeout)}
+          isAdded={isAdded}
+          onChange={(value) => onChange({ ...path, requestTimeout: value })}
+        />
       </td>
       <td className="py-3 pr-2">
-        <NumberInput value={path.cacheTimeout} onChange={(value) => onChange({ ...path, cacheTimeout: value })} />
+        <NumberInput
+          value={path.responseTimeout}
+          min={1}
+          isChanged={path.responseTimeout !== (baselinePath?.responseTimeout ?? path.responseTimeout)}
+          isAdded={isAdded}
+          onChange={(value) => onChange({ ...path, responseTimeout: value })}
+        />
+      </td>
+      <td className="py-3 pr-2">
+        <NumberInput
+          value={path.cacheTimeout}
+          isChanged={path.cacheTimeout !== (baselinePath?.cacheTimeout ?? path.cacheTimeout)}
+          isAdded={isAdded}
+          onChange={(value) => onChange({ ...path, cacheTimeout: value })}
+        />
       </td>
       <td className="py-3 pr-2">
         <div className="flex items-center gap-2">
@@ -437,6 +643,8 @@ function PathRow({
           <NumberInput
             value={path.rateLimitCount}
             min={path.useRateLimit ? 1 : 0}
+            isChanged={path.rateLimitCount !== (baselinePath?.rateLimitCount ?? path.rateLimitCount)}
+            isAdded={isAdded}
             disabled={!path.useRateLimit}
             onChange={(value) =>
               onChange({
@@ -473,11 +681,15 @@ function NumberInput({
   value,
   onChange,
   min = 0,
+  isChanged = false,
+  isAdded = false,
   disabled = false,
 }: {
   value: number;
   onChange: (next: number) => void;
   min?: number;
+  isChanged?: boolean;
+  isAdded?: boolean;
   disabled?: boolean;
 }) {
   return (
@@ -485,11 +697,47 @@ function NumberInput({
       type="number"
       min={min}
       value={value}
-      onChange={(event) => onChange(Number(event.target.value))}
+      onChange={(event) => {
+        const parsed = Number(event.target.value);
+        const safeValue = Number.isNaN(parsed) ? min : Math.max(min, Math.trunc(parsed));
+        onChange(safeValue);
+      }}
       disabled={disabled}
-      className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-60"
+      className={`${buildInputClass(isChanged, isAdded, 'w-full px-2 py-2 text-xs')} disabled:cursor-not-allowed disabled:opacity-60`}
     />
   );
+}
+
+function findResourceByDomain(resources: UpstreamResourceDraft[], domain: string): UpstreamResourceDraft | undefined {
+  return resources.find((resource) => resource.domain === domain);
+}
+
+function isFieldChanged(current: string, baseline?: string): boolean {
+  if (typeof baseline !== 'string') {
+    return false;
+  }
+  return current !== baseline;
+}
+
+function buildInputClass(isChanged: boolean, isAdded = false, sizeClass = 'w-full px-3 py-2 text-sm'): string {
+  if (isAdded) {
+    return `${sizeClass} rounded-md border border-emerald-500/60 bg-emerald-500/10 text-white`;
+  }
+  if (isChanged) {
+    return `${sizeClass} rounded-md border border-amber-500/70 bg-amber-500/10 text-white`;
+  }
+  return `${sizeClass} rounded-md border border-slate-700 bg-slate-950 text-white`;
+}
+
+function getMethodCrudOrder(method: string): number {
+  const normalized = method.toUpperCase();
+  if (normalized === 'POST') return 0;
+  if (normalized === 'GET') return 1;
+  if (normalized === 'PUT' || normalized === 'PATCH') return 2;
+  if (normalized === 'DELETE') return 3;
+  if (normalized === 'HEAD') return 4;
+  if (normalized === 'OPTIONS') return 5;
+  return 99;
 }
 
 function Card({

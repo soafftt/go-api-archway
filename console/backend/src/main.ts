@@ -4,6 +4,7 @@ import { UpstreamAdminService } from './application/upstream-admin-service.js';
 import { loadConfig } from './config/env.js';
 import { toGatewaySnapshotJson } from './domain/upstream.js';
 import { createPostgresPool } from './infra/postgres/postgres.js';
+import { applyPostgresSchema } from './infra/postgres/postgres-schema.js';
 import { PostgresRouteChangeOutboxRepository } from './infra/postgres/postgres-route-change-outbox-repository.js';
 import { PostgresUpstreamAdminRepository } from './infra/postgres/postgres-upstream-admin-repository.js';
 import { ValkeyRouteProjectionRepository } from './infra/valkey/valkey-route-projection-repository.js';
@@ -16,6 +17,7 @@ async function main() {
   const config = loadConfig();
   const pool = createPostgresPool(config.POSTGRES_CONNECTION_STRING);
   const valkey = new Redis(config.VALKEY_URL);
+  await applyPostgresSchema(pool);
 
   const adminRepository = new PostgresUpstreamAdminRepository(pool);
   const outboxRepository = new PostgresRouteChangeOutboxRepository(pool);

@@ -29,6 +29,7 @@ function isValidRoutePath(value: string): boolean {
 
 const upstreamPathSchema = z.object({
   path: z.string().min(1).refine(isValidRoutePath, 'path must start with "/" and only contain literal or {variable} segments'),
+  description: z.string().nullable().optional().transform((value) => normalizeDescription(value)),
   method: z.string().min(1).transform((value) => value.toUpperCase()).refine((value) => /^[A-Z]+$/.test(value), 'method must be an uppercase token'),
   requestTimeout: z.coerce.number().int().positive(),
   responseTimeout: z.coerce.number().int().positive(),
@@ -37,10 +38,11 @@ const upstreamPathSchema = z.object({
   rateLimitCount: z.coerce.number().int().min(0),
 });
 
-const upstreamResourceSchema = z.object({
+export const upstreamResourceSchema = z.object({
   domain: z
     .string()
     .refine((value) => value === '' || /^[a-z0-9.-]+$/.test(value), 'domain must be empty or lowercase letters, numbers, dots, hyphens'),
+  description: z.string().nullable().optional().transform((value) => normalizeDescription(value)),
   host: z.string().refine((value) => /^[A-Za-z0-9.-]+(?::\d+)?$/.test(value), 'host must be host[:port] without scheme'),
   paths: z.array(upstreamPathSchema).min(1, 'at least one path is required'),
 });
@@ -236,4 +238,11 @@ function matchesRoutePattern(pattern: string, requestPath: string): boolean {
   }
 
   return true;
+}
+
+function normalizeDescription(value: string | null | undefined): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return value;
 }

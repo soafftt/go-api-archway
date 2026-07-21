@@ -1,4 +1,4 @@
-import type { PreviewMatchResult, UpstreamServiceDraft, UpstreamServiceSummary } from '../types';
+import type { PreviewMatchResult, UpstreamResourceDraft, UpstreamServiceDraft, UpstreamServiceSummary } from '../types';
 
 const BASE_URL = '/api/v1/upstream-services';
 
@@ -42,6 +42,17 @@ export function updateService(serviceName: string, payload: UpstreamServiceDraft
   return request<UpstreamServiceDraft>(`${BASE_URL}/${serviceName}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
+  });
+}
+
+export function upsertServiceResource(
+  serviceName: string,
+  resource: UpstreamResourceDraft,
+  previousDomain: string,
+): Promise<UpstreamServiceDraft> {
+  return request<UpstreamServiceDraft>(`${BASE_URL}/${serviceName}/resources/upsert`, {
+    method: 'PUT',
+    body: JSON.stringify({ resource, previousDomain }),
   });
 }
 

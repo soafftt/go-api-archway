@@ -13,10 +13,12 @@ const sampleService: UpstreamServiceDocument = {
   resources: [
     {
       domain: 'users',
+      description: '',
       host: 'member.internal:8080',
       paths: [
         {
           path: '/{id}',
+          description: '',
           method: 'GET',
           requestTimeout: 3000,
           responseTimeout: 5000,
@@ -76,5 +78,37 @@ describe('UpstreamAdminService', () => {
     const service = new UpstreamAdminService(repository);
 
     await expect(service.create(sampleService)).rejects.toThrow(/already exists/i);
+  });
+
+  it('upserts resource by previousDomain and updates only when changed', async () => {
+    const repository = createRepository();
+    repository.get = vi.fn(async () => sampleService);
+    const service = new UpstreamAdminService(repository);
+
+    const changedResource = {
+      ...sampleService.resources[0],
+      host: 'member-v2.internal:8080',
+    };
+
+    await expect(service.upsertResource('member-api', {
+      previousDomain: 'users',
+      resource: changedResource,
+    })).resolves.toEqual({
+      ...sampleService,
+      resources: [changedResource],
+    });
+    expect(repository.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips update when upsert payload is unchanged', async () => {
+    const repository = createRepository();
+    repository.get = vi.fn(async () => sampleService);
+    const service = new UpstreamAdminService(repository);
+
+    await expect(service.upsertResource('member-api', {
+      previousDomain: 'users',
+      resource: sampleService.resources[0],
+    })).resolves.toEqual(sampleService);
+    expect(repository.update).not.toHaveBeenCalled();
   });
 });

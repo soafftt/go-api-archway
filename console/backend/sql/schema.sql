@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS upstream_resources (
   id BIGSERIAL PRIMARY KEY,
   service_id BIGINT NOT NULL,
   domain VARCHAR(255) NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
   host VARCHAR(255) NOT NULL,
   sort_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS upstream_paths (
   id BIGSERIAL PRIMARY KEY,
   resource_id BIGINT NOT NULL,
   path VARCHAR(512) NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
   method VARCHAR(16) NOT NULL,
   request_timeout BIGINT NOT NULL,
   response_timeout BIGINT NOT NULL,
@@ -110,6 +112,28 @@ BEGIN
   ) THEN
     ALTER TABLE upstream_paths
       ADD COLUMN rate_limit_count BIGINT NOT NULL DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'upstream_resources'
+      AND column_name = 'description'
+  ) THEN
+    ALTER TABLE upstream_resources
+      ADD COLUMN description TEXT NOT NULL DEFAULT '';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'upstream_paths'
+      AND column_name = 'description'
+  ) THEN
+    ALTER TABLE upstream_paths
+      ADD COLUMN description TEXT NOT NULL DEFAULT '';
   END IF;
 
   IF NOT EXISTS (

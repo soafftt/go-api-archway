@@ -29,10 +29,12 @@ describe('PostgresUpstreamAdminRepository', () => {
         resources: [
           {
             domain: 'users',
+            description: '',
             host: 'member.internal:8080',
             paths: [
               {
                 path: '/{id}',
+                description: '',
                 method: 'GET',
                 requestTimeout: 3000,
                 responseTimeout: 5000,
@@ -50,7 +52,7 @@ describe('PostgresUpstreamAdminRepository', () => {
     expect(query).toHaveBeenNthCalledWith(1, 'BEGIN');
     expect(query).toHaveBeenLastCalledWith('COMMIT');
     expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO upstream_services'), ['member-api', 1, 'RS256', 'key', 'user_id']);
-    expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO upstream_resources'), [11, 'users', 'member.internal:8080', 0]);
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO upstream_resources'), [11, 'users', '', 'member.internal:8080', 0]);
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO route_change_outbox'),
       expect.arrayContaining(['member-api', 'ROUTE_MESSAGE_ADD', 1]),
@@ -63,8 +65,8 @@ describe('PostgresUpstreamAdminRepository', () => {
       .fn()
       .mockResolvedValueOnce({ rows: [{ service_name: 'member-api' }] })
       .mockResolvedValueOnce({ rows: [{ id: 1, service_name: 'member-api', version: 1, auth_algorithm: 'RS256', auth_key_data: 'key', auth_user_key: 'user_id', updated_at: new Date() }] })
-      .mockResolvedValueOnce({ rows: [{ id: 10, domain: 'users', host: 'member.internal:8080', sort_order: 0 }] })
-      .mockResolvedValueOnce({ rows: [{ resource_id: 10, path: '/{id}', method: 'GET', request_timeout: 3000, response_timeout: 5000, check_authorization: true, cache_timeout: 0, rate_limit_count: 0, sort_order: 0 }] });
+      .mockResolvedValueOnce({ rows: [{ id: 10, domain: 'users', description: '', host: 'member.internal:8080', sort_order: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ resource_id: 10, path: '/{id}', description: '', method: 'GET', request_timeout: 3000, response_timeout: 5000, check_authorization: true, cache_timeout: 0, rate_limit_count: 0, sort_order: 0 }] });
     const pool = { connect: vi.fn(), query } as never;
     const repository = new PostgresUpstreamAdminRepository(pool);
 

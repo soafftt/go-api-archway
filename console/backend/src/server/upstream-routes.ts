@@ -34,6 +34,10 @@ export function createUpstreamRoutes(service: UpstreamAdminService) {
     response.json(await service.update(request.params.serviceName, request.body));
   }));
 
+  router.put('/:serviceName/resources/upsert', asyncHandler(async (request, response) => {
+    response.json(await service.upsertResource(request.params.serviceName, request.body));
+  }));
+
   router.delete('/:serviceName', asyncHandler(async (request, response) => {
     await service.delete(request.params.serviceName);
     response.status(204).send();

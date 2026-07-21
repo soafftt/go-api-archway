@@ -15,6 +15,7 @@ type ServiceRow = QueryResultRow & {
 type ResourceRow = QueryResultRow & {
   id: number;
   domain: string;
+  description: string | null;
   host: string;
   sort_order: number;
 };
@@ -22,6 +23,7 @@ type ResourceRow = QueryResultRow & {
 type PathRow = QueryResultRow & {
   resource_id: number;
   path: string;
+  description: string | null;
   method: string;
   request_timeout: number;
   response_timeout: number;
@@ -204,7 +206,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
   private async readAggregate(serviceRow: ServiceRow): Promise<UpstreamServiceDocument> {
     const resourceResult = await this.pool.query<ResourceRow>(
       `
-        SELECT id, domain, host, sort_order
+        SELECT id, domain, description, host, sort_order
         FROM upstream_resources
         WHERE service_id = $1
         ORDER BY sort_order ASC, id ASC
@@ -229,7 +231,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
 
     const pathResult = await this.pool.query<PathRow>(
       `
-        SELECT resource_id, path, method, request_timeout, response_timeout, check_authorization, cache_timeout, rate_limit_count, sort_order
+        SELECT resource_id, path, description, method, request_timeout, response_timeout, check_authorization, cache_timeout, rate_limit_count, sort_order
         FROM upstream_paths
         WHERE resource_id = ANY($1::bigint[])
         ORDER BY resource_id ASC, sort_order ASC, id ASC
@@ -239,11 +241,13 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
 
     const resources = resourceResult.rows.map<UpstreamResource>((resourceRow) => ({
       domain: resourceRow.domain,
+      description: resourceRow.description ?? '',
       host: resourceRow.host,
       paths: pathResult.rows
         .filter((pathRow) => pathRow.resource_id === resourceRow.id)
         .map((pathRow) => ({
           path: pathRow.path,
+          description: pathRow.description ?? '',
           method: pathRow.method as UpstreamResource['paths'][number]['method'],
           requestTimeout: Number(pathRow.request_timeout),
           responseTimeout: Number(pathRow.response_timeout),
@@ -274,12 +278,13 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
           INSERT INTO upstream_resources (
             service_id,
             domain,
+            description,
             host,
             sort_order
-          ) VALUES ($1, $2, $3, $4)
+          ) VALUES ($1, $2, $3, $4, $5)
           RETURNING id
         `,
-        [serviceId, resource.domain, resource.host, resourceIndex],
+        [serviceId, resource.domain, resource.description ?? '', resource.host, resourceIndex],
       );
 
       for (const [pathIndex, path] of resource.paths.entries()) {
@@ -288,6 +293,7 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
             INSERT INTO upstream_paths (
               resource_id,
               path,
+              description,
               method,
               request_timeout,
               response_timeout,
@@ -295,11 +301,12 @@ export class PostgresUpstreamAdminRepository implements UpstreamAdminRepository 
               cache_timeout,
               rate_limit_count,
               sort_order
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
           `,
           [
             resourceResult.rows[0].id,
             path.path,
+            path.description ?? '',
             path.method,
             path.requestTimeout,
             path.responseTimeout,

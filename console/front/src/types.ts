@@ -6,6 +6,7 @@ export type AuthorizationDraft = {
 
 export type UpstreamPathDraft = {
   path: string;
+  description: string;
   method: string;
   requestTimeout: number;
   responseTimeout: number;
@@ -17,6 +18,7 @@ export type UpstreamPathDraft = {
 
 export type UpstreamResourceDraft = {
   domain: string;
+  description: string;
   host: string;
   paths: UpstreamPathDraft[];
 };
@@ -42,4 +44,10 @@ export type PreviewMatchResult = {
   host?: string;
   upstreamPath?: string;
   method?: string;
+};
+
+export type GatewaySample = {
+  method: string;
+  gatewayPath: string;
+  display: string;
 };

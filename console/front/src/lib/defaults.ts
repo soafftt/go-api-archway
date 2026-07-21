@@ -11,6 +11,7 @@ export function createAuthorizationDraft(): AuthorizationDraft {
 export function createPathDraft(): UpstreamPathDraft {
   return {
     path: '/',
+    description: '',
     method: 'GET',
     requestTimeout: 3000,
     responseTimeout: 5000,
@@ -24,6 +25,7 @@ export function createPathDraft(): UpstreamPathDraft {
 export function createResourceDraft(): UpstreamResourceDraft {
   return {
     domain: '',
+    description: '',
     host: '',
     paths: [createPathDraft()],
   };

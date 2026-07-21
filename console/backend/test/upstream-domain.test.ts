@@ -11,10 +11,12 @@ const service = upstreamServiceSchema.parse({
   resources: [
     {
       domain: 'users',
+      description: '',
       host: 'member.internal:8080',
       paths: [
         {
           path: '/{id}',
+          description: '',
           method: 'GET',
           requestTimeout: 3000,
           responseTimeout: 5000,
@@ -88,9 +90,11 @@ describe('upstream domain mapping', () => {
         {
           domain: 'users',
           host: 'member.internal:8080',
+          description: '',
           paths: [
             {
               path: '/bulk',
+              description: '',
               method: 'options',
               requestTimeout: 1000,
               responseTimeout: 1000,

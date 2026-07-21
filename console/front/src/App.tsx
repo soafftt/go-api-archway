@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { deleteService, getService, listServices, createService, updateService } from './lib/api';
+import { deleteService, getService, listServices, createService, updateService, upsertServiceResource } from './lib/api';
 import { createServiceDraft } from './lib/defaults';
 import { normalizeDraftFromApi } from './lib/mappers';
 import { validateDraft } from './lib/validation';
 import { ServiceEditor } from './components/ServiceEditor';
 import { ServiceList } from './components/ServiceList';
-import type { UpstreamServiceDraft, UpstreamServiceSummary } from './types';
+import type { UpstreamResourceDraft, UpstreamServiceDraft, UpstreamServiceSummary } from './types';
 
 export default function App() {
   const [services, setServices] = useState<UpstreamServiceSummary[]>([]);
   const [selectedServiceName, setSelectedServiceName] = useState<string | null>(null);
   const [draft, setDraft] = useState<UpstreamServiceDraft>(createServiceDraft());
+  const [baselineDraft, setBaselineDraft] = useState<UpstreamServiceDraft | null>(null);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -23,6 +24,7 @@ export default function App() {
     if (nextServices.length === 0) {
       setSelectedServiceName(null);
       setDraft(createServiceDraft());
+      setBaselineDraft(null);
       setMode('create');
       return;
     }
@@ -57,7 +59,9 @@ export default function App() {
         if (cancelled) {
           return;
         }
-        setDraft(normalizeDraftFromApi(service));
+        const normalized = normalizeDraftFromApi(service);
+        setDraft(normalized);
+        setBaselineDraft(normalized);
         setMode('edit');
       })
       .catch((loadError: Error) => {
@@ -65,6 +69,7 @@ export default function App() {
           return;
         }
         setDraft(createServiceDraft());
+        setBaselineDraft(null);
         setMode('create');
         setError(loadError.message);
       })
@@ -83,6 +88,7 @@ export default function App() {
   const handleCreate = () => {
     setSelectedServiceName(null);
     setDraft(createServiceDraft());
+    setBaselineDraft(null);
     setMode('create');
     setMessage(null);
     setError(null);
@@ -102,14 +108,18 @@ export default function App() {
     try {
       if (mode === 'create') {
         const created = await createService(draft);
+        const normalized = normalizeDraftFromApi(created);
         setSelectedServiceName(created.serviceName);
-        setDraft(normalizeDraftFromApi(created));
+        setDraft(normalized);
+        setBaselineDraft(normalized);
         setMode('edit');
         setMessage('규칙을 생성했습니다.');
         await loadServices(created.serviceName);
       } else {
         const updated = await updateService(draft.serviceName, draft);
-        setDraft(normalizeDraftFromApi(updated));
+        const normalized = normalizeDraftFromApi(updated);
+        setDraft(normalized);
+        setBaselineDraft(normalized);
         setMessage('규칙을 저장했습니다.');
         await loadServices(updated.serviceName);
       }
@@ -138,10 +148,34 @@ export default function App() {
       setMessage('규칙을 삭제했습니다.');
       setSelectedServiceName(null);
       setDraft(createServiceDraft());
+      setBaselineDraft(null);
       setMode('create');
       await loadServices(null);
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : '삭제에 실패했습니다.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSaveResource = async (resource: UpstreamResourceDraft, previousDomain: string) => {
+    if (mode !== 'edit') {
+      await handleSave();
+      return;
+    }
+
+    setBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const updated = await upsertServiceResource(draft.serviceName, resource, previousDomain);
+      const normalized = normalizeDraftFromApi(updated);
+      setDraft(normalized);
+      setBaselineDraft(normalized);
+      setMessage('domain 규칙을 저장했습니다.');
+      await loadServices(updated.serviceName);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'domain 저장에 실패했습니다.');
     } finally {
       setBusy(false);
     }
@@ -161,8 +195,9 @@ export default function App() {
         busy={busy}
         message={message}
         error={error}
+        baselineDraft={baselineDraft}
         onChange={setDraft}
-        onSave={() => void handleSave()}
+        onSaveResource={(resource, previousDomain) => void handleSaveResource(resource, previousDomain)}
         onDelete={() => void handleDelete()}
       />
     </main>

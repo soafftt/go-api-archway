@@ -1,4 +1,13 @@
-import { previewMatch, toGatewaySnapshotJson, upstreamServiceSchema, type PreviewMatchResult, type UpstreamServiceDocument, type UpstreamServiceSummary } from '../domain/upstream.js';
+import { z } from 'zod';
+import {
+  previewMatch,
+  toGatewaySnapshotJson,
+  upstreamResourceSchema,
+  upstreamServiceSchema,
+  type PreviewMatchResult,
+  type UpstreamServiceDocument,
+  type UpstreamServiceSummary,
+} from '../domain/upstream.js';
 import type { UpstreamAdminRepository } from './ports.js';
 
 export class ConflictError extends Error {}
@@ -56,6 +65,34 @@ export class UpstreamAdminService {
     return service;
   }
 
+  async upsertResource(serviceName: string, input: unknown): Promise<UpstreamServiceDocument> {
+    const payload = upsertResourceSchema.parse(input);
+    const current = await this.get(serviceName);
+    const normalizedCurrent = upstreamServiceSchema.parse(current);
+
+    const targetDomain = payload.previousDomain ?? payload.resource.domain;
+    const targetResourceIndex = normalizedCurrent.resources.findIndex((resource) => resource.domain === targetDomain);
+    const nextResources = targetResourceIndex >= 0
+      ? normalizedCurrent.resources.map((resource, index) => (index === targetResourceIndex ? payload.resource : resource))
+      : [...normalizedCurrent.resources, payload.resource];
+
+    const nextService = upstreamServiceSchema.parse({
+      serviceName: normalizedCurrent.serviceName,
+      authorization: normalizedCurrent.authorization,
+      resources: nextResources,
+    });
+
+    if (JSON.stringify(normalizedCurrent) === JSON.stringify(nextService)) {
+      return current;
+    }
+
+    const updated = await this.repository.update(serviceName, nextService, toGatewaySnapshotJson(nextService));
+    if (!updated) {
+      throw new NotFoundError(`service "${serviceName}" not found`);
+    }
+    return nextService;
+  }
+
   async delete(serviceName: string): Promise<void> {
     const deleted = await this.repository.delete(serviceName);
     if (!deleted) {
@@ -85,6 +122,11 @@ export class UpstreamAdminService {
     return previewMatch(service, gatewayPath, method);
   }
 }
+
+const upsertResourceSchema = z.object({
+  resource: upstreamResourceSchema,
+  previousDomain: z.string().optional(),
+});
 
 function isUniqueViolation(error: unknown): error is { code: string } {
   return typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === '23505';
