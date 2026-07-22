@@ -36,11 +36,10 @@ type AppConfig struct {
 
 func NewAppConfig() *AppConfig {
 	_ = godotenv.Load()
-
-	cfg := &AppConfig{}
-	if err := env.Parse(cfg); err != nil {
+	var appConfig = &AppConfig{}
+	if err := env.Parse(appConfig); err != nil {
 		panic(err)
 	}
 
-	return cfg
+	return appConfig
 }

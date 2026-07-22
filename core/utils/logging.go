@@ -48,14 +48,19 @@ func newLogger(environment string) Logger {
 		logger, _ = zap.NewProduction()
 	}
 
-	logger.WithOptions(
+	logger = logger.WithOptions(
 		zap.AddCaller(),
+		zap.AddCallerSkip(1),
 		zap.AddStacktrace(zap.WarnLevel),
 	)
 
 	return &stdLogger{
-		zapLogger:        logger,
-		zapSugaredLogger: logger.Sugar(),
+		zapLogger: logger,
+		zapSugaredLogger: logger.Sugar().WithOptions(
+			zap.AddCaller(),
+			zap.AddCallerSkip(1),
+			zap.AddStacktrace(zap.WarnLevel),
+		),
 	}
 }
 

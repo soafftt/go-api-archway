@@ -20,15 +20,19 @@ func Chain(h http.Handler, hm ...Middleware) http.Handler {
 }
 
 // MiddlewareCotainer 를 만들고, DI 과정에서 내가 필요로 하는는 것을 순서대로 등록함.
-type MiddlewareContainer struct {
+type Container struct {
 	Middlewares []Middleware
 }
 
-func NewMiddlewareContainer(requestMiddleware RequestMiddleware) *MiddlewareContainer {
-	middlewares := make([]Middleware, 0, 1)
+func NewMiddlewareContainer(
+	requestMiddleware RequestMiddleware,
+	metricsMiddleware MetricsMiddleware,
+) *Container {
+	middlewares := make([]Middleware, 0, 2)
+	middlewares = append(middlewares, metricsMiddleware) // 이것이 최우선이 되어야 해서 뒤로 밀림.
 	middlewares = append(middlewares, requestMiddleware)
 
-	return &MiddlewareContainer{
+	return &Container{
 		Middlewares: middlewares,
 	}
 }

@@ -41,17 +41,19 @@ func InitializeApp() (*GatewayProxyApp, error) {
 	}
 	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort, upstreamLookupGrpcPort)
 	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase, rateLimiterPort)
-	middlewareContainer := middleware.NewMiddlewareContainer(requestMiddleware)
+	metricsMiddleware := middleware.NewMetricsMiddleware()
+	container := middleware.NewMiddlewareContainer(requestMiddleware, metricsMiddleware)
 	gatewayProxy := in.NewGatewayProxy()
 	adapterInDI := &di3.AdapterInDI{
 		RequestMiddleware:   requestMiddleware,
-		MiddlewareContainer: middlewareContainer,
+		MetricsMiddleware:   metricsMiddleware,
+		MiddlewareContainer: container,
 		GatewayProxy:        gatewayProxy,
 	}
 	applicationServiceDI := &di4.ApplicationServiceDI{
 		UpStreamLookUpUseCase: upstreamLookupUseCase,
 	}
-	gatewayProxyServer := config.NewGatewayProxyServer(gatewayProxy, middlewareContainer)
+	gatewayProxyServer := config.NewGatewayProxyServer(gatewayProxy, container)
 	gatewayProxyApp := &GatewayProxyApp{
 		adapterConfig:      adapterConfig,
 		adapterOutDI:       adapterOutDI,
