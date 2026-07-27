@@ -46,7 +46,7 @@ func NewGrpcClient(appConfig *config.AppConfig) GrpcClient {
 		opts = append(opts, grpc.WithDisableRetry())
 	}
 
-	conn, err := grpc.NewClient(appConfig.ClientNetworkConfig.UnixSocketPath, opts...)
+	conn, err := grpc.NewClient("passthrough:///"+appConfig.ClientNetworkConfig.UnixSocketPath, opts...)
 
 	if err != nil {
 		panic(err)

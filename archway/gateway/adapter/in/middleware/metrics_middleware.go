@@ -1,17 +1,24 @@
 package middleware
 
 import (
+	"gateway/application/port/in"
 	"net/http"
+	"strings"
+	"unsafe"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type MetricsMiddleware Middleware
 
-type metricsMiddleware struct{}
+type metricsMiddleware struct {
+	grpcMetricUseCase in.ControlPlaneMetricUseCase
+}
 
-func NewMetricsMiddleware() MetricsMiddleware {
-	return &metricsMiddleware{}
+func NewMetricsMiddleware(controlPlaneMetricUseCase in.ControlPlaneMetricUseCase) MetricsMiddleware {
+	return &metricsMiddleware{
+		grpcMetricUseCase: controlPlaneMetricUseCase,
+	}
 }
 
 func (m metricsMiddleware) HandleMiddleware(next http.Handler) http.Handler {
@@ -23,20 +30,28 @@ func (m metricsMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 		case "/_metrics":
 			promhttp.Handler().ServeHTTP(w, r)
 			break
-		case "/favicon.ico":
-			{
-				w.Header().Set("Content-Type", "text/plain")
-				_, _ = w.Write([]byte(""))
-				break
+		case "/_metrics/control-plane":
+			metric := strings.TrimSpace(m.grpcMetricUseCase.GetMetric())
+			w.Header().Set("Content-Type", "text/plain")
+
+			var metricBytes []byte
+			if metric == "" {
+				metricBytes = make([]byte, 0)
+			} else {
+				metricBytes = unsafe.Slice(unsafe.StringData(metric), len(metric))
 			}
+
+			_, _ = w.Write(metricBytes)
+			break
+		case "/favicon.ico":
+			w.Header().Set("Content-Type", "text/plain")
+			_, _ = w.Write([]byte(""))
+			break
 
 		// 기본 통작.
 		default:
-			{
-				// prometheus 설정을 찾아보자.
-				next.ServeHTTP(w, r)
-			}
+			// prometheus 설정을 찾아보자.
+			next.ServeHTTP(w, r)
 		}
 	})
-
 }

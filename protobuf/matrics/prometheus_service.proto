@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package adapter.config.proto.grpc;
+option go_package = "github.com/soafftt/go-api-archway/archway/pb";
+
+service MetricsService {
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+}
+
+message GetMetricsRequest {}
+message GetMetricsResponse {
+  string data = 1;
+}

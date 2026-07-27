@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"gateway/controller/application/port/in"
-	pb "gateway/protobuf"
+	pb "protobuf"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -21,7 +21,10 @@ func NewUpstreamLookupController(upstreamLookupUseCase in.UpstreamLookupUseCase)
 	return &UpstreamLookupController{upstreamLookupUseCase: upstreamLookupUseCase}
 }
 
-func (u *UpstreamLookupController) Lookup(ctx context.Context, request *pb.UpstreamLookupRequest) (*pb.UpstreamLookupResponse, error) {
+func (u *UpstreamLookupController) Lookup(
+	ctx context.Context,
+	request *pb.UpstreamLookupRequest,
+) (*pb.UpstreamLookupResponse, error) {
 	if request == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}

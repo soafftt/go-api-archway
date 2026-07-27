@@ -10,6 +10,7 @@ import (
 	"gateway/controller/adapter/config/app_config"
 	"gateway/controller/adapter/config/server"
 	"gateway/controller/adapter/config/server/grpc_server"
+	"gateway/controller/adapter/config/server/grpc_server/metrics"
 	"gateway/controller/adapter/config/server/unixsocket_server"
 	"gateway/controller/adapter/config/valkey"
 	di5 "gateway/controller/adapter/port/in/grpc/di"
@@ -44,12 +45,14 @@ func InitializeGatewayControllerApp() (*GatewayControllerApp, error) {
 		UpStreamRouter: upstreamRouter,
 	}
 	upstreamLookupController := handler2.NewUpstreamLookupController(upstreamLookupUseCase)
-	v := di5.NewGrpcServiceRegistrars(upstreamLookupController)
+	grpcServerMetrics := metrics.NewServerMetrics()
+	metricsController := handler2.NewMetricsController(grpcServerMetrics)
+	v := di5.NewGrpcServiceRegistrars(upstreamLookupController, metricsController)
 	grpcServiceProvider := &di5.GrpcServiceProvider{
 		Registrars: v,
 	}
 	unixServer := unixsocket_server.NewUnixSocketServer(unixRouterProvider, appConfig)
-	grpcServer := grpc_server.NewGrpcServer(appConfig, grpcServiceProvider)
+	grpcServer := grpc_server.NewGrpcServer(appConfig, grpcServiceProvider, grpcServerMetrics)
 	listenerServer := server.NewListenerServer(appConfig, unixServer, grpcServer)
 	gatewayControllerApp := &GatewayControllerApp{
 		app:                 appConfig,
@@ -60,6 +63,7 @@ func InitializeGatewayControllerApp() (*GatewayControllerApp, error) {
 		grpcServiceProvider: grpcServiceProvider,
 		unixServer:          unixServer,
 		grpcServer:          grpcServer,
+		grpcMetrics:         grpcServerMetrics,
 		listenerServer:      listenerServer,
 	}
 	return gatewayControllerApp, nil
@@ -76,5 +80,6 @@ type GatewayControllerApp struct {
 	grpcServiceProvider *di5.GrpcServiceProvider
 	unixServer          server.UnixServer
 	grpcServer          server.GrpcServer
+	grpcMetrics         metrics.GrpcServerMetrics
 	listenerServer      server.ListenerServer
 }

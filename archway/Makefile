@@ -42,4 +42,9 @@ build-gateway-controller: wire-gateway-controller
 	cd $(GATEWAY_CONTROLLER_DIR) && $(GO) build -o $(BUILD_DIR)/gateway-controller ./cmd
 
 proto-upstream-lookup:
-	cd $(PROTOBUF_DIR) && protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative upstream_lookup.proto
+	cd $(PROTOBUF_DIR) && \
+	set -e; \
+	for proto in $$(find . -type f -name '*.proto' | sort); do \
+		protoc --go_out=. --go_opt=paths=source_relative \
+			--go-grpc_out=. --go-grpc_opt=paths=source_relative "$$proto"; \
+	done

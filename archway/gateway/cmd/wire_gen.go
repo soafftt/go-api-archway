@@ -34,14 +34,17 @@ func InitializeApp() (*GatewayProxyApp, error) {
 	upstreamLookupPort := controlplane.NewUpstreamLookup(appConfig, httpClient)
 	upstreamLookupGrpcPort := controlplane.NewUpstreamLookupGrpc(grpcClient)
 	rateLimiterPort := ratelimit.NewRateLimit()
+	controlPlaneMetricPort := controlplane.NewMetricsLookup(grpcClient)
 	adapterOutDI := &di2.AdapterOutDI{
 		HttpUpstreamLookupPort: upstreamLookupPort,
 		GrpcUpstreamLookupPort: upstreamLookupGrpcPort,
 		RateLimiter:            rateLimiterPort,
+		GrpcMetricLookupPort:   controlPlaneMetricPort,
 	}
 	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort, upstreamLookupGrpcPort)
 	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase, rateLimiterPort)
-	metricsMiddleware := middleware.NewMetricsMiddleware()
+	controlPlaneMetricUseCase := service.NewControlPlaneMetricService(controlPlaneMetricPort)
+	metricsMiddleware := middleware.NewMetricsMiddleware(controlPlaneMetricUseCase)
 	container := middleware.NewMiddlewareContainer(requestMiddleware, metricsMiddleware)
 	gatewayProxy := in.NewGatewayProxy()
 	adapterInDI := &di3.AdapterInDI{
@@ -51,7 +54,8 @@ func InitializeApp() (*GatewayProxyApp, error) {
 		GatewayProxy:        gatewayProxy,
 	}
 	applicationServiceDI := &di4.ApplicationServiceDI{
-		UpStreamLookUpUseCase: upstreamLookupUseCase,
+		UpStreamLookUpUseCase:     upstreamLookupUseCase,
+		ControlPlaneMetricUseCase: controlPlaneMetricUseCase,
 	}
 	gatewayProxyServer := config.NewGatewayProxyServer(gatewayProxy, container)
 	gatewayProxyApp := &GatewayProxyApp{

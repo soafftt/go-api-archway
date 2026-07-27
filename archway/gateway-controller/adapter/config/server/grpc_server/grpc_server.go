@@ -5,6 +5,7 @@ import (
 	"errors"
 	"gateway/controller/adapter/config/app_config"
 	"gateway/controller/adapter/config/server"
+	"gateway/controller/adapter/config/server/grpc_server/metrics"
 	adapterPortInGrpcDi "gateway/controller/adapter/port/in/grpc/di"
 	"log"
 	"net"
@@ -22,15 +23,18 @@ import (
 type grpcServer struct {
 	GrpcServiceProvider *adapterPortInGrpcDi.GrpcServiceProvider
 	AppConfig           *app_config.AppConfig
+	GrpcMetrics         metrics.GrpcServerMetrics
 }
 
 func NewGrpcServer(
 	appConfig *app_config.AppConfig,
 	grpcServiceProvider *adapterPortInGrpcDi.GrpcServiceProvider,
+	grpcMetrics metrics.GrpcServerMetrics,
 ) server.GrpcServer {
 	return &grpcServer{
 		AppConfig:           appConfig,
 		GrpcServiceProvider: grpcServiceProvider,
+		GrpcMetrics:         grpcMetrics,
 	}
 }
 
@@ -42,6 +46,7 @@ func (g *grpcServer) newServer() *grpc.Server {
 		numStreamWorkers = uint32(runtime.GOMAXPROCS(0))
 	}
 
+	metrics := g.GrpcMetrics.GetServerMetrics()
 	return grpc.NewServer(
 		// 최대 ReceiveMessageSize (Bytes)
 		grpc.MaxRecvMsgSize(grpcConfig.MaxRecvMsgBytes),
@@ -68,6 +73,8 @@ func (g *grpcServer) newServer() *grpc.Server {
 			MinTime:             time.Duration(grpcConfig.KeepaliveEnforcementMinTimeMs) * time.Millisecond,
 			PermitWithoutStream: grpcConfig.PermitWithoutStream,
 		}),
+		grpc.StreamInterceptor(metrics.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(metrics.UnaryServerInterceptor()),
 	)
 }
 
@@ -88,8 +95,8 @@ func (g *grpcServer) Start() {
 		_ = listener.Close()
 	}()
 
-	grpcServer := g.newServer()
-	g.registerServices(grpcServer)
+	rpcServer := g.newServer()
+	g.registerServices(rpcServer)
 
 	go func() {
 		defer func() {
@@ -99,16 +106,16 @@ func (g *grpcServer) Start() {
 		}()
 
 		log.Println("grpc server start")
-		if err := grpcServer.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+		if err := rpcServer.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			log.Println(err)
 		}
 	}()
 
-	g.stopWait(grpcServer)
+	g.stopWait(rpcServer)
 
 }
 
-func (g *grpcServer) stopWait(grpcServer *grpc.Server) {
+func (g *grpcServer) stopWait(server *grpc.Server) {
 	osSignal := make(chan os.Signal, 1)
 	signal.Notify(osSignal, syscall.SIGINT, syscall.SIGTERM)
 
@@ -122,7 +129,7 @@ func (g *grpcServer) stopWait(grpcServer *grpc.Server) {
 
 	shutdownDone := make(chan struct{})
 	go func() {
-		grpcServer.GracefulStop()
+		server.GracefulStop()
 		close(shutdownDone)
 	}()
 
@@ -130,7 +137,7 @@ func (g *grpcServer) stopWait(grpcServer *grpc.Server) {
 	case <-shutdownDone:
 		log.Println("gRPC graceful shutdown complete")
 	case <-timeoutContext.Done():
-		grpcServer.Stop()
+		server.Stop()
 		if errors.Is(timeoutContext.Err(), context.DeadlineExceeded) {
 			log.Printf("gRPC graceful shutdown timeout: %s", shutdownWaitTime)
 		} else {

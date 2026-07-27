@@ -2,7 +2,8 @@ package di
 
 import (
 	"gateway/controller/adapter/port/in/grpc/handler"
-	pb "gateway/protobuf"
+	pb "protobuf"
+	pbMetrics "protobuf/matrics"
 
 	"github.com/google/wire"
 	"google.golang.org/grpc"
@@ -22,10 +23,16 @@ type GrpcServiceProvider struct {
 	Registrars []GrpcServiceRegistrar
 }
 
-func NewGrpcServiceRegistrars(upstreamLookupServer pb.UpstreamLookupServiceServer) []GrpcServiceRegistrar {
+func NewGrpcServiceRegistrars(
+	upstreamLookupServer pb.UpstreamLookupServiceServer,
+	metricsServer pbMetrics.MetricsServiceServer,
+) []GrpcServiceRegistrar {
 	return []GrpcServiceRegistrar{
 		grpcServiceRegistrarFunc(func(registrar grpc.ServiceRegistrar) {
 			pb.RegisterUpstreamLookupServiceServer(registrar, upstreamLookupServer)
+		}),
+		grpcServiceRegistrarFunc(func(registrar grpc.ServiceRegistrar) {
+			pbMetrics.RegisterMetricsServiceServer(registrar, metricsServer)
 		}),
 	}
 }
@@ -33,6 +40,8 @@ func NewGrpcServiceRegistrars(upstreamLookupServer pb.UpstreamLookupServiceServe
 var GrpcServiceProviderSet = wire.NewSet(
 	handler.NewUpstreamLookupController,
 	wire.Bind(new(pb.UpstreamLookupServiceServer), new(*handler.UpstreamLookupController)),
+	handler.NewMetricsController,
+	wire.Bind(new(pbMetrics.MetricsServiceServer), new(*handler.MetricsController)),
 	NewGrpcServiceRegistrars,
 	wire.Struct(new(GrpcServiceProvider), "*"),
 )
