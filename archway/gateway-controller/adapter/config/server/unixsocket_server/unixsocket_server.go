@@ -4,6 +4,7 @@ import (
 	"context"
 	appConfig "gateway/controller/adapter/config/app_config"
 	"gateway/controller/adapter/config/server"
+	"gateway/controller/adapter/config/server/unixsocket_server/middleware"
 	adapterPortInUnixDi "gateway/controller/adapter/port/in/unix/di"
 	"log"
 	"net"
@@ -49,7 +50,7 @@ func (u *unixServer) newHTTPServer(handler http.Handler) *http.Server {
 		ReadTimeout:  time.Duration(u.AppConfig.Server.ReadTimeoutMillisecond) * time.Millisecond,
 		WriteTimeout: time.Duration(u.AppConfig.Server.WriteTimeoutMillisecond) * time.Millisecond,
 		IdleTimeout:  time.Duration(u.AppConfig.Server.IdleTimeoutMillisecond) * time.Millisecond,
-		Handler:      handler,
+		Handler:      middleware.Chain(handler),
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"gateway/adapter/config"
 	"gateway/adapter/config/client"
 	"gateway/adapter/config/di"
+	"gateway/adapter/config/server"
 	"gateway/adapter/in"
 	di3 "gateway/adapter/in/di"
 	"gateway/adapter/in/middleware"
@@ -35,16 +36,18 @@ func InitializeApp() (*GatewayProxyApp, error) {
 	upstreamLookupGrpcPort := controlplane.NewUpstreamLookupGrpc(grpcClient)
 	rateLimiterPort := ratelimit.NewRateLimit()
 	controlPlaneMetricPort := controlplane.NewMetricsLookup(grpcClient)
+	unixMetricOutPort := controlplane.NewUnixMetricLookup(httpClient)
 	adapterOutDI := &di2.AdapterOutDI{
 		HttpUpstreamLookupPort: upstreamLookupPort,
 		GrpcUpstreamLookupPort: upstreamLookupGrpcPort,
 		RateLimiter:            rateLimiterPort,
 		GrpcMetricLookupPort:   controlPlaneMetricPort,
+		UnixMetricLookupPort:   unixMetricOutPort,
 	}
 	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort, upstreamLookupGrpcPort)
 	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase, rateLimiterPort)
 	controlPlaneMetricUseCase := service.NewControlPlaneMetricService(controlPlaneMetricPort)
-	metricsMiddleware := middleware.NewMetricsMiddleware(controlPlaneMetricUseCase)
+	metricsMiddleware := middleware.NewMetricsMiddleware(appConfig, controlPlaneMetricUseCase)
 	container := middleware.NewMiddlewareContainer(requestMiddleware, metricsMiddleware)
 	gatewayProxy := in.NewGatewayProxy()
 	adapterInDI := &di3.AdapterInDI{
@@ -57,7 +60,7 @@ func InitializeApp() (*GatewayProxyApp, error) {
 		UpStreamLookUpUseCase:     upstreamLookupUseCase,
 		ControlPlaneMetricUseCase: controlPlaneMetricUseCase,
 	}
-	gatewayProxyServer := config.NewGatewayProxyServer(gatewayProxy, container)
+	gatewayProxyServer := server.NewGatewayProxyServer(gatewayProxy, container)
 	gatewayProxyApp := &GatewayProxyApp{
 		adapterConfig:      adapterConfig,
 		adapterOutDI:       adapterOutDI,
@@ -75,5 +78,5 @@ type GatewayProxyApp struct {
 	adapterOutDI       *di2.AdapterOutDI
 	adapterInDI        *di3.AdapterInDI
 	applicationService *di4.ApplicationServiceDI
-	proxyServer        *config.GatewayProxyServer
+	proxyServer        *server.GatewayProxyServer
 }

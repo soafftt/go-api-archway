@@ -1,4 +1,4 @@
-package config
+package server
 
 import (
 	"context"
@@ -50,11 +50,17 @@ func (s *GatewayProxyServer) Start() {
 			panic(err)
 		}
 	}()
-	s.registerGracefulShutdown()
+
+	defer func() {
+		s.registerGracefulShutdown()
+	}()
 }
 
 func (s *GatewayProxyServer) registerGracefulShutdown() {
 	// channel 을 이용하여 stop 시그널을 대기 한다.
+
+	logger.Info("Registering graceful shutdown")
+
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, syscall.SIGINT, syscall.SIGTERM)
 	<-stopSignal

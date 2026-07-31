@@ -14,12 +14,14 @@ type AdapterOutDI struct {
 	GrpcUpstreamLookupPort appPortOut.UpstreamLookupGrpcPort
 	RateLimiter            appPortOutRateLimiter.RateLimiterPort
 	GrpcMetricLookupPort   appPortOut.ControlPlaneMetricPort
+	UnixMetricLookupPort   controlPlane.UnixMetricOutPort
 }
 
 var AdapterOutDiProviderSet = wire.NewSet(
 	controlPlane.NewUpstreamLookup,
 	controlPlane.NewUpstreamLookupGrpc,
 	controlPlane.NewMetricsLookup,
+	controlPlane.NewUnixMetricLookup,
 	ddapterGatewayRateLimit.NewRateLimit,
 	wire.Struct(new(AdapterOutDI), "*"),
 )

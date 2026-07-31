@@ -4,8 +4,8 @@
 package main
 
 import (
-	"gateway/adapter/config"
 	adpaterConfigDi "gateway/adapter/config/di"
+	"gateway/adapter/config/server"
 	adapterInDI "gateway/adapter/in/di"
 	adapterOutDI "gateway/adapter/out/di"
 	applicationServiceDi "gateway/application/service/di"
@@ -18,7 +18,7 @@ type GatewayProxyApp struct {
 	adapterOutDI       *adapterOutDI.AdapterOutDI
 	adapterInDI        *adapterInDI.AdapterInDI
 	applicationService *applicationServiceDi.ApplicationServiceDI
-	proxyServer        *config.GatewayProxyServer
+	proxyServer        *server.GatewayProxyServer
 }
 
 func InitializeApp() (*GatewayProxyApp, error) {
@@ -27,7 +27,7 @@ func InitializeApp() (*GatewayProxyApp, error) {
 		adapterOutDI.AdapterOutDiProviderSet,
 		applicationServiceDi.ApplicationServiceProvider,
 		adapterInDI.AdapterInProviderSet,
-		config.ProxyServerProvider,
+		server.ProxyServerProvider,
 		wire.Struct(new(GatewayProxyApp), "*"),
 	)
 

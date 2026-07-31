@@ -1,9 +1,13 @@
 package utils
 
 import (
+	"os"
+	"strings"
+
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var _logger Logger
@@ -16,7 +20,7 @@ func init() {
 		panic(err)
 	}
 
-	_logger = newLogger(cfg.Environment)
+	_logger = newLogger(cfg.Environment, cfg.Logger.LogLevel)
 }
 
 type Logger interface {
@@ -37,20 +41,34 @@ func GetLogger() Logger {
 
 type config struct {
 	Environment string `env:"ENV" envDefault:"dev"`
+	Logger      struct {
+		LogLevel string `env:"LOG_LEVEL" envDefault:"info"`
+	}
 }
 
-func newLogger(environment string) Logger {
-	var logger *zap.Logger
+func newLogger(environment string, logLevel string) Logger {
+	var logEncoderConfig zapcore.EncoderConfig
 	if environment == "local" || environment == "dev" {
-		logger, _ = zap.NewDevelopment()
+		logEncoderConfig = zap.NewDevelopmentEncoderConfig()
 
 	} else {
-		logger, _ = zap.NewProduction()
+		logEncoderConfig = zap.NewDevelopmentEncoderConfig()
 	}
 
-	logger = logger.WithOptions(
-		zap.AddCaller(),
+	// 레벨표시를 Color 사용.
+	logEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+
+	core := zapcore.NewCore(
+		zapcore.NewConsoleEncoder(logEncoderConfig), // 콘솔용 인코더
+		zapcore.AddSync(os.Stdout),                  // 표준 출력
+		getLogLevel(logLevel),                       // 로그 레벨
+	)
+
+	logger := zap.New(
+		core,
+		// Wrapping 한 상태이기에 Wrapping 위치를 제거하기 위하여 1단계 스킵
 		zap.AddCallerSkip(1),
+		// Warn 부터는 Stacktrace 추가.
 		zap.AddStacktrace(zap.WarnLevel),
 	)
 
@@ -60,6 +78,7 @@ func newLogger(environment string) Logger {
 			zap.AddCaller(),
 			zap.AddCallerSkip(1),
 			zap.AddStacktrace(zap.WarnLevel),
+			zap.ErrorOutput(os.Stdout),
 		),
 	}
 }
@@ -104,4 +123,26 @@ func (s stdLogger) ErrorW(message string, err error, keyValue ...any) {
 func (s stdLogger) Sync() {
 	_ = s.zapSugaredLogger.Sync()
 	_ = s.zapLogger.Sync()
+}
+
+func getLogLevel(lv string) zapcore.Level {
+	var logLv zapcore.Level
+	switch strings.ToLower(lv) {
+	case "INFO":
+		logLv = zap.InfoLevel
+	case "WRAN":
+		logLv = zap.WarnLevel
+	case "ERROR":
+		logLv = zap.ErrorLevel
+	case "DPNIC":
+	case "PANIC":
+		logLv = zap.PanicLevel
+
+	case "FATAL":
+		logLv = zap.FatalLevel
+	default:
+		logLv = zap.DebugLevel
+	}
+
+	return logLv
 }
