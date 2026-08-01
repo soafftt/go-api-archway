@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"unsafe"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type MetricsMiddleware Middleware
@@ -34,6 +36,7 @@ func (m metricsMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 		switch r.RequestURI {
 		// metrics 이면, prometheus 동작.
 		case "/_metrics":
+			promhttp.Handler().ServeHTTP(w, r)
 			break
 		case "/_metrics/control-plane":
 			metric := strings.TrimSpace(m.grpcMetricUseCase.GetMetric())
