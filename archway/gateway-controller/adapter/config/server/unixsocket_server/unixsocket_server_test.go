@@ -298,7 +298,7 @@ func keyDataForAlgorithm(algorithm string) string {
 	case "ES256":
 		return ecdsaJWKBase64
 	case "HS256":
-		return base64.StdEncoding.EncodeToString([]byte(hs256JWKJSON))
+		return base64.StdEncoding.EncodeToString(coreUtils.ToBytesFromString(hs256JWKJSON))
 	default:
 		panic("unsupported algorithm: " + algorithm)
 	}

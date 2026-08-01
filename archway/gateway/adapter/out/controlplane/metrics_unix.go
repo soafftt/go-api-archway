@@ -1,6 +1,7 @@
 package controlplane
 
 import (
+	"core/utils"
 	"gateway/adapter/config/client"
 	"gateway/application/port/out"
 	"sync"
@@ -55,5 +56,5 @@ func (u *unixMetric) GetMetric() string {
 		return ""
 	}
 
-	return string(bodyBytes)
+	return utils.ToStringFromBytes(bodyBytes)
 }

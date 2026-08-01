@@ -75,7 +75,7 @@ func buildParseBenchmarkServiceJSON(serviceName string, dataset parseBenchmarkDa
 	if dataset.withAuth {
 		payload["authorization"] = map[string]any{
 			"algorithm": "HS256",
-			"key_data":  base64.StdEncoding.EncodeToString([]byte(parseBenchmarkHS256JWKJSON)),
+			"key_data":  base64.StdEncoding.EncodeToString(coreUtils.ToBytesFromString(parseBenchmarkHS256JWKJSON)),
 			"user_key":  "user_id",
 		}
 	}
@@ -113,5 +113,5 @@ func buildParseBenchmarkServiceJSON(serviceName string, dataset parseBenchmarkDa
 		panic(fmt.Errorf("marshal parse benchmark service: %w", err))
 	}
 
-	return string(raw)
+	return coreUtils.ToStringFromBytes(raw)
 }

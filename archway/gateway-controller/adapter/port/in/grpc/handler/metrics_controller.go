@@ -56,5 +56,5 @@ func (m *MetricsController) GetMetrics(
 		}
 	}
 
-	return &pb.GetMetricsResponse{Data: buffer.String()}, nil
+	return &pb.GetMetricsResponse{Data: utils.ToStringFromBytes(buffer.Bytes())}, nil
 }

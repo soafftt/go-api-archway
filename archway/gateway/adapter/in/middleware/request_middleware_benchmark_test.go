@@ -3,6 +3,7 @@ package middleware
 import (
 	"bufio"
 	"context"
+	"core/utils"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -980,5 +981,5 @@ func buildFullChainMatrixFixture(tb testing.TB, scenario benchmarkScenario, algo
 		tb.Fatalf("failed to marshal matrix payload: %v", err)
 	}
 
-	return routes, token, string(encoded)
+	return routes, token, utils.ToStringFromBytes(encoded)
 }
