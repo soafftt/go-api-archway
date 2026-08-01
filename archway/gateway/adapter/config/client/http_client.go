@@ -2,11 +2,15 @@ package client
 
 import (
 	"context"
-	"gateway/adapter/config"
+	"gateway/adapter/config/appconfig"
 	"net"
 	"net/http"
 	"time"
 )
+
+type HttpClientConfig interface {
+	GetHttpClientProperties() appconfig.HttpClientProperties
+}
 
 type HttpClient interface {
 	GetClient() *http.Client
@@ -16,9 +20,15 @@ type httpClient struct {
 	client *http.Client
 }
 
-func NewHttpClient(config *config.AppConfig) HttpClient {
+func NewHttpClient(
+	networkConfig appconfig.ClientNetworkConfig,
+	httpConfig HttpClientConfig,
+) HttpClient {
+	networkProperties := networkConfig.GetClientNetworkProperties()
+	httpClientProperties := httpConfig.GetHttpClientProperties()
+
 	dialer := &net.Dialer{
-		Timeout:   time.Duration(config.HttpClient.TimeoutMilliSeconds) * time.Millisecond,
+		Timeout:   time.Duration(httpClientProperties.TimeoutMilliSeconds) * time.Millisecond,
 		KeepAlive: 30 * time.Second,
 	}
 
@@ -29,10 +39,10 @@ func NewHttpClient(config *config.AppConfig) HttpClient {
 			MaxIdleConns:        500,
 			IdleConnTimeout:     90 * time.Second,
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return dialer.DialContext(ctx, config.ClientNetworkConfig.Network, config.ClientNetworkConfig.UnixSocketPath)
+				return dialer.DialContext(ctx, networkProperties.Network, networkProperties.UnixSocketPath)
 			},
 		},
-		Timeout: time.Duration(config.HttpClient.TimeoutMilliSeconds) * time.Millisecond,
+		Timeout: time.Duration(httpClientProperties.TimeoutMilliSeconds) * time.Millisecond,
 	}
 
 	return &httpClient{

@@ -3,7 +3,7 @@ package in_test
 import (
 	"bufio"
 	"fmt"
-	"gateway/adapter/config"
+	"gateway/adapter/config/appconfig"
 	"gateway/adapter/config/client"
 	ingateway "gateway/adapter/in"
 	"gateway/adapter/in/middleware"
@@ -67,11 +67,11 @@ func TestGatewayE2E_RewritePathVariableViaGatewayController(t *testing.T) {
 
 	waitForGatewayControllerSocket(t, socketPath)
 
-	appConfig := &config.AppConfig{}
-	appConfig.ClientNetworkConfig.BaseURL = "http://unix/v1/upstream?path="
+	appConfig := &appconfig.Config{}
+	appConfig.ClientNetworkConfig.UnixSocketBaseURI = "http://unix/v1/upstream?path="
 	appConfig.ClientNetworkConfig.Network = "unix"
 	appConfig.ClientNetworkConfig.UnixSocketPath = socketPath
-	appConfig.HttpClient.TimeoutMilliSeconds = 3000
+	appConfig.HttpClientConfig.TimeoutMilliSeconds = 3000
 
 	gatewayControllerClient := client.NewHttpClient(appConfig)
 	upstreamLookupPort := controlplane.NewUpstreamLookup(appConfig, gatewayControllerClient)

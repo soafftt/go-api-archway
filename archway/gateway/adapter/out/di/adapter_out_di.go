@@ -13,7 +13,7 @@ type AdapterOutDI struct {
 	HttpUpstreamLookupPort appPortOut.UpstreamLookupPort
 	GrpcUpstreamLookupPort appPortOut.UpstreamLookupGrpcPort
 	RateLimiter            appPortOutRateLimiter.RateLimiterPort
-	GrpcMetricLookupPort   appPortOut.ControlPlaneMetricPort
+	GrpcMetricLookupPort   controlPlane.GrpcMetricOutPort
 	UnixMetricLookupPort   controlPlane.UnixMetricOutPort
 }
 

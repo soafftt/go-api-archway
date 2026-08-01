@@ -5,7 +5,7 @@ import (
 	"core/errs"
 	"core/utils"
 	"errors"
-	"gateway/adapter/config"
+	"gateway/adapter/config/appconfig"
 	"gateway/adapter/config/client"
 	"gateway/application/port/out"
 	"net/http"
@@ -17,11 +17,11 @@ type upstreamLookup struct {
 }
 
 func NewUpstreamLookup(
-	appConfig *config.AppConfig,
+	networkConfig appconfig.ClientNetworkConfig,
 	httpUpstreamLookClient client.HttpClient,
 ) out.UpstreamLookupPort {
 	return &upstreamLookup{
-		uri:    appConfig.ClientNetworkConfig.BaseURL,
+		uri:    networkConfig.GetClientNetworkProperties().UnixSocketBaseURI,
 		client: httpUpstreamLookClient.GetClient(),
 	}
 }

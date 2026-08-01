@@ -31,7 +31,6 @@ func NewGatewayProxyServer(
 	}
 
 	httpServer.SetKeepAlivesEnabled(true)
-
 	return &GatewayProxyServer{
 		httpServer: &httpServer,
 	}
@@ -41,7 +40,7 @@ func (s *GatewayProxyServer) Start() {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				// recover 로깅.
+				logger.Error("GatewayProxyServer panic")
 			}
 		}()
 

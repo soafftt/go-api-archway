@@ -8,12 +8,10 @@ import (
 )
 
 type ApplicationServiceDI struct {
-	UpStreamLookUpUseCase     in.UpstreamLookupUseCase
-	ControlPlaneMetricUseCase in.ControlPlaneMetricUseCase
+	UpStreamLookUpUseCase in.UpstreamLookupUseCase
 }
 
 var ApplicationServiceProvider = wire.NewSet(
 	service.NewUpstreamLookupService,
-	service.NewControlPlaneMetricService,
 	wire.Struct(new(ApplicationServiceDI), "*"),
 )

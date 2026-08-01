@@ -3,6 +3,7 @@ package in
 import (
 	"context"
 	coreAdapterIn "core/adapter/in"
+	"core/consts/httpheader"
 	"core/utils"
 	"encoding/json"
 	"gateway/adapter/in/ctxkey"
@@ -20,12 +21,12 @@ var logger = utils.GetLogger()
 
 const proxyBufferSize = 10 * 10 * 1024
 
-type proxyBufferPool struct {
+type httpResponseBufferPool struct {
 	bufferPool sync.Pool
 }
 
 func newProxyBufferPool() httputil.BufferPool {
-	return &proxyBufferPool{
+	return &httpResponseBufferPool{
 		bufferPool: sync.Pool{
 			New: func() any {
 				return new(make([]byte, proxyBufferSize))
@@ -34,13 +35,13 @@ func newProxyBufferPool() httputil.BufferPool {
 	}
 }
 
-func (p *proxyBufferPool) Get() []byte {
+func (p *httpResponseBufferPool) Get() []byte {
 	buffer := p.bufferPool.Get().(*[]byte)
 	return *buffer
 }
 
-func (p *proxyBufferPool) Put(bytes []byte) {
-	bytes = bytes[:proxyBufferSize]
+func (p *httpResponseBufferPool) Put(bytes []byte) {
+	bytes = bytes[:0]
 	clear(bytes)
 	p.bufferPool.Put(&bytes)
 }
@@ -74,7 +75,7 @@ func newReversProxy() *httputil.ReverseProxy {
 			},
 			// keep-alive 를 끌껏인가? (굳이....)
 			DisableKeepAlives: false,
-			// http/2 로 강제 변환 정송을 할것인가
+			// http/2 로 강제 변환 전송 할것인가
 			ForceAttemptHTTP2: false,
 			// Pool 에 가지고 있어도 되는 최대 커넥션 수
 			MaxIdleConns:        500,
@@ -88,50 +89,11 @@ func newReversProxy() *httputil.ReverseProxy {
 		},
 		// rewrite
 		Rewrite: func(proxy *httputil.ProxyRequest) {
-			ctx := proxy.In.Context()
-			lookupResult := ctx.Value(ctxkey.LOOKUP_KEY).(in.UpstreamLookupResult)
-
-			proxy.Out.URL = &url.URL{
-				Scheme:   lookupResult.Scheme(),
-				Host:     lookupResult.GetDomain(),
-				Path:     lookupResult.Path,
-				RawQuery: proxy.In.URL.RawQuery,
-			}
-
-			xForwardedFor := proxy.In.Header.Get("X-Forwarded-For")
-			if xForwardedFor != "" {
-				xForwardedFor = proxy.In.RemoteAddr
-			} else {
-				xForwardedFor = xForwardedFor + ";" + proxy.In.Host
-			}
-
-			proxy.Out.Method = lookupResult.Method
-			proxy.Out.Body = proxy.In.Body
-
-			// 요청 헤더를 그대로 복사한다.
-			proxy.Out.Header = proxy.In.Header.Clone()
-			proxy.Out.Header.Set("X-Request-Host", proxy.In.Host)
-			proxy.Out.Header.Set("X-Forwarded-For", xForwardedFor)
-			// 인증체크 정보가 있으면 X-USER 로 전달한다.
-			if lookupResult.UserKey != nil {
-				proxy.Out.Header.Set("X-USER", lookupResult.UserKey.(string))
-			}
+			proxyRewrite(proxy)
 		},
 		// 응답 변경 = body 는 upstream 응답을 그대로 사용.
 		ModifyResponse: func(res *http.Response) error {
-			// 에러이면 Cache 자체를 사용할 일이 없음.
-			if res.StatusCode != http.StatusOK {
-				return nil
-			}
-
-			lookupResult := res.Request.Context().Value(ctxkey.LOOKUP_KEY).(in.UpstreamLookupResult)
-			if lookupResult.CacheTimeout > 0 {
-				res.Header.Set("Cache-Control", "max-age="+strconv.FormatInt(lookupResult.CacheTimeout, 10))
-			} else {
-				res.Header.Set("Cache-Control", "max-age=-1")
-			}
-
-			return nil
+			return proxyModifyResponse(res)
 		},
 		// 에러처리.
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
@@ -153,4 +115,51 @@ func newReversProxy() *httputil.ReverseProxy {
 		// bufferPool 을 syncPool 로 사용하게 하여, 메모리 최적회 (1MB) --> 줄여도 됨.
 		BufferPool: newProxyBufferPool(),
 	}
+}
+
+func proxyRewrite(proxy *httputil.ProxyRequest) {
+	ctx := proxy.In.Context()
+	lookupResult := ctx.Value(ctxkey.LOOKUP_KEY).(in.UpstreamLookupResult)
+
+	proxy.Out.URL = &url.URL{
+		Scheme:   lookupResult.Scheme(),
+		Host:     lookupResult.GetDomain(),
+		Path:     lookupResult.Path,
+		RawQuery: proxy.In.URL.RawQuery,
+	}
+
+	xForwardedFor := proxy.In.Header.Get(httpheader.XForwardedFor)
+	if xForwardedFor != "" {
+		xForwardedFor = proxy.In.RemoteAddr
+	} else {
+		xForwardedFor = xForwardedFor + ";" + proxy.In.Host
+	}
+
+	proxy.Out.Method = lookupResult.Method
+	proxy.Out.Body = proxy.In.Body
+
+	// 요청 헤더를 그대로 복사한다.
+	proxy.Out.Header = proxy.In.Header.Clone()
+	proxy.Out.Header.Set(httpheader.XRequestHost, proxy.In.Host)
+	proxy.Out.Header.Set(httpheader.XForwardedFor, xForwardedFor)
+	// 인증체크 정보가 있으면 X-USER 로 전달한다.
+	if lookupResult.UserKey != nil {
+		proxy.Out.Header.Set(httpheader.XUser, lookupResult.UserKey.(string))
+	}
+}
+
+func proxyModifyResponse(res *http.Response) error {
+	// 에러이면 Cache 자체를 사용할 일이 없음.
+	if res.StatusCode != http.StatusOK {
+		return nil
+	}
+
+	lookupResult := res.Request.Context().Value(ctxkey.LOOKUP_KEY).(in.UpstreamLookupResult)
+	if lookupResult.CacheTimeout > 0 {
+		res.Header.Set(httpheader.CacheControl, "max-age="+strconv.FormatInt(lookupResult.CacheTimeout, 10))
+	} else {
+		res.Header.Set(httpheader.CacheControl, "max-age=-1")
+	}
+
+	return nil
 }

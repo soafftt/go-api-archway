@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"gateway/adapter/config"
-	"gateway/application/port/in"
+	"core/utils"
+	"gateway/adapter/config/appconfig"
+	"gateway/adapter/out/controlplane"
 	"net/http"
 	"strings"
 	"unsafe"
@@ -14,20 +15,23 @@ type MetricsMiddleware Middleware
 
 type metricsMiddleware struct {
 	transfer          string
-	grpcMetricUseCase in.ControlPlaneMetricUseCase
+	grpcMetricOutPort controlplane.GrpcMetricOutPort
+	unixMetricOutPort controlplane.UnixMetricOutPort
 }
 
 func NewMetricsMiddleware(
-	config *config.AppConfig,
-	controlPlaneMetricUseCase in.ControlPlaneMetricUseCase,
+	config appconfig.ClientNetworkConfig,
+	grpcMetricOutPort controlplane.GrpcMetricOutPort,
+	unixMetricOutPort controlplane.UnixMetricOutPort,
 ) MetricsMiddleware {
 	return &metricsMiddleware{
-		transfer:          config.ClientNetworkConfig.Transfer,
-		grpcMetricUseCase: controlPlaneMetricUseCase,
+		transfer:          config.GetClientNetworkProperties().Transfer,
+		grpcMetricOutPort: grpcMetricOutPort,
+		unixMetricOutPort: unixMetricOutPort,
 	}
 }
 
-var emptyBodyBytes = []byte("")
+var emptyBodyBytes = utils.ToBytesFromString("")
 
 func (m metricsMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -39,10 +43,19 @@ func (m metricsMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 			promhttp.Handler().ServeHTTP(w, r)
 			break
 		case "/_metrics/control-plane":
-			metric := strings.TrimSpace(m.grpcMetricUseCase.GetMetric())
 			w.Header().Set("Content-Type", "text/plain")
 
 			var metricBytes []byte
+			var metric string
+
+			if m.transfer == "grpc" {
+				metric = m.grpcMetricOutPort.GetMetric()
+			} else {
+				// http 호출 해야 함.
+				metric = m.unixMetricOutPort.GetMetric()
+			}
+
+			metric = strings.TrimSpace(metric)
 			if metric == "" {
 				metricBytes = emptyBodyBytes
 			} else {
@@ -50,6 +63,7 @@ func (m metricsMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 			}
 
 			_, _ = w.Write(metricBytes)
+
 			break
 		case "/favicon.ico":
 			w.Header().Set("Content-Type", "text/plain")
@@ -58,7 +72,6 @@ func (m metricsMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 
 		// 기본 통작.
 		default:
-			// prometheus 설정을 찾아보자.
 			next.ServeHTTP(w, r)
 		}
 	})

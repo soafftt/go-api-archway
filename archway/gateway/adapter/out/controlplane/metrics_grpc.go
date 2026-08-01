@@ -10,11 +10,13 @@ import (
 
 var logger = utils.GetLogger()
 
+type GrpcMetricOutPort out.ControlPlaneMetricPort
+
 type MetricsLookup struct {
 	serviceClient pb.MetricsServiceClient
 }
 
-func NewMetricsLookup(grpc client.GrpcClient) out.ControlPlaneMetricPort {
+func NewMetricsLookup(grpc client.GrpcClient) GrpcMetricOutPort {
 	return &MetricsLookup{
 		serviceClient: pb.NewMetricsServiceClient(grpc.GetClient()),
 	}
