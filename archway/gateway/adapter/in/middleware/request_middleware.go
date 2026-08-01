@@ -81,7 +81,7 @@ func (r requestMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 
 		// 필수값 할당
 		ctx := request.Context()
-		ctx = context.WithValue(ctx, ctxkey.LOOKUP_KEY, lookupResult)
+		ctx = context.WithValue(ctx, ctxkey.UpstreamLookupKey, lookupResult)
 
 		// request 에 context 를 덮어씀.
 		request = request.WithContext(ctx)

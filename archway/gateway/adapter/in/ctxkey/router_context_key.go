@@ -1,5 +1,5 @@
 package ctxkey
 
-type RequestContextKey string
+type ProxyContextKey string
 
-const LOOKUP_KEY RequestContextKey = "UPSTREAM_LOOKUP"
+const UpstreamLookupKey ProxyContextKey = "UPSTREAM_LOOKUP"

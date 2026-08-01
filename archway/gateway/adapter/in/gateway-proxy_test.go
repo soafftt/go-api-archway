@@ -25,7 +25,7 @@ func TestGatewayProxyRewritesUpstreamHostAndPath(t *testing.T) {
 		Method: http.MethodGet,
 	}
 	request := httptest.NewRequest(http.MethodGet, "http://gateway.local/v1/e2e-service/echo.local/echo/ping", nil)
-	request = request.WithContext(context.WithValue(request.Context(), ctxkey.LOOKUP_KEY, lookupResult))
+	request = request.WithContext(context.WithValue(request.Context(), ctxkey.UpstreamLookupKey, lookupResult))
 	response := httptest.NewRecorder()
 
 	newReversProxy().ServeHTTP(response, request)
