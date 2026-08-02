@@ -1,4 +1,4 @@
-package controlplane
+package grpc
 
 import (
 	"context"
@@ -12,17 +12,17 @@ var logger = utils.GetLogger()
 
 type GrpcMetricOutPort out.ControlPlaneMetricPort
 
-type MetricsLookup struct {
+type metricsLookup struct {
 	serviceClient pb.MetricsServiceClient
 }
 
 func NewMetricsLookup(grpc client.GrpcClient) GrpcMetricOutPort {
-	return &MetricsLookup{
+	return &metricsLookup{
 		serviceClient: pb.NewMetricsServiceClient(grpc.GetClient()),
 	}
 }
 
-func (c MetricsLookup) GetMetric() string {
+func (c metricsLookup) GetMetric() string {
 	metric, err := c.serviceClient.GetMetrics(context.Background(), &pb.GetMetricsRequest{})
 	if err != nil {
 		// logging

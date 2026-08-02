@@ -6,7 +6,6 @@ import (
 	"core/consts/httpheader"
 	"core/utils"
 	"encoding/json"
-	"gateway/adapter/in/ctxkey"
 	"gateway/application/port/in"
 	"net"
 	"net/http"
@@ -88,16 +87,12 @@ func newReversProxy() *httputil.ReverseProxy {
 			ExpectContinueTimeout: 1 * time.Second,
 		},
 		// rewrite
-		Rewrite: func(proxy *httputil.ProxyRequest) {
-			proxyRewrite(proxy)
-		},
+		Rewrite: proxyRewrite,
 		// 응답 변경 = body 는 upstream 응답을 그대로 사용.
-		ModifyResponse: func(res *http.Response) error {
-			return proxyModifyResponse(res)
-		},
+		ModifyResponse: proxyModifyResponse,
 		// 에러처리.
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
-			target := r.Context().Value(ctxkey.UpstreamLookupKey).(in.UpstreamLookupResult)
+			target := r.Context().Value(UpstreamLookupKey).(in.UpstreamLookupResult)
 			// 에러로깅.
 			// 알수 없는 에러가 발생하는 경우.
 			// 이렇기에 에러 응답을 맞춰야 우 싰음
@@ -119,7 +114,7 @@ func newReversProxy() *httputil.ReverseProxy {
 
 func proxyRewrite(proxy *httputil.ProxyRequest) {
 	ctx := proxy.In.Context()
-	lookupResult := ctx.Value(ctxkey.UpstreamLookupKey).(in.UpstreamLookupResult)
+	lookupResult := ctx.Value(UpstreamLookupKey).(in.UpstreamLookupResult)
 
 	proxy.Out.URL = &url.URL{
 		Scheme:   lookupResult.Scheme(),
@@ -154,7 +149,7 @@ func proxyModifyResponse(res *http.Response) error {
 		return nil
 	}
 
-	lookupResult := res.Request.Context().Value(ctxkey.UpstreamLookupKey).(in.UpstreamLookupResult)
+	lookupResult := res.Request.Context().Value(UpstreamLookupKey).(in.UpstreamLookupResult)
 	if lookupResult.CacheTimeout > 0 {
 		res.Header.Set(httpheader.CacheControl, "max-age="+strconv.FormatInt(lookupResult.CacheTimeout, 10))
 	} else {

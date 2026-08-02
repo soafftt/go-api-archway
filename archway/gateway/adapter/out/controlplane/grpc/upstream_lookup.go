@@ -1,4 +1,4 @@
-package controlplane
+package grpc
 
 import (
 	"context"
@@ -10,17 +10,17 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type upstreamLookupGrpc struct {
+type upstreamLookup struct {
 	serviceClient pb.UpstreamLookupServiceClient
 }
 
-func NewUpstreamLookupGrpc(grpc client.GrpcClient) out.UpstreamLookupGrpcPort {
-	return &upstreamLookupGrpc{
+func NewUpstreamLookup(grpc client.GrpcClient) out.UpstreamLookupGrpcPort {
+	return &upstreamLookup{
 		serviceClient: pb.NewUpstreamLookupServiceClient(grpc.GetClient()),
 	}
 }
 
-func (u *upstreamLookupGrpc) GetUpstreamInfo(
+func (u *upstreamLookup) GetUpstreamInfo(
 	path string,
 	accessToken *string,
 ) (out.UpStreamLookupPortResult, error) {

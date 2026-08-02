@@ -1,4 +1,4 @@
-package controlplane
+package http
 
 import (
 	coreAdapterIn "core/adapter/in"

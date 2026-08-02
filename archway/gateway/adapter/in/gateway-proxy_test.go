@@ -2,7 +2,6 @@ package in
 
 import (
 	"context"
-	"gateway/adapter/in/ctxkey"
 	applicationIn "gateway/application/port/in"
 	"io"
 	"net/http"
@@ -25,7 +24,7 @@ func TestGatewayProxyRewritesUpstreamHostAndPath(t *testing.T) {
 		Method: http.MethodGet,
 	}
 	request := httptest.NewRequest(http.MethodGet, "http://gateway.local/v1/e2e-service/echo.local/echo/ping", nil)
-	request = request.WithContext(context.WithValue(request.Context(), ctxkey.UpstreamLookupKey, lookupResult))
+	request = request.WithContext(context.WithValue(request.Context(), UpstreamLookupKey, lookupResult))
 	response := httptest.NewRecorder()
 
 	newReversProxy().ServeHTTP(response, request)

@@ -17,7 +17,11 @@ func NewRateLimit() ratelimiter.RateLimiterPort {
 	return &rateLimit{}
 }
 
-func (rl *rateLimit) Allow(service string, originalPath string, rateLimitCount int32) (bool, ratelimiter.RemainToken, ratelimiter.RemainTokensAt) {
+func (rl *rateLimit) Allow(
+	service string,
+	originalPath string,
+	rateLimitCount int32,
+) (bool, ratelimiter.RemainToken, ratelimiter.RemainTokensAt) {
 	key := service + "|" + originalPath
 
 	rwMutex.RLock()

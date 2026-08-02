@@ -1,4 +1,4 @@
-package controlplane
+package http
 
 import (
 	"core/utils"
@@ -7,10 +7,9 @@ import (
 	"sync"
 )
 
-// TODO
-// grpc metic 도 out.ControlPlaneMetricPort 의 interface 를 추가 해야 함.
-// 하나를 가지고 나누어 써야 하고. Golang 의 DI 특성상 같은 interface 를 di graph 에 사용할 수 없기 때문.
-type UnixMetricOutPort out.ControlPlaneMetricPort
+var logger = utils.GetLogger()
+
+type HttpMetricOutPort out.ControlPlaneMetricPort
 
 var bodySyncPool = sync.Pool{
 	New: func() any {
@@ -19,19 +18,19 @@ var bodySyncPool = sync.Pool{
 	},
 }
 
-type unixMetric struct {
+type httpMetric struct {
 	httpClient client.HttpClient
 }
 
-func NewUnixMetricLookup(
+func NewHttpMetricLookup(
 	httpClient client.HttpClient,
-) UnixMetricOutPort {
-	return &unixMetric{
+) HttpMetricOutPort {
+	return &httpMetric{
 		httpClient: httpClient,
 	}
 }
 
-func (u *unixMetric) GetMetric() string {
+func (u *httpMetric) GetMetric() string {
 	resp, err := u.httpClient.GetClient().Get("http://unix/_metrics")
 	if err != nil {
 		logger.ErrorW("Failed to get metric from control plane", err)

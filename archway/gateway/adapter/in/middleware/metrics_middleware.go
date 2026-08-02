@@ -3,7 +3,8 @@ package middleware
 import (
 	"core/utils"
 	"gateway/adapter/config/appconfig"
-	"gateway/adapter/out/controlplane"
+	"gateway/adapter/out/controlplane/grpc"
+	http2 "gateway/adapter/out/controlplane/http"
 	"net/http"
 	"strings"
 	"unsafe"
@@ -15,14 +16,14 @@ type MetricsMiddleware Middleware
 
 type metricsMiddleware struct {
 	transfer          string
-	grpcMetricOutPort controlplane.GrpcMetricOutPort
-	unixMetricOutPort controlplane.UnixMetricOutPort
+	grpcMetricOutPort grpc.GrpcMetricOutPort
+	unixMetricOutPort http2.HttpMetricOutPort
 }
 
 func NewMetricsMiddleware(
 	config appconfig.ClientNetworkConfig,
-	grpcMetricOutPort controlplane.GrpcMetricOutPort,
-	unixMetricOutPort controlplane.UnixMetricOutPort,
+	grpcMetricOutPort grpc.GrpcMetricOutPort,
+	unixMetricOutPort http2.HttpMetricOutPort,
 ) MetricsMiddleware {
 	return &metricsMiddleware{
 		transfer:          config.GetClientNetworkProperties().Transfer,
