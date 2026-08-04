@@ -5,7 +5,6 @@ import (
 	"gateway/adapter/config/appconfig"
 	"net"
 	"net/http"
-	"time"
 )
 
 type HttpClientConfig interface {
@@ -28,21 +27,21 @@ func NewHttpClient(
 	httpClientProperties := httpConfig.GetHttpClientProperties()
 
 	dialer := &net.Dialer{
-		Timeout:   time.Duration(httpClientProperties.TimeoutMilliSeconds) * time.Millisecond,
-		KeepAlive: 30 * time.Second,
+		Timeout:   httpClientProperties.TimeoutMilliSeconds,
+		KeepAlive: httpClientProperties.KeepAliveSeconds,
 	}
 
 	client := http.Client{
 		Transport: &http.Transport{
-			MaxIdleConnsPerHost: 500,
-			MaxConnsPerHost:     500,
-			MaxIdleConns:        500,
-			IdleConnTimeout:     90 * time.Second,
+			MaxIdleConnsPerHost: httpClientProperties.MaxIdleConnsPerHost,
+			MaxConnsPerHost:     httpClientProperties.MaxConnsPerHost,
+			MaxIdleConns:        httpClientProperties.MaxIdleConns,
+			IdleConnTimeout:     httpClientProperties.IdleConnTimeoutSeconds,
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				return dialer.DialContext(ctx, networkProperties.Network, networkProperties.UnixSocketPath)
 			},
 		},
-		Timeout: time.Duration(httpClientProperties.TimeoutMilliSeconds) * time.Millisecond,
+		Timeout: httpClientProperties.TimeoutMilliSeconds,
 	}
 
 	return &httpClient{

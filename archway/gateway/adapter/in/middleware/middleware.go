@@ -9,6 +9,7 @@ type Middleware interface {
 	HandleMiddleware(next http.Handler) http.Handler
 }
 
+// TODO: Container 의 함수로 들어가게 하자
 // serve 를 구현하는 곳에서 chain 실행.
 // 내가 등록한 순서대로의 hm ...Middleware 을 역순으로 등록해야 순차적으로 실행됨.
 func Chain(h http.Handler, hm ...Middleware) http.Handler {
@@ -28,11 +29,10 @@ func NewMiddlewareContainer(
 	requestMiddleware RequestMiddleware,
 	metricsMiddleware MetricsMiddleware,
 ) *Container {
-	middlewares := make([]Middleware, 0, 2)
-	middlewares = append(middlewares, metricsMiddleware) // 이것이 최우선이 되어야 해서 뒤로 밀림.
-	middlewares = append(middlewares, requestMiddleware)
-
 	return &Container{
-		Middlewares: middlewares,
+		Middlewares: []Middleware{
+			metricsMiddleware,
+			requestMiddleware,
+		},
 	}
 }

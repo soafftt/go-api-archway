@@ -24,16 +24,13 @@ func (u *upstreamLookup) GetUpstreamInfo(
 	path string,
 	accessToken *string,
 ) (out.UpStreamLookupPortResult, error) {
-	var ctx context.Context
-	switch accessToken {
-	case nil:
-		ctx = context.Background()
-	default:
+	ctx := context.Background()
+	if accessToken != nil {
 		md := metadata.Pairs("authorization", *accessToken)
-		ctx = metadata.NewOutgoingContext(context.Background(), md)
+		ctx = metadata.NewOutgoingContext(ctx, md)
 	}
 
-	result, err := u.serviceClient.Lookup(ctx, new(pb.UpstreamLookupRequest{Path: path}))
+	result, err := u.serviceClient.Lookup(ctx, &pb.UpstreamLookupRequest{Path: path})
 
 	var lookupResult out.UpStreamLookupPortResult
 	if err != nil {

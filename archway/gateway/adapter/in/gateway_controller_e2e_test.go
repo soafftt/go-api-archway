@@ -7,6 +7,7 @@ import (
 	"gateway/adapter/config/client"
 	ingateway "gateway/adapter/in"
 	"gateway/adapter/in/middleware"
+	controlplane "gateway/adapter/out/controlplane/http"
 	"gateway/adapter/out/ratelimit"
 	"gateway/application/service"
 	"net"
@@ -68,17 +69,17 @@ func TestGatewayE2E_RewritePathVariableViaGatewayController(t *testing.T) {
 	waitForGatewayControllerSocket(t, socketPath)
 
 	appConfig := &appconfig.Config{}
-	appConfig.ClientNetworkConfig.UnixSocketBaseURI = "http://unix/v1/upstream?path="
+	appConfig.ClientNetworkConfig.UpstreamLookupHttpUri = "http://unix/v1/upstream?path="
 	appConfig.ClientNetworkConfig.Network = "unix"
 	appConfig.ClientNetworkConfig.UnixSocketPath = socketPath
 	appConfig.HttpClientConfig.TimeoutMilliSeconds = 3000
 
-	gatewayControllerClient := client.NewHttpClient(appConfig)
+	gatewayControllerClient := client.NewHttpClient(appConfig, appConfig)
 	upstreamLookupPort := controlplane.NewUpstreamLookup(appConfig, gatewayControllerClient)
-	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort)
+	upstreamLookupUseCase := service.NewUpstreamLookupService(upstreamLookupPort, upstreamLookupPort)
 	requestMiddleware := middleware.NewRequestMiddleware(upstreamLookupUseCase, ratelimit.NewRateLimit())
 
-	handler := middleware.Chain(ingateway.NewGatewayProxy().HttpProxy, requestMiddleware)
+	handler := middleware.Chain(ingateway.NewGatewayProxy(appConfig).HttpProxy, requestMiddleware)
 
 	request := httptest.NewRequest(
 		http.MethodGet,

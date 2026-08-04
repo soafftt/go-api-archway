@@ -35,7 +35,7 @@ func (r requestMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 		jsonEncoder := json.NewEncoder(writer)
 
 		target := request.URL.Path
-		if target == "/" {
+		if target == "" || target == "/" {
 			writer.Header().Set("Content-Type", "application/json")
 			writer.WriteHeader(http.StatusNotFound)
 			_ = jsonEncoder.Encode(coreAdapterIn.NewErrorResponse(errs.ERR_INVALID_TARGET))
@@ -71,17 +71,18 @@ func (r requestMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 		}
 
 		// ratelimit 체크
-		serviceName := lookupResult.ServiceName
-		originalPath := lookupResult.OriginPath
-		rateLimitCount := lookupResult.RateLimitCount
-
-		if allow := r.chekAllowRateLimitWithErrorResponse(writer, jsonEncoder, serviceName, originalPath, rateLimitCount); !allow {
+		if allow := r.handleRateLimit(
+			writer,
+			jsonEncoder,
+			lookupResult.ServiceName,
+			lookupResult.OriginPath,
+			lookupResult.RateLimitCount,
+		); !allow {
 			return
 		}
 
 		// 필수값 할당
-		ctx := request.Context()
-		ctx = context.WithValue(ctx, in.UpstreamLookupKey, lookupResult)
+		ctx := context.WithValue(request.Context(), in.UpstreamLookupKey, lookupResult)
 
 		// request 에 context 를 덮어씀.
 		request = request.WithContext(ctx)
@@ -90,7 +91,13 @@ func (r requestMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (r requestMiddleware) chekAllowRateLimitWithErrorResponse(writer http.ResponseWriter, encoder *json.Encoder, serviceName string, originPath string, rateLimitCount int64) bool {
+func (r requestMiddleware) handleRateLimit(
+	writer http.ResponseWriter,
+	encoder *json.Encoder,
+	serviceName string,
+	originPath string,
+	rateLimitCount int64,
+) bool {
 	if rateLimitCount <= 0 {
 		return true
 	}

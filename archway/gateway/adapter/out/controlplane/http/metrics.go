@@ -9,7 +9,7 @@ import (
 
 var logger = utils.GetLogger()
 
-type HttpMetricOutPort out.ControlPlaneMetricPort
+type HttpMetricOutPort out.MetricLookupPort
 
 var bodySyncPool = sync.Pool{
 	New: func() any {
@@ -46,7 +46,6 @@ func (u *httpMetric) GetMetric() string {
 		bodySyncPool.Put(bodyBuffer)
 
 		_ = resp.Body.Close()
-
 	}()
 
 	_, err = resp.Body.Read(bodyBytes)

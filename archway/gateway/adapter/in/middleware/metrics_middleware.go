@@ -7,7 +7,6 @@ import (
 	http2 "gateway/adapter/out/controlplane/http"
 	"net/http"
 	"strings"
-	"unsafe"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -32,43 +31,24 @@ func NewMetricsMiddleware(
 	}
 }
 
-var emptyBodyBytes = utils.ToBytesFromString("")
-
 func (m metricsMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// URI 자체가 프로메테우스면, 그냥. 넘어감.
-		// config 로 URI 를 빼며 될듯.
 		switch r.RequestURI {
 		// metrics 이면, prometheus 동작.
 		case "/_metrics":
 			promhttp.Handler().ServeHTTP(w, r)
 			break
 		case "/_metrics/control-plane":
+			metricBytes := m.getMetric()
+
 			w.Header().Set("Content-Type", "text/plain")
-
-			var metricBytes []byte
-			var metric string
-
-			if m.transfer == "grpc" {
-				metric = m.grpcMetricOutPort.GetMetric()
-			} else {
-				// http 호출 해야 함.
-				metric = m.unixMetricOutPort.GetMetric()
-			}
-
-			metric = strings.TrimSpace(metric)
-			if metric == "" {
-				metricBytes = emptyBodyBytes
-			} else {
-				metricBytes = unsafe.Slice(unsafe.StringData(metric), len(metric))
-			}
-
 			_, _ = w.Write(metricBytes)
 
 			break
 		case "/favicon.ico":
 			w.Header().Set("Content-Type", "text/plain")
-			_, _ = w.Write(emptyBodyBytes)
+			_, _ = w.Write(utils.GetEmptyStringBytes())
 			break
 
 		// 기본 통작.
@@ -76,4 +56,22 @@ func (m metricsMiddleware) HandleMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		}
 	})
+}
+
+func (m metricsMiddleware) getMetric() []byte {
+	var metric string
+
+	if m.transfer == "grpc" {
+		metric = m.grpcMetricOutPort.GetMetric()
+	} else {
+		// http 호출 해야 함.
+		metric = m.unixMetricOutPort.GetMetric()
+	}
+
+	metric = strings.TrimSpace(metric)
+	if metric == "" {
+		return utils.GetEmptyStringBytes()
+	}
+
+	return utils.ToBytesFromString(metric)
 }

@@ -3,6 +3,7 @@ package di
 import (
 	"gateway/adapter/config/appconfig"
 	"gateway/adapter/config/client"
+	"gateway/adapter/in"
 
 	"github.com/google/wire"
 )
@@ -20,5 +21,6 @@ var AdapterConfigProviderSet = wire.NewSet(
 	wire.Bind(new(appconfig.ClientNetworkConfig), new(*appconfig.Config)),
 	wire.Bind(new(client.GrpcClientConfig), new(*appconfig.Config)),
 	wire.Bind(new(client.HttpClientConfig), new(*appconfig.Config)),
+	wire.Bind(new(in.ProxyServerConfig), new(*appconfig.Config)),
 	wire.Struct(new(AdapterConfig), "*"),
 )

@@ -9,7 +9,9 @@ import (
 )
 
 var rwMutex = sync.RWMutex{}
-var rateLimitCache = make(map[string]*rate.Limiter)
+
+// RateLimit 가 걸린 URI 가 1024로 가정.
+var rateLimitCache = make(map[string]*rate.Limiter, 1024)
 
 type rateLimit struct{}
 

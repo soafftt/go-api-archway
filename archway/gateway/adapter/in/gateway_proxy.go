@@ -6,6 +6,7 @@ import (
 	"core/consts/httpheader"
 	"core/utils"
 	"encoding/json"
+	"gateway/adapter/config/appconfig"
 	"gateway/application/port/in"
 	"net"
 	"net/http"
@@ -13,22 +14,19 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
-	"time"
 )
 
 var logger = utils.GetLogger()
-
-const proxyBufferSize = 10 * 10 * 1024
 
 type httpResponseBufferPool struct {
 	bufferPool sync.Pool
 }
 
-func newProxyBufferPool() httputil.BufferPool {
+func newProxyBufferPool(bufferSize int) httputil.BufferPool {
 	return &httpResponseBufferPool{
 		bufferPool: sync.Pool{
 			New: func() any {
-				return new(make([]byte, proxyBufferSize))
+				return new(make([]byte, bufferSize))
 			},
 		},
 	}
@@ -45,17 +43,21 @@ func (p *httpResponseBufferPool) Put(bytes []byte) {
 	p.bufferPool.Put(&bytes)
 }
 
+type ProxyServerConfig interface {
+	GetProxyServerProperties() appconfig.ProxyServerProperties
+}
+
 type GatewayProxy struct {
 	HttpProxy *httputil.ReverseProxy
 }
 
-func NewGatewayProxy() *GatewayProxy {
+func NewGatewayProxy(proxyServerConfig ProxyServerConfig) *GatewayProxy {
 	return &GatewayProxy{
-		HttpProxy: newReversProxy(),
+		HttpProxy: newReversProxy(proxyServerConfig.GetProxyServerProperties()),
 	}
 }
 
-func newReversProxy() *httputil.ReverseProxy {
+func newReversProxy(proxyServerProperties appconfig.ProxyServerProperties) *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{
 		// rewire 설정 (설정하지 않으면 기본값 사용)
 		Transport: &http.Transport{
@@ -70,21 +72,21 @@ func newReversProxy() *httputil.ReverseProxy {
 
 			// 네트워크 timeout 재처리
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return net.DialTimeout(network, addr, time.Second*10)
+				return net.DialTimeout(network, addr, proxyServerProperties.DialTimeoutSeconds)
 			},
 			// keep-alive 를 끌껏인가? (굳이....)
-			DisableKeepAlives: false,
+			DisableKeepAlives: proxyServerProperties.DisableKeepAlive,
 			// http/2 로 강제 변환 전송 할것인가
-			ForceAttemptHTTP2: false,
+			ForceAttemptHTTP2: proxyServerProperties.DisableKeepAlive,
 			// Pool 에 가지고 있어도 되는 최대 커넥션 수
-			MaxIdleConns:        500,
-			MaxIdleConnsPerHost: 500,
+			MaxIdleConns:        proxyServerProperties.MaxIdleConns,
+			MaxIdleConnsPerHost: proxyServerProperties.MaxIdleConnsPerHost,
 			// Pool 에 얼마나 머무를 것인가.
-			IdleConnTimeout: 120 * time.Second,
+			IdleConnTimeout: proxyServerProperties.IdleConnTimeoutSeconds,
 			// ssl handshake timeout
-			TLSHandshakeTimeout: 1 * time.Second,
+			TLSHandshakeTimeout: proxyServerProperties.TLSHandshakeTimeoutSeconds,
 			// httpStatus 100 을 기다리는 시간.(upstream 이 status 100 을 구현해야 함)
-			ExpectContinueTimeout: 1 * time.Second,
+			ExpectContinueTimeout: proxyServerProperties.ExpectContinueTimeoutSeconds,
 		},
 		// rewrite
 		Rewrite: proxyRewrite,
@@ -107,8 +109,7 @@ func newReversProxy() *httputil.ReverseProxy {
 			}
 
 		},
-		// bufferPool 을 syncPool 로 사용하게 하여, 메모리 최적회 (1MB) --> 줄여도 됨.
-		BufferPool: newProxyBufferPool(),
+		BufferPool: newProxyBufferPool(proxyServerProperties.BufferSize),
 	}
 }
 
@@ -137,6 +138,7 @@ func proxyRewrite(proxy *httputil.ProxyRequest) {
 	proxy.Out.Header = proxy.In.Header.Clone()
 	proxy.Out.Header.Set(httpheader.XRequestHost, proxy.In.Host)
 	proxy.Out.Header.Set(httpheader.XForwardedFor, xForwardedFor)
+
 	// 인증체크 정보가 있으면 X-USER 로 전달한다.
 	if lookupResult.UserKey != nil {
 		proxy.Out.Header.Set(httpheader.XUser, lookupResult.UserKey.(string))

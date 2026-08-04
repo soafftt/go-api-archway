@@ -24,7 +24,6 @@ func NewGatewayProxyServer(
 	proxy *in.GatewayProxy,
 	containers *middleware.Container,
 ) *GatewayProxyServer {
-
 	httpServer := http.Server{
 		Addr:    ":80",
 		Handler: middleware.Chain(proxy.HttpProxy, containers.Middlewares...),

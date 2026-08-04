@@ -17,6 +17,7 @@ func NewUpstreamLookupService(
 ) in.UpstreamLookupUseCase {
 	return &upstreamLookupService{
 		httpUpstreamLookupPort: httpUpstreamLookupPort,
+		grpcUpstreamLookupPort: grpcUpstreamLookupPort,
 	}
 }
 

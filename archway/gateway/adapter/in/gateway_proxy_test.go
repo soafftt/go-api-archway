@@ -2,6 +2,7 @@ package in
 
 import (
 	"context"
+	"gateway/adapter/config/appconfig"
 	applicationIn "gateway/application/port/in"
 	"io"
 	"net/http"
@@ -27,7 +28,7 @@ func TestGatewayProxyRewritesUpstreamHostAndPath(t *testing.T) {
 	request = request.WithContext(context.WithValue(request.Context(), UpstreamLookupKey, lookupResult))
 	response := httptest.NewRecorder()
 
-	newReversProxy().ServeHTTP(response, request)
+	newReversProxy(appconfig.ProxyServerProperties{}).ServeHTTP(response, request)
 
 	result := response.Result()
 	defer result.Body.Close()

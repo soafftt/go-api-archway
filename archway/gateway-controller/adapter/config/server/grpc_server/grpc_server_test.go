@@ -18,13 +18,14 @@ import (
 	"testing"
 	"time"
 
+	grpcServerMetrics "gateway/controller/adapter/config/server/grpc_server/metrics"
 	adapterPortInGrpcDi "gateway/controller/adapter/port/in/grpc/di"
 	adapterPortInGrpcHandler "gateway/controller/adapter/port/in/grpc/handler"
 	applicationPortIn "gateway/controller/application/port/in"
 	applicationDto "gateway/controller/application/port/in/dto"
 	applicationCache "gateway/controller/application/port/out/cache"
 	applicationService "gateway/controller/application/service"
-	pb "gateway/protobuf"
+	pb "protobuf"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -130,7 +131,8 @@ func newStubRouteCacheWithAuth(t testing.TB, serviceName string, algorithm strin
 func newTestGrpcServer(routeCache applicationCache.RouteCache) *grpcServer {
 	useCase := applicationService.NewUpstreamLookupService(routeCache)
 	controller := adapterPortInGrpcHandler.NewUpstreamLookupController(useCase)
-	registrars := adapterPortInGrpcDi.NewGrpcServiceRegistrars(controller)
+	metricsController := adapterPortInGrpcHandler.NewMetricsController(grpcServerMetrics.NewServerMetrics())
+	registrars := adapterPortInGrpcDi.NewGrpcServiceRegistrars(controller, metricsController)
 
 	cfg := &app_config.AppConfig{}
 	applyDefaultGrpcServerConfig(cfg)
@@ -138,6 +140,7 @@ func newTestGrpcServer(routeCache applicationCache.RouteCache) *grpcServer {
 	return &grpcServer{
 		GrpcServiceProvider: &adapterPortInGrpcDi.GrpcServiceProvider{Registrars: registrars},
 		AppConfig:           cfg,
+		GrpcMetrics:         grpcServerMetrics.NewServerMetrics(),
 	}
 }
 
@@ -306,17 +309,19 @@ func TestGrpcServerLookup_BusinessErrorInResponse(t *testing.T) {
 
 	useCase := stubUpstreamLookupUseCase{result: applicationDto.NewErrUpStreamLookupResult(errors.New("service not found"))}
 	controller := adapterPortInGrpcHandler.NewUpstreamLookupController(useCase)
-	registrars := adapterPortInGrpcDi.NewGrpcServiceRegistrars(controller)
+	metricsController := adapterPortInGrpcHandler.NewMetricsController(grpcServerMetrics.NewServerMetrics())
+	registrars := adapterPortInGrpcDi.NewGrpcServiceRegistrars(controller, metricsController)
 	server := &grpcServer{
 		GrpcServiceProvider: &adapterPortInGrpcDi.GrpcServiceProvider{Registrars: registrars},
 		AppConfig:           &app_config.AppConfig{},
+		GrpcMetrics:         grpcServerMetrics.NewServerMetrics(),
 	}
 	applyDefaultGrpcServerConfig(server.AppConfig)
 
 	client, _, cleanup := newBufconnGrpcClient(t, server)
 	defer cleanup()
 
-	response, err := client.Lookup(context.Background(), &pb.UpstreamLookupRequest{})
+	response, err := client.Lookup(context.Background(), &pb.UpstreamLookupRequest{Path: "/v1/unknown-service/api.example.com/path"})
 	if err != nil {
 		t.Fatalf("expected nil transport error, got %v", err)
 	}

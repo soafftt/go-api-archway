@@ -17,3 +17,9 @@ func ToStringFromBytes(bytes []byte) string {
 
 	return unsafe.String(unsafe.SliceData(bytes), len(bytes))
 }
+
+var emptyStringBytes = ToBytesFromString("")
+
+func GetEmptyStringBytes() []byte {
+	return emptyStringBytes
+}

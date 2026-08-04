@@ -21,7 +21,7 @@ func NewUpstreamLookup(
 	httpUpstreamLookClient client.HttpClient,
 ) out.UpstreamLookupPort {
 	return &upstreamLookup{
-		uri:    networkConfig.GetClientNetworkProperties().UnixSocketBaseURI,
+		uri:    networkConfig.GetClientNetworkProperties().UpstreamLookupHttpUri,
 		client: httpUpstreamLookClient.GetClient(),
 	}
 }

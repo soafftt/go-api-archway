@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"gateway/adapter/config/appconfig"
 	ingateway "gateway/adapter/in"
 	"gateway/adapter/out/ratelimit"
 	portIn "gateway/application/port/in"
@@ -153,7 +154,7 @@ func BenchmarkGatewayPipeline_RateLimitMatrixE2E(b *testing.B) {
 					jwtCodec:    mustNewCodec(b, buildJWTKeyName(scenario.name, algorithm)),
 				}
 
-				proxy := ingateway.NewGatewayProxy()
+				proxy := ingateway.NewGatewayProxy(&appconfig.Config{})
 				handler := NewRequestMiddleware(lookupUseCase, ratelimit.NewRateLimit()).HandleMiddleware(proxy.HttpProxy)
 				runMiddlewareBenchmark(b, handler, fixture.routes, token, parallelLevel, true)
 			})
@@ -367,7 +368,7 @@ func BenchmarkGatewayFullChainE2E_RewriteViaGatewayController(b *testing.B) {
 							}
 
 							requestMiddleware := NewRequestMiddleware(lookupUseCase, ratelimit.NewRateLimit())
-							handler := Chain(ingateway.NewGatewayProxy().HttpProxy, requestMiddleware)
+							handler := Chain(ingateway.NewGatewayProxy(&appconfig.Config{}).HttpProxy, requestMiddleware)
 
 							targetPath := "/v1/" + serviceName + "/api.example.com/echo/user-123/posts/777?trace=true"
 							requestSample := httptest.NewRequest(http.MethodGet, "http://gateway.local"+targetPath, nil)
@@ -483,7 +484,7 @@ func BenchmarkGatewayFullChainRateLimitMatrixE2E(b *testing.B) {
 				}
 
 				requestMiddleware := NewRequestMiddleware(lookupUseCase, ratelimit.NewRateLimit())
-				handler := Chain(ingateway.NewGatewayProxy().HttpProxy, requestMiddleware)
+				handler := Chain(ingateway.NewGatewayProxy(&appconfig.Config{}).HttpProxy, requestMiddleware)
 
 				benchmarkWaitForGatewayFullChainReady(b, handler, routes[0].requestSample, token, routes[0].authRequired)
 				runMiddlewareBenchmark(b, handler, routes, token, parallelLevel, true)
