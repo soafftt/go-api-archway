@@ -5,7 +5,7 @@
 package main
 
 import (
-	adapderConfigAppConfig "gateway/controller/adapter/config/app_config"
+	adapterConfigDi "gateway/controller/adapter/config/di"
 	adapterConfigListener "gateway/controller/adapter/config/server"
 	"gateway/controller/adapter/config/server/grpc_server"
 	"gateway/controller/adapter/config/server/grpc_server/metrics"
@@ -20,7 +20,7 @@ import (
 )
 
 type GatewayControllerApp struct {
-	app                 *adapderConfigAppConfig.AppConfig
+	app                 *adapterConfigDi.AdapterConfig
 	valkeyClient        adpaterConfigValkey.ValkeyClient
 	adapterPortOut      *adapterPortOutDi.AdapterPortOutDi
 	serviceProvider     *applicationServiceDi.ServiceProvider
@@ -34,7 +34,7 @@ type GatewayControllerApp struct {
 
 func InitializeGatewayControllerApp() (*GatewayControllerApp, error) {
 	wire.Build(
-		adapderConfigAppConfig.AppConfigSet,
+		adapterConfigDi.AdapterConfigProviderSet,
 		adpaterConfigValkey.ValkeyClientSet,
 		adapterPortOutDi.AdapterPortOutDiProviderSet,
 		applicationServiceDi.ServiceProviderSet,

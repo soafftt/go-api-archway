@@ -3,7 +3,7 @@ package grpc_server
 import (
 	"context"
 	"errors"
-	"gateway/controller/adapter/config/app_config"
+	serverProperties "gateway/controller/adapter/config/app_config/server"
 	"gateway/controller/adapter/config/server"
 	"gateway/controller/adapter/config/server/grpc_server/metrics"
 	adapterPortInGrpcDi "gateway/controller/adapter/port/in/grpc/di"
@@ -13,7 +13,6 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-	"time"
 
 	"github.com/google/wire"
 	"google.golang.org/grpc"
@@ -21,60 +20,61 @@ import (
 )
 
 type grpcServer struct {
-	GrpcServiceProvider *adapterPortInGrpcDi.GrpcServiceProvider
-	AppConfig           *app_config.AppConfig
-	GrpcMetrics         metrics.GrpcServerMetrics
+	GrpcServiceProvider  *adapterPortInGrpcDi.GrpcServiceProvider
+	networkProperties    serverProperties.NetworkProperties
+	grpcServerProperties serverProperties.GrpcServerProperties
+	GrpcMetrics          metrics.GrpcServerMetrics
 }
 
 func NewGrpcServer(
-	appConfig *app_config.AppConfig,
+	networkConfig serverProperties.NetworkConfig,
+	grpcConfig serverProperties.GrpcServerConfig,
 	grpcServiceProvider *adapterPortInGrpcDi.GrpcServiceProvider,
 	grpcMetrics metrics.GrpcServerMetrics,
 ) server.GrpcServer {
 	return &grpcServer{
-		AppConfig:           appConfig,
-		GrpcServiceProvider: grpcServiceProvider,
-		GrpcMetrics:         grpcMetrics,
+		networkProperties:    networkConfig.GetNetworkProperties(),
+		grpcServerProperties: grpcConfig.GetGrpcServerProperties(),
+		GrpcServiceProvider:  grpcServiceProvider,
+		GrpcMetrics:          grpcMetrics,
 	}
 }
 
 func (g *grpcServer) newServer() *grpc.Server {
-	grpcConfig := g.AppConfig.Server.Grpc
-
-	numStreamWorkers := grpcConfig.NumStreamWorkers
+	numStreamWorkers := g.grpcServerProperties.NumStreamWorkers
 	if numStreamWorkers == 0 {
 		numStreamWorkers = uint32(runtime.GOMAXPROCS(0))
 	}
 
-	metrics := g.GrpcMetrics.GetServerMetrics()
+	serverMetrics := g.GrpcMetrics.GetServerMetrics()
 	return grpc.NewServer(
 		// 최대 ReceiveMessageSize (Bytes)
-		grpc.MaxRecvMsgSize(grpcConfig.MaxRecvMsgBytes),
+		grpc.MaxRecvMsgSize(g.grpcServerProperties.MaxRecvMsgBytes),
 		// 최대 SendMessageSize (Bytes)
-		grpc.MaxSendMsgSize(grpcConfig.MaxSendMsgBytes),
+		grpc.MaxSendMsgSize(g.grpcServerProperties.MaxSendMsgBytes),
 		// ReadBufferSize (byte)
-		grpc.ReadBufferSize(grpcConfig.ReadBufferBytes),
+		grpc.ReadBufferSize(g.grpcServerProperties.ReadBufferBytes),
 		// WriteBufferSize (byte)
-		grpc.WriteBufferSize(grpcConfig.WriteBufferBytes),
+		grpc.WriteBufferSize(g.grpcServerProperties.WriteBufferBytes),
 		// ConnectionTime 지정.
-		grpc.ConnectionTimeout(time.Duration(grpcConfig.ConnectionTimeoutMillisecond)*time.Millisecond),
+		grpc.ConnectionTimeout(g.grpcServerProperties.ConnectionTimeoutMillisecond),
 		// 회대 연결 동시성 Stream - 1024가 기본이나 2048까지 늘림.
-		grpc.MaxConcurrentStreams(grpcConfig.MaxConcurrentStreams),
+		grpc.MaxConcurrentStreams(g.grpcServerProperties.MaxConcurrentStreams),
 		// stream 처리를 위한 goworkers - CPU 개수만큼 처리.
 		//
 		grpc.NumStreamWorkers(numStreamWorkers),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle: time.Duration(grpcConfig.KeepaliveMaxConnectionIdleMs) * time.Millisecond,
-			MaxConnectionAge:  time.Duration(grpcConfig.KeepaliveMaxConnectionAgeMs) * time.Millisecond,
-			Time:              time.Duration(grpcConfig.KeepaliveTimeMs) * time.Millisecond,
-			Timeout:           time.Duration(grpcConfig.KeepaliveTimeoutMs) * time.Millisecond,
+			MaxConnectionIdle: g.grpcServerProperties.KeepaliveMaxConnectionIdleMs,
+			MaxConnectionAge:  g.grpcServerProperties.KeepaliveMaxConnectionAgeMs,
+			Time:              g.grpcServerProperties.KeepaliveTimeMs,
+			Timeout:           g.grpcServerProperties.KeepaliveTimeoutMs,
 		}),
 		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
-			MinTime:             time.Duration(grpcConfig.KeepaliveEnforcementMinTimeMs) * time.Millisecond,
-			PermitWithoutStream: grpcConfig.PermitWithoutStream,
+			MinTime:             g.grpcServerProperties.KeepaliveEnforcementMinTimeMs,
+			PermitWithoutStream: g.grpcServerProperties.PermitWithoutStream,
 		}),
-		grpc.StreamInterceptor(metrics.StreamServerInterceptor()),
-		grpc.UnaryInterceptor(metrics.UnaryServerInterceptor()),
+		grpc.StreamInterceptor(serverMetrics.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(serverMetrics.UnaryServerInterceptor()),
 	)
 }
 
@@ -85,8 +85,7 @@ func (g *grpcServer) registerServices(server grpc.ServiceRegistrar) {
 }
 
 func (g *grpcServer) Start() {
-	serverConfig := g.AppConfig.Server
-	listener, err := net.Listen(serverConfig.Grpc.Network, serverConfig.UnixSocketPath)
+	listener, err := net.Listen(g.grpcServerProperties.Network, g.networkProperties.UnixSocketPath)
 	if err != nil {
 		panic(err)
 	}
@@ -123,7 +122,7 @@ func (g *grpcServer) stopWait(server *grpc.Server) {
 
 	<-osSignal
 
-	shutdownWaitTime := time.Duration(g.AppConfig.Server.Grpc.GracefulStopTimeoutMillisecond) * time.Millisecond
+	shutdownWaitTime := g.grpcServerProperties.GracefulStopTimeoutMillisecond
 	timeoutContext, cancel := context.WithTimeout(context.Background(), shutdownWaitTime)
 	defer cancel()
 

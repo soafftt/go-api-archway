@@ -44,21 +44,21 @@ type stubListenerServer struct{}
 func (stubListenerServer) Start() {}
 
 func applyDefaultGrpcServerConfig(cfg *app_config.AppConfig) {
-	cfg.Server.Grpc.Network = "unix"
-	cfg.Server.Grpc.MaxRecvMsgBytes = 4 * 1024 * 1024
-	cfg.Server.Grpc.MaxSendMsgBytes = 10 * 1024 * 1024
-	cfg.Server.Grpc.ReadBufferBytes = 32 * 1024
-	cfg.Server.Grpc.WriteBufferBytes = 32 * 1024
-	cfg.Server.Grpc.ConnectionTimeoutMillisecond = 5000
-	cfg.Server.Grpc.MaxConcurrentStreams = 2048
-	cfg.Server.Grpc.NumStreamWorkers = 0
-	cfg.Server.Grpc.KeepaliveMaxConnectionIdleMs = 15 * 60 * 1000
-	cfg.Server.Grpc.KeepaliveMaxConnectionAgeMs = 30 * 60 * 1000
-	cfg.Server.Grpc.KeepaliveTimeMs = 2 * 60 * 1000
-	cfg.Server.Grpc.KeepaliveTimeoutMs = 20 * 1000
-	cfg.Server.Grpc.KeepaliveEnforcementMinTimeMs = 20 * 1000
-	cfg.Server.Grpc.PermitWithoutStream = true
-	cfg.Server.Grpc.GracefulStopTimeoutMillisecond = 300
+	cfg.Server.GrpcServerProperties.Network = "unix"
+	cfg.Server.GrpcServerProperties.MaxRecvMsgBytes = 4 * 1024 * 1024
+	cfg.Server.GrpcServerProperties.MaxSendMsgBytes = 10 * 1024 * 1024
+	cfg.Server.GrpcServerProperties.ReadBufferBytes = 32 * 1024
+	cfg.Server.GrpcServerProperties.WriteBufferBytes = 32 * 1024
+	cfg.Server.GrpcServerProperties.ConnectionTimeoutMillisecond = 5000
+	cfg.Server.GrpcServerProperties.MaxConcurrentStreams = 2048
+	cfg.Server.GrpcServerProperties.NumStreamWorkers = 0
+	cfg.Server.GrpcServerProperties.KeepaliveMaxConnectionIdleMs = 15 * 60 * 1000
+	cfg.Server.GrpcServerProperties.KeepaliveMaxConnectionAgeMs = 30 * 60 * 1000
+	cfg.Server.GrpcServerProperties.KeepaliveTimeMs = 2 * 60 * 1000
+	cfg.Server.GrpcServerProperties.KeepaliveTimeoutMs = 20 * 1000
+	cfg.Server.GrpcServerProperties.KeepaliveEnforcementMinTimeMs = 20 * 1000
+	cfg.Server.GrpcServerProperties.PermitWithoutStream = true
+	cfg.Server.GrpcServerProperties.GracefulStopTimeoutMillisecond = 300
 }
 
 func (s stubUpstreamLookupUseCase) LookUpFromRequest(_ applicationDto.UpStreamLookupRequest) applicationDto.UpStreamLookupResult {
@@ -138,9 +138,9 @@ func newTestGrpcServer(routeCache applicationCache.RouteCache) *grpcServer {
 	applyDefaultGrpcServerConfig(cfg)
 
 	return &grpcServer{
-		GrpcServiceProvider: &adapterPortInGrpcDi.GrpcServiceProvider{Registrars: registrars},
-		AppConfig:           cfg,
-		GrpcMetrics:         grpcServerMetrics.NewServerMetrics(),
+		GrpcServiceProvider:  &adapterPortInGrpcDi.GrpcServiceProvider{Registrars: registrars},
+		grpcServerProperties: cfg,
+		GrpcMetrics:          grpcServerMetrics.NewServerMetrics(),
 	}
 }
 
@@ -312,11 +312,11 @@ func TestGrpcServerLookup_BusinessErrorInResponse(t *testing.T) {
 	metricsController := adapterPortInGrpcHandler.NewMetricsController(grpcServerMetrics.NewServerMetrics())
 	registrars := adapterPortInGrpcDi.NewGrpcServiceRegistrars(controller, metricsController)
 	server := &grpcServer{
-		GrpcServiceProvider: &adapterPortInGrpcDi.GrpcServiceProvider{Registrars: registrars},
-		AppConfig:           &app_config.AppConfig{},
-		GrpcMetrics:         grpcServerMetrics.NewServerMetrics(),
+		GrpcServiceProvider:  &adapterPortInGrpcDi.GrpcServiceProvider{Registrars: registrars},
+		grpcServerProperties: &app_config.AppConfig{},
+		GrpcMetrics:          grpcServerMetrics.NewServerMetrics(),
 	}
-	applyDefaultGrpcServerConfig(server.AppConfig)
+	applyDefaultGrpcServerConfig(server.grpcServerProperties)
 
 	client, _, cleanup := newBufconnGrpcClient(t, server)
 	defer cleanup()

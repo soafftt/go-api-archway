@@ -258,7 +258,7 @@ func newTestUnixServer(socketPath string, routes []adapterPortInUnix.Route) *uni
 		UnixRouterProvider: &adapterPortInUnixDi.UnixRouterProvider{
 			UpStreamRouter: stubUnixRouter{routes: routes},
 		},
-		AppConfig: cfg,
+		httpServerProperties: cfg,
 	}
 }
 
@@ -287,7 +287,7 @@ func newLookupUnixServerWithUseCase(socketPath string, useCase applicationPortIn
 		UnixRouterProvider: &adapterPortInUnixDi.UnixRouterProvider{
 			UpStreamRouter: router,
 		},
-		AppConfig: cfg,
+		httpServerProperties: cfg,
 	}
 }
 

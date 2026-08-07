@@ -2,7 +2,7 @@ package unixsocket_server
 
 import (
 	"context"
-	appConfig "gateway/controller/adapter/config/app_config"
+	serverProperties "gateway/controller/adapter/config/app_config/server"
 	"gateway/controller/adapter/config/server"
 	"gateway/controller/adapter/config/server/unixsocket_server/middleware"
 	adapterPortInUnixDi "gateway/controller/adapter/port/in/unix/di"
@@ -12,25 +12,27 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/google/wire"
 )
 
 type unixServer struct {
-	UnixRouterProvider *adapterPortInUnixDi.UnixRouterProvider
-	AppConfig          *appConfig.AppConfig
+	UnixRouterProvider   *adapterPortInUnixDi.UnixRouterProvider
+	httpServerProperties serverProperties.HttpServerProperties
+	networkProperties    serverProperties.NetworkProperties
 }
 
 // Router 를 등록해야 함.
 // 즉, Router 를 inject 하여 해야 함.
 func NewUnixSocketServer(
 	UnixRouterProvider *adapterPortInUnixDi.UnixRouterProvider,
-	AppConfig *appConfig.AppConfig,
+	httpServerConfig serverProperties.HttpServerConfig,
+	networkProperties serverProperties.NetworkConfig,
 ) server.UnixServer {
 	return &unixServer{
-		UnixRouterProvider: UnixRouterProvider,
-		AppConfig:          AppConfig,
+		UnixRouterProvider:   UnixRouterProvider,
+		httpServerProperties: httpServerConfig.GetHttpServerProperties(),
+		networkProperties:    networkProperties.GetNetworkProperties(),
 	}
 }
 
@@ -47,21 +49,21 @@ func (u *unixServer) newServeMux() *http.ServeMux {
 
 func (u *unixServer) newHTTPServer(handler http.Handler) *http.Server {
 	return &http.Server{
-		ReadTimeout:  time.Duration(u.AppConfig.Server.ReadTimeoutMillisecond) * time.Millisecond,
-		WriteTimeout: time.Duration(u.AppConfig.Server.WriteTimeoutMillisecond) * time.Millisecond,
-		IdleTimeout:  time.Duration(u.AppConfig.Server.IdleTimeoutMillisecond) * time.Millisecond,
+		ReadTimeout:  u.httpServerProperties.ReadTimeoutMillisecond,
+		WriteTimeout: u.httpServerProperties.WriteTimeoutMillisecond,
+		IdleTimeout:  u.httpServerProperties.IdleTimeoutMillisecond,
 		Handler:      middleware.Chain(handler),
 	}
 }
 
 func (u *unixServer) Start() {
 	// unix socket path 를 제거.
-	_ = os.Remove(u.AppConfig.Server.UnixSocketPath)
+	_ = os.Remove(u.networkProperties.UnixSocketPath)
 
 	mux := u.newServeMux()
 	serve := u.newHTTPServer(mux)
 
-	listener, err := net.Listen("unix", u.AppConfig.Server.UnixSocketPath)
+	listener, err := net.Listen("unix", u.networkProperties.UnixSocketPath)
 	if err != nil {
 		panic(err)
 	}
@@ -73,7 +75,7 @@ func (u *unixServer) Start() {
 			}
 		}()
 
-		log.Printf("Server Started: socket path: %s", u.AppConfig.Server.UnixSocketPath)
+		log.Printf("Server Started: socket path: %s", u.networkProperties.UnixSocketPath)
 		if err := serve.Serve(listener); err != nil {
 			log.Println("Server Error", err)
 		}
@@ -84,7 +86,7 @@ func (u *unixServer) Start() {
 	signal.Notify(osSignal, syscall.SIGINT, syscall.SIGTERM)
 	<-osSignal // 종료 시그널 대기.
 
-	terminateContext, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
+	terminateContext, cancel := context.WithTimeout(context.Background(), u.httpServerProperties.GracefulShutdownTimeoutMs)
 	defer cancel()
 
 	err = serve.Shutdown(terminateContext)

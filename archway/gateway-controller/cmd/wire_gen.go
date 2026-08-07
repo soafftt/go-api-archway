@@ -8,54 +8,58 @@ package main
 
 import (
 	"gateway/controller/adapter/config/app_config"
+	"gateway/controller/adapter/config/di"
 	"gateway/controller/adapter/config/server"
 	"gateway/controller/adapter/config/server/grpc_server"
 	"gateway/controller/adapter/config/server/grpc_server/metrics"
 	"gateway/controller/adapter/config/server/unixsocket_server"
 	"gateway/controller/adapter/config/valkey"
-	di5 "gateway/controller/adapter/port/in/grpc/di"
+	di6 "gateway/controller/adapter/port/in/grpc/di"
 	handler2 "gateway/controller/adapter/port/in/grpc/handler"
-	di4 "gateway/controller/adapter/port/in/unix/di"
+	di5 "gateway/controller/adapter/port/in/unix/di"
 	"gateway/controller/adapter/port/in/unix/handler"
 	"gateway/controller/adapter/port/out/cache"
-	"gateway/controller/adapter/port/out/cache/di"
-	di2 "gateway/controller/adapter/port/out/di"
+	di2 "gateway/controller/adapter/port/out/cache/di"
+	di3 "gateway/controller/adapter/port/out/di"
 	"gateway/controller/application/service"
-	di3 "gateway/controller/application/service/di"
+	di4 "gateway/controller/application/service/di"
 )
 
 // Injectors from wire.go:
 
 func InitializeGatewayControllerApp() (*GatewayControllerApp, error) {
 	appConfig := app_config.NewAppConfig()
+	adapterConfig := &di.AdapterConfig{
+		AppConfig: appConfig,
+	}
 	valkeyClient := valkey.NewValkeyClient(appConfig)
 	routeValkeyCache := cache.NewRouteValkeyCache(valkeyClient)
-	routerCacheDi := di.RouterCacheDi{
+	routerCacheDi := di2.RouterCacheDi{
 		RouteCache: routeValkeyCache,
 	}
-	adapterPortOutDi := &di2.AdapterPortOutDi{
+	adapterPortOutDi := &di3.AdapterPortOutDi{
 		RouterCache: routerCacheDi,
 	}
 	upstreamLookupUseCase := service.NewUpstreamLookupService(routeValkeyCache)
-	serviceProvider := &di3.ServiceProvider{
+	serviceProvider := &di4.ServiceProvider{
 		UpstreamLookupCase: upstreamLookupUseCase,
 	}
 	upstreamRouter := handler.NewUpStreamHandler(upstreamLookupUseCase)
-	unixRouterProvider := &di4.UnixRouterProvider{
+	unixRouterProvider := &di5.UnixRouterProvider{
 		UpStreamRouter: upstreamRouter,
 	}
 	upstreamLookupController := handler2.NewUpstreamLookupController(upstreamLookupUseCase)
 	grpcServerMetrics := metrics.NewServerMetrics()
 	metricsController := handler2.NewMetricsController(grpcServerMetrics)
-	v := di5.NewGrpcServiceRegistrars(upstreamLookupController, metricsController)
-	grpcServiceProvider := &di5.GrpcServiceProvider{
+	v := di6.NewGrpcServiceRegistrars(upstreamLookupController, metricsController)
+	grpcServiceProvider := &di6.GrpcServiceProvider{
 		Registrars: v,
 	}
-	unixServer := unixsocket_server.NewUnixSocketServer(unixRouterProvider, appConfig)
-	grpcServer := grpc_server.NewGrpcServer(appConfig, grpcServiceProvider, grpcServerMetrics)
+	unixServer := unixsocket_server.NewUnixSocketServer(unixRouterProvider, appConfig, appConfig)
+	grpcServer := grpc_server.NewGrpcServer(appConfig, appConfig, grpcServiceProvider, grpcServerMetrics)
 	listenerServer := server.NewListenerServer(appConfig, unixServer, grpcServer)
 	gatewayControllerApp := &GatewayControllerApp{
-		app:                 appConfig,
+		app:                 adapterConfig,
 		valkeyClient:        valkeyClient,
 		adapterPortOut:      adapterPortOutDi,
 		serviceProvider:     serviceProvider,
@@ -72,12 +76,12 @@ func InitializeGatewayControllerApp() (*GatewayControllerApp, error) {
 // wire.go:
 
 type GatewayControllerApp struct {
-	app                 *app_config.AppConfig
+	app                 *di.AdapterConfig
 	valkeyClient        valkey.ValkeyClient
-	adapterPortOut      *di2.AdapterPortOutDi
-	serviceProvider     *di3.ServiceProvider
-	unixRouterProvider  *di4.UnixRouterProvider
-	grpcServiceProvider *di5.GrpcServiceProvider
+	adapterPortOut      *di3.AdapterPortOutDi
+	serviceProvider     *di4.ServiceProvider
+	unixRouterProvider  *di5.UnixRouterProvider
+	grpcServiceProvider *di6.GrpcServiceProvider
 	unixServer          server.UnixServer
 	grpcServer          server.GrpcServer
 	grpcMetrics         metrics.GrpcServerMetrics
