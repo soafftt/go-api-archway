@@ -94,7 +94,8 @@ func isVersionSegment(segment string) bool {
 	if len(segment) < 2 || segment[0] != 'v' {
 		return false
 	}
-	for _, character := range segment[1:] {
+	for idx, _ := range segment[1:] {
+		character := segment[idx]
 		if character < '0' || character > '9' {
 			return false
 		}

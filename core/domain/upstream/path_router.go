@@ -41,7 +41,8 @@ func (uspr *UpStreamPathRouter) Insert(upstreamPath *UpstreamPath) {
 	segments := splitPath(upstreamPath.Path)
 	node := uspr.root
 
-	for _, segment := range segments {
+	for idx, _ := range segments {
+		segment := segments[idx]
 		if isPathVariable(segment) {
 			// Handle path variable {id}, {userId}, etc.
 			paramName := extractParamName(segment)
@@ -138,8 +139,8 @@ func splitPath(path string) []string {
 	parts := strings.Split(strings.Trim(path, "/"), "/")
 	segments := make([]string, 0, len(parts))
 
-	for _, part := range parts {
-		if part != "" {
+	for idx, _ := range parts {
+		if part := parts[idx]; part != "" {
 			segments = append(segments, part)
 		}
 	}

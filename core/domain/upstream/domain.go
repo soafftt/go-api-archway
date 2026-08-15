@@ -10,8 +10,9 @@ type UpstreamResource struct {
 // InitializeRouter 는 path 정보를 기반으로 Trie 라우터를 초기화합니다. UpstreamService 의 InitializeResourceIndex에서 호출됩니다.
 func (u *UpstreamResource) InitializeRouter() {
 	u.pathRouter = NewUpStreamPathRouter()
-	for _, p := range u.Paths {
-		u.pathRouter.Insert(p)
+	for idx, _ := range u.Paths {
+		path := u.Paths[idx]
+		u.pathRouter.Insert(path)
 	}
 }
 
