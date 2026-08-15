@@ -33,7 +33,8 @@ func (u *UpstreamService) InitializeResourceIndex() {
 	}
 
 	u.resourceIndex = make(map[string]*UpstreamResource, len(u.Resources))
-	for _, resource := range u.Resources {
+	for idx, _ := range u.Resources {
+		resource := u.Resources[idx]
 		if resource == nil {
 			continue
 		}
